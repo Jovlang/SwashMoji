@@ -1,0 +1,3598 @@
+#️⃣ hash key
+*️⃣ keycap: *
+0️⃣ keycap 0
+1️⃣ keycap 1
+2️⃣ keycap 2
+3️⃣ keycap 3
+4️⃣ keycap 4
+5️⃣ keycap 5
+6️⃣ keycap 6
+7️⃣ keycap 7
+8️⃣ keycap 8
+9️⃣ keycap 9
+©️ copyright sign
+®️ registered sign
+🀄 mahjong tile red dragon
+🃏 playing card black joker
+🅰️ negative squared latin capital letter a
+🅱️ negative squared latin capital letter b
+🅾️ negative squared latin capital letter o
+🅿️ negative squared latin capital letter p
+🆎 negative squared ab
+🆑 squared cl
+🆒 squared cool
+🆓 squared free
+🆔 squared id
+🆕 squared new
+🆖 squared ng
+🆗 squared ok
+🆘 squared sos
+🆙 squared up with exclamation mark
+🆚 squared vs
+🇦🇨 ascension island flag
+🇦🇩 andorra flag
+🇦🇪 united arab emirates flag
+🇦🇫 afghanistan flag
+🇦🇬 antigua & barbuda flag
+🇦🇮 anguilla flag
+🇦🇱 albania flag
+🇦🇲 armenia flag
+🇦🇴 angola flag
+🇦🇶 antarctica flag
+🇦🇷 argentina flag
+🇦🇸 american samoa flag
+🇦🇹 austria flag
+🇦🇺 australia flag
+🇦🇼 aruba flag
+🇦🇽 åland islands flag
+🇦🇿 azerbaijan flag
+🇧🇦 bosnia & herzegovina flag
+🇧🇧 barbados flag
+🇧🇩 bangladesh flag
+🇧🇪 belgium flag
+🇧🇫 burkina faso flag
+🇧🇬 bulgaria flag
+🇧🇭 bahrain flag
+🇧🇮 burundi flag
+🇧🇯 benin flag
+🇧🇱 st. barthélemy flag
+🇧🇲 bermuda flag
+🇧🇳 brunei flag
+🇧🇴 bolivia flag
+🇧🇶 caribbean netherlands flag
+🇧🇷 brazil flag
+🇧🇸 bahamas flag
+🇧🇹 bhutan flag
+🇧🇻 bouvet island flag
+🇧🇼 botswana flag
+🇧🇾 belarus flag
+🇧🇿 belize flag
+🇨🇦 canada flag
+🇨🇨 cocos (keeling) islands flag
+🇨🇩 congo - kinshasa flag
+🇨🇫 central african republic flag
+🇨🇬 congo - brazzaville flag
+🇨🇭 switzerland flag
+🇨🇮 côte d’ivoire flag
+🇨🇰 cook islands flag
+🇨🇱 chile flag
+🇨🇲 cameroon flag
+🇨🇳 china flag
+🇨🇴 colombia flag
+🇨🇵 clipperton island flag
+🇨🇷 costa rica flag
+🇨🇺 cuba flag
+🇨🇻 cape verde flag
+🇨🇼 curaçao flag
+🇨🇽 christmas island flag
+🇨🇾 cyprus flag
+🇨🇿 czechia flag
+🇩🇪 germany flag
+🇩🇬 diego garcia flag
+🇩🇯 djibouti flag
+🇩🇰 denmark flag
+🇩🇲 dominica flag
+🇩🇴 dominican republic flag
+🇩🇿 algeria flag
+🇪🇦 ceuta & melilla flag
+🇪🇨 ecuador flag
+🇪🇪 estonia flag
+🇪🇬 egypt flag
+🇪🇭 western sahara flag
+🇪🇷 eritrea flag
+🇪🇸 spain flag
+🇪🇹 ethiopia flag
+🇪🇺 european union flag
+🇫🇮 finland flag
+🇫🇯 fiji flag
+🇫🇰 falkland islands flag
+🇫🇲 micronesia flag
+🇫🇴 faroe islands flag
+🇫🇷 france flag
+🇬🇦 gabon flag
+🇬🇧 united kingdom flag
+🇬🇩 grenada flag
+🇬🇪 georgia flag
+🇬🇫 french guiana flag
+🇬🇬 guernsey flag
+🇬🇭 ghana flag
+🇬🇮 gibraltar flag
+🇬🇱 greenland flag
+🇬🇲 gambia flag
+🇬🇳 guinea flag
+🇬🇵 guadeloupe flag
+🇬🇶 equatorial guinea flag
+🇬🇷 greece flag
+🇬🇸 south georgia & south sandwich islands flag
+🇬🇹 guatemala flag
+🇬🇺 guam flag
+🇬🇼 guinea-bissau flag
+🇬🇾 guyana flag
+🇭🇰 hong kong sar china flag
+🇭🇲 heard & mcdonald islands flag
+🇭🇳 honduras flag
+🇭🇷 croatia flag
+🇭🇹 haiti flag
+🇭🇺 hungary flag
+🇮🇨 canary islands flag
+🇮🇩 indonesia flag
+🇮🇪 ireland flag
+🇮🇱 israel flag
+🇮🇲 isle of man flag
+🇮🇳 india flag
+🇮🇴 british indian ocean territory flag
+🇮🇶 iraq flag
+🇮🇷 iran flag
+🇮🇸 iceland flag
+🇮🇹 italy flag
+🇯🇪 jersey flag
+🇯🇲 jamaica flag
+🇯🇴 jordan flag
+🇯🇵 japan flag
+🇰🇪 kenya flag
+🇰🇬 kyrgyzstan flag
+🇰🇭 cambodia flag
+🇰🇮 kiribati flag
+🇰🇲 comoros flag
+🇰🇳 st. kitts & nevis flag
+🇰🇵 north korea flag
+🇰🇷 south korea flag
+🇰🇼 kuwait flag
+🇰🇾 cayman islands flag
+🇰🇿 kazakhstan flag
+🇱🇦 laos flag
+🇱🇧 lebanon flag
+🇱🇨 st. lucia flag
+🇱🇮 liechtenstein flag
+🇱🇰 sri lanka flag
+🇱🇷 liberia flag
+🇱🇸 lesotho flag
+🇱🇹 lithuania flag
+🇱🇺 luxembourg flag
+🇱🇻 latvia flag
+🇱🇾 libya flag
+🇲🇦 morocco flag
+🇲🇨 monaco flag
+🇲🇩 moldova flag
+🇲🇪 montenegro flag
+🇲🇫 st. martin flag
+🇲🇬 madagascar flag
+🇲🇭 marshall islands flag
+🇲🇰 north macedonia flag
+🇲🇱 mali flag
+🇲🇲 myanmar (burma) flag
+🇲🇳 mongolia flag
+🇲🇴 macao sar china flag
+🇲🇵 northern mariana islands flag
+🇲🇶 martinique flag
+🇲🇷 mauritania flag
+🇲🇸 montserrat flag
+🇲🇹 malta flag
+🇲🇺 mauritius flag
+🇲🇻 maldives flag
+🇲🇼 malawi flag
+🇲🇽 mexico flag
+🇲🇾 malaysia flag
+🇲🇿 mozambique flag
+🇳🇦 namibia flag
+🇳🇨 new caledonia flag
+🇳🇪 niger flag
+🇳🇫 norfolk island flag
+🇳🇬 nigeria flag
+🇳🇮 nicaragua flag
+🇳🇱 netherlands flag
+🇳🇴 norway flag
+🇳🇵 nepal flag
+🇳🇷 nauru flag
+🇳🇺 niue flag
+🇳🇿 new zealand flag
+🇴🇲 oman flag
+🇵🇦 panama flag
+🇵🇪 peru flag
+🇵🇫 french polynesia flag
+🇵🇬 papua new guinea flag
+🇵🇭 philippines flag
+🇵🇰 pakistan flag
+🇵🇱 poland flag
+🇵🇲 st. pierre & miquelon flag
+🇵🇳 pitcairn islands flag
+🇵🇷 puerto rico flag
+🇵🇸 palestinian territories flag
+🇵🇹 portugal flag
+🇵🇼 palau flag
+🇵🇾 paraguay flag
+🇶🇦 qatar flag
+🇷🇪 réunion flag
+🇷🇴 romania flag
+🇷🇸 serbia flag
+🇷🇺 russia flag
+🇷🇼 rwanda flag
+🇸🇦 saudi arabia flag
+🇸🇧 solomon islands flag
+🇸🇨 seychelles flag
+🇸🇩 sudan flag
+🇸🇪 sweden flag
+🇸🇬 singapore flag
+🇸🇭 st. helena flag
+🇸🇮 slovenia flag
+🇸🇯 svalbard & jan mayen flag
+🇸🇰 slovakia flag
+🇸🇱 sierra leone flag
+🇸🇲 san marino flag
+🇸🇳 senegal flag
+🇸🇴 somalia flag
+🇸🇷 suriname flag
+🇸🇸 south sudan flag
+🇸🇹 são tomé & príncipe flag
+🇸🇻 el salvador flag
+🇸🇽 sint maarten flag
+🇸🇾 syria flag
+🇸🇿 eswatini flag
+🇹🇦 tristan da cunha flag
+🇹🇨 turks & caicos islands flag
+🇹🇩 chad flag
+🇹🇫 french southern territories flag
+🇹🇬 togo flag
+🇹🇭 thailand flag
+🇹🇯 tajikistan flag
+🇹🇰 tokelau flag
+🇹🇱 timor-leste flag
+🇹🇲 turkmenistan flag
+🇹🇳 tunisia flag
+🇹🇴 tonga flag
+🇹🇷 türkiye flag
+🇹🇹 trinidad & tobago flag
+🇹🇻 tuvalu flag
+🇹🇼 taiwan flag
+🇹🇿 tanzania flag
+🇺🇦 ukraine flag
+🇺🇬 uganda flag
+🇺🇲 u.s. outlying islands flag
+🇺🇳 united nations flag
+🇺🇸 united states flag
+🇺🇾 uruguay flag
+🇺🇿 uzbekistan flag
+🇻🇦 vatican city flag
+🇻🇨 st. vincent & grenadines flag
+🇻🇪 venezuela flag
+🇻🇬 british virgin islands flag
+🇻🇮 u.s. virgin islands flag
+🇻🇳 vietnam flag
+🇻🇺 vanuatu flag
+🇼🇫 wallis & futuna flag
+🇼🇸 samoa flag
+🇽🇰 kosovo flag
+🇾🇪 yemen flag
+🇾🇹 mayotte flag
+🇿🇦 south africa flag
+🇿🇲 zambia flag
+🇿🇼 zimbabwe flag
+🈁 squared katakana koko
+🈂️ squared katakana sa
+🈚 squared cjk unified ideograph-7121
+🈯 squared cjk unified ideograph-6307
+🈲 squared cjk unified ideograph-7981
+🈳 squared cjk unified ideograph-7a7a
+🈴 squared cjk unified ideograph-5408
+🈵 squared cjk unified ideograph-6e80
+🈶 squared cjk unified ideograph-6709
+🈷️ squared cjk unified ideograph-6708
+🈸 squared cjk unified ideograph-7533
+🈹 squared cjk unified ideograph-5272
+🈺 squared cjk unified ideograph-55b6
+🉐 circled ideograph advantage
+🉑 circled ideograph accept
+🌀 cyclone
+🌁 foggy
+🌂 closed umbrella
+🌃 night with stars
+🌄 sunrise over mountains
+🌅 sunrise
+🌆 cityscape at dusk
+🌇 sunset over buildings
+🌈 rainbow
+🌉 bridge at night
+🌊 water wave
+🌋 volcano
+🌌 milky way
+🌍 earth globe europe-africa
+🌎 earth globe americas
+🌏 earth globe asia-australia
+🌐 globe with meridians
+🌑 new moon symbol
+🌒 waxing crescent moon symbol
+🌓 first quarter moon symbol
+🌔 waxing gibbous moon symbol
+🌕 full moon symbol
+🌖 waning gibbous moon symbol
+🌗 last quarter moon symbol
+🌘 waning crescent moon symbol
+🌙 crescent moon
+🌚 new moon with face
+🌛 first quarter moon with face
+🌜 last quarter moon with face
+🌝 full moon with face
+🌞 sun with face
+🌟 glowing star
+🌠 shooting star
+🌡️ thermometer
+🌤️ sun behind small cloud
+🌥️ sun behind large cloud
+🌦️ sun behind rain cloud
+🌧️ cloud with rain
+🌨️ cloud with snow
+🌩️ cloud with lightning
+🌪️ tornado
+🌫️ fog
+🌬️ wind face
+🌭 hot dog
+🌮 taco
+🌯 burrito
+🌰 chestnut
+🌱 seedling
+🌲 evergreen tree
+🌳 deciduous tree
+🌴 palm tree
+🌵 cactus
+🌶️ hot pepper
+🌷 tulip
+🌸 cherry blossom
+🌹 rose
+🌺 hibiscus
+🌻 sunflower
+🌼 blossom
+🌽 ear of maize
+🌾 ear of rice
+🌿 herb
+🍀 four leaf clover
+🍁 maple leaf
+🍂 fallen leaf
+🍃 leaf fluttering in wind
+🍄‍🟫 brown mushroom
+🍄 mushroom
+🍅 tomato
+🍆 aubergine
+🍇 grapes
+🍈 melon
+🍉 watermelon
+🍊 tangerine
+🍋‍🟩 lime
+🍋 lemon
+🍌 banana
+🍍 pineapple
+🍎 red apple
+🍏 green apple
+🍐 pear
+🍑 peach
+🍒 cherries
+🍓 strawberry
+🍔 hamburger
+🍕 slice of pizza
+🍖 meat on bone
+🍗 poultry leg
+🍘 rice cracker
+🍙 rice ball
+🍚 cooked rice
+🍛 curry and rice
+🍜 steaming bowl
+🍝 spaghetti
+🍞 bread
+🍟 french fries
+🍠 roasted sweet potato
+🍡 dango
+🍢 oden
+🍣 sushi
+🍤 fried shrimp
+🍥 fish cake with swirl design
+🍦 soft ice cream
+🍧 shaved ice
+🍨 ice cream
+🍩 doughnut
+🍪 cookie
+🍫 chocolate bar
+🍬 candy
+🍭 lollipop
+🍮 custard
+🍯 honey pot
+🍰 shortcake
+🍱 bento box
+🍲 pot of food
+🍳 cooking
+🍴 fork and knife
+🍵 teacup without handle
+🍶 sake bottle and cup
+🍷 wine glass
+🍸 cocktail glass
+🍹 tropical drink
+🍺 beer mug
+🍻 clinking beer mugs
+🍼 baby bottle
+🍽️ fork and knife with plate
+🍾 bottle with popping cork
+🍿 popcorn
+🎀 ribbon
+🎁 wrapped present
+🎂 birthday cake
+🎃 jack-o-lantern
+🎄 christmas tree
+🎅 father christmas
+🎅🏻 father christmas (skin tone)
+🎅🏼 father christmas (skin tone)
+🎅🏽 father christmas (skin tone)
+🎅🏾 father christmas (skin tone)
+🎅🏿 father christmas (skin tone)
+🎆 fireworks
+🎇 firework sparkler
+🎈 balloon
+🎉 party popper
+🎊 confetti ball
+🎋 tanabata tree
+🎌 crossed flags
+🎍 pine decoration
+🎎 japanese dolls
+🎏 carp streamer
+🎐 wind chime
+🎑 moon viewing ceremony
+🎒 school satchel
+🎓 graduation cap
+🎖️ military medal
+🎗️ reminder ribbon
+🎙️ studio microphone
+🎚️ level slider
+🎛️ control knobs
+🎞️ film frames
+🎟️ admission tickets
+🎠 carousel horse
+🎡 ferris wheel
+🎢 roller coaster
+🎣 fishing pole and fish
+🎤 microphone
+🎥 movie camera
+🎦 cinema
+🎧 headphone
+🎨 artist palette
+🎩 top hat
+🎪 circus tent
+🎫 ticket
+🎬 clapper board
+🎭 performing arts
+🎮 video game
+🎯 direct hit
+🎰 slot machine
+🎱 billiards
+🎲 game die
+🎳 bowling
+🎴 flower playing cards
+🎵 musical note
+🎶 multiple musical notes
+🎷 saxophone
+🎸 guitar
+🎹 musical keyboard
+🎺 trumpet
+🎻 violin
+🎼 musical score
+🎽 running shirt with sash
+🎾 tennis racquet and ball
+🎿 ski and ski boot
+🏀 basketball and hoop
+🏁 chequered flag
+🏂 snowboarder
+🏂🏻 snowboarder (skin tone)
+🏂🏼 snowboarder (skin tone)
+🏂🏽 snowboarder (skin tone)
+🏂🏾 snowboarder (skin tone)
+🏂🏿 snowboarder (skin tone)
+🏃‍♀️ woman running
+🏃🏻‍♀️ woman running (skin tone)
+🏃🏼‍♀️ woman running (skin tone)
+🏃🏽‍♀️ woman running (skin tone)
+🏃🏾‍♀️ woman running (skin tone)
+🏃🏿‍♀️ woman running (skin tone)
+🏃‍♀️‍➡️ woman running facing right
+🏃🏻‍♀️‍➡️ woman running facing right (skin tone)
+🏃🏼‍♀️‍➡️ woman running facing right (skin tone)
+🏃🏽‍♀️‍➡️ woman running facing right (skin tone)
+🏃🏾‍♀️‍➡️ woman running facing right (skin tone)
+🏃🏿‍♀️‍➡️ woman running facing right (skin tone)
+🏃‍♂️ man running
+🏃🏻‍♂️ man running (skin tone)
+🏃🏼‍♂️ man running (skin tone)
+🏃🏽‍♂️ man running (skin tone)
+🏃🏾‍♂️ man running (skin tone)
+🏃🏿‍♂️ man running (skin tone)
+🏃‍♂️‍➡️ man running facing right
+🏃🏻‍♂️‍➡️ man running facing right (skin tone)
+🏃🏼‍♂️‍➡️ man running facing right (skin tone)
+🏃🏽‍♂️‍➡️ man running facing right (skin tone)
+🏃🏾‍♂️‍➡️ man running facing right (skin tone)
+🏃🏿‍♂️‍➡️ man running facing right (skin tone)
+🏃‍➡️ person running facing right
+🏃🏻‍➡️ person running facing right (skin tone)
+🏃🏼‍➡️ person running facing right (skin tone)
+🏃🏽‍➡️ person running facing right (skin tone)
+🏃🏾‍➡️ person running facing right (skin tone)
+🏃🏿‍➡️ person running facing right (skin tone)
+🏃 runner
+🏃🏻 runner (skin tone)
+🏃🏼 runner (skin tone)
+🏃🏽 runner (skin tone)
+🏃🏾 runner (skin tone)
+🏃🏿 runner (skin tone)
+🏄‍♀️ woman surfing
+🏄🏻‍♀️ woman surfing (skin tone)
+🏄🏼‍♀️ woman surfing (skin tone)
+🏄🏽‍♀️ woman surfing (skin tone)
+🏄🏾‍♀️ woman surfing (skin tone)
+🏄🏿‍♀️ woman surfing (skin tone)
+🏄‍♂️ man surfing
+🏄🏻‍♂️ man surfing (skin tone)
+🏄🏼‍♂️ man surfing (skin tone)
+🏄🏽‍♂️ man surfing (skin tone)
+🏄🏾‍♂️ man surfing (skin tone)
+🏄🏿‍♂️ man surfing (skin tone)
+🏄 surfer
+🏄🏻 surfer (skin tone)
+🏄🏼 surfer (skin tone)
+🏄🏽 surfer (skin tone)
+🏄🏾 surfer (skin tone)
+🏄🏿 surfer (skin tone)
+🏅 sports medal
+🏆 trophy
+🏇 horse racing
+🏇🏻 horse racing (skin tone)
+🏇🏼 horse racing (skin tone)
+🏇🏽 horse racing (skin tone)
+🏇🏾 horse racing (skin tone)
+🏇🏿 horse racing (skin tone)
+🏈 american football
+🏉 rugby football
+🏊‍♀️ woman swimming
+🏊🏻‍♀️ woman swimming (skin tone)
+🏊🏼‍♀️ woman swimming (skin tone)
+🏊🏽‍♀️ woman swimming (skin tone)
+🏊🏾‍♀️ woman swimming (skin tone)
+🏊🏿‍♀️ woman swimming (skin tone)
+🏊‍♂️ man swimming
+🏊🏻‍♂️ man swimming (skin tone)
+🏊🏼‍♂️ man swimming (skin tone)
+🏊🏽‍♂️ man swimming (skin tone)
+🏊🏾‍♂️ man swimming (skin tone)
+🏊🏿‍♂️ man swimming (skin tone)
+🏊 swimmer
+🏊🏻 swimmer (skin tone)
+🏊🏼 swimmer (skin tone)
+🏊🏽 swimmer (skin tone)
+🏊🏾 swimmer (skin tone)
+🏊🏿 swimmer (skin tone)
+🏋️‍♀️ woman lifting weights
+🏋🏻‍♀️ woman lifting weights (skin tone)
+🏋🏼‍♀️ woman lifting weights (skin tone)
+🏋🏽‍♀️ woman lifting weights (skin tone)
+🏋🏾‍♀️ woman lifting weights (skin tone)
+🏋🏿‍♀️ woman lifting weights (skin tone)
+🏋️‍♂️ man lifting weights
+🏋🏻‍♂️ man lifting weights (skin tone)
+🏋🏼‍♂️ man lifting weights (skin tone)
+🏋🏽‍♂️ man lifting weights (skin tone)
+🏋🏾‍♂️ man lifting weights (skin tone)
+🏋🏿‍♂️ man lifting weights (skin tone)
+🏋️ person lifting weights
+🏋🏻 person lifting weights (skin tone)
+🏋🏼 person lifting weights (skin tone)
+🏋🏽 person lifting weights (skin tone)
+🏋🏾 person lifting weights (skin tone)
+🏋🏿 person lifting weights (skin tone)
+🏌️‍♀️ woman golfing
+🏌🏻‍♀️ woman golfing (skin tone)
+🏌🏼‍♀️ woman golfing (skin tone)
+🏌🏽‍♀️ woman golfing (skin tone)
+🏌🏾‍♀️ woman golfing (skin tone)
+🏌🏿‍♀️ woman golfing (skin tone)
+🏌️‍♂️ man golfing
+🏌🏻‍♂️ man golfing (skin tone)
+🏌🏼‍♂️ man golfing (skin tone)
+🏌🏽‍♂️ man golfing (skin tone)
+🏌🏾‍♂️ man golfing (skin tone)
+🏌🏿‍♂️ man golfing (skin tone)
+🏌️ person golfing
+🏌🏻 person golfing (skin tone)
+🏌🏼 person golfing (skin tone)
+🏌🏽 person golfing (skin tone)
+🏌🏾 person golfing (skin tone)
+🏌🏿 person golfing (skin tone)
+🏍️ motorcycle
+🏎️ racing car
+🏏 cricket bat and ball
+🏐 volleyball
+🏑 field hockey stick and ball
+🏒 ice hockey stick and puck
+🏓 table tennis paddle and ball
+🏔️ snow-capped mountain
+🏕️ camping
+🏖️ beach with umbrella
+🏗️ building construction
+🏘️ houses
+🏙️ cityscape
+🏚️ derelict house
+🏛️ classical building
+🏜️ desert
+🏝️ desert island
+🏞️ national park
+🏟️ stadium
+🏠 house building
+🏡 house with garden
+🏢 office building
+🏣 japanese post office
+🏤 european post office
+🏥 hospital
+🏦 bank
+🏧 automated teller machine
+🏨 hotel
+🏩 love hotel
+🏪 convenience store
+🏫 school
+🏬 department store
+🏭 factory
+🏮 izakaya lantern
+🏯 japanese castle
+🏰 european castle
+🏳️ white flag
+🏴‍☠️ pirate flag
+🏴󠁧󠁢󠁥󠁮󠁧󠁿 england flag
+🏴󠁧󠁢󠁳󠁣󠁴󠁿 scotland flag
+🏴󠁧󠁢󠁷󠁬󠁳󠁿 wales flag
+🏴 waving black flag
+🏵️ rosette
+🏷️ label
+🏸 badminton racquet and shuttlecock
+🏹 bow and arrow
+🏺 amphora
+🏻 emoji modifier fitzpatrick type-1-2
+🏼 emoji modifier fitzpatrick type-3
+🏽 emoji modifier fitzpatrick type-4
+🏾 emoji modifier fitzpatrick type-5
+🏿 emoji modifier fitzpatrick type-6
+🐀 rat
+🐁 mouse
+🐂 ox
+🐃 water buffalo
+🐄 cow
+🐅 tiger
+🐆 leopard
+🐇 rabbit
+🐈‍⬛ black cat
+🐈 cat
+🐉 dragon
+🐊 crocodile
+🐋 whale
+🐌 snail
+🐍 snake
+🐎 horse
+🐏 ram
+🐐 goat
+🐑 sheep
+🐒 monkey
+🐓 rooster
+🐔 chicken
+🐕‍🦺 service dog
+🐕 dog
+🐖 pig
+🐗 boar
+🐘 elephant
+🐙 octopus
+🐚 spiral shell
+🐛 bug
+🐜 ant
+🐝 honeybee
+🐞 lady beetle
+🐟 fish
+🐠 tropical fish
+🐡 blowfish
+🐢 turtle
+🐣 hatching chick
+🐤 baby chick
+🐥 front-facing baby chick
+🐦‍🔥 phoenix
+🐦‍⬛ black bird
+🐦 bird
+🐧 penguin
+🐨 koala
+🐩 poodle
+🐪 dromedary camel
+🐫 bactrian camel
+🐬 dolphin
+🐭 mouse face
+🐮 cow face
+🐯 tiger face
+🐰 rabbit face
+🐱 cat face
+🐲 dragon face
+🐳 spouting whale
+🐴 horse face
+🐵 monkey face
+🐶 dog face
+🐷 pig face
+🐸 frog face
+🐹 hamster face
+🐺 wolf face
+🐻‍❄️ polar bear
+🐻 bear face
+🐼 panda face
+🐽 pig nose
+🐾 paw prints
+🐿️ chipmunk
+👀 eyes
+👁️‍🗨️ eye in speech bubble
+👁️ eye
+👂 ear
+👂🏻 ear (skin tone)
+👂🏼 ear (skin tone)
+👂🏽 ear (skin tone)
+👂🏾 ear (skin tone)
+👂🏿 ear (skin tone)
+👃 nose
+👃🏻 nose (skin tone)
+👃🏼 nose (skin tone)
+👃🏽 nose (skin tone)
+👃🏾 nose (skin tone)
+👃🏿 nose (skin tone)
+👄 mouth
+👅 tongue
+👆 white up pointing backhand index
+👆🏻 white up pointing backhand index (skin tone)
+👆🏼 white up pointing backhand index (skin tone)
+👆🏽 white up pointing backhand index (skin tone)
+👆🏾 white up pointing backhand index (skin tone)
+👆🏿 white up pointing backhand index (skin tone)
+👇 white down pointing backhand index
+👇🏻 white down pointing backhand index (skin tone)
+👇🏼 white down pointing backhand index (skin tone)
+👇🏽 white down pointing backhand index (skin tone)
+👇🏾 white down pointing backhand index (skin tone)
+👇🏿 white down pointing backhand index (skin tone)
+👈 white left pointing backhand index
+👈🏻 white left pointing backhand index (skin tone)
+👈🏼 white left pointing backhand index (skin tone)
+👈🏽 white left pointing backhand index (skin tone)
+👈🏾 white left pointing backhand index (skin tone)
+👈🏿 white left pointing backhand index (skin tone)
+👉 white right pointing backhand index
+👉🏻 white right pointing backhand index (skin tone)
+👉🏼 white right pointing backhand index (skin tone)
+👉🏽 white right pointing backhand index (skin tone)
+👉🏾 white right pointing backhand index (skin tone)
+👉🏿 white right pointing backhand index (skin tone)
+👊 fisted hand sign
+👊🏻 fisted hand sign (skin tone)
+👊🏼 fisted hand sign (skin tone)
+👊🏽 fisted hand sign (skin tone)
+👊🏾 fisted hand sign (skin tone)
+👊🏿 fisted hand sign (skin tone)
+👋 waving hand sign
+👋🏻 waving hand sign (skin tone)
+👋🏼 waving hand sign (skin tone)
+👋🏽 waving hand sign (skin tone)
+👋🏾 waving hand sign (skin tone)
+👋🏿 waving hand sign (skin tone)
+👌 ok hand sign
+👌🏻 ok hand sign (skin tone)
+👌🏼 ok hand sign (skin tone)
+👌🏽 ok hand sign (skin tone)
+👌🏾 ok hand sign (skin tone)
+👌🏿 ok hand sign (skin tone)
+👍 thumbs up sign
+👍🏻 thumbs up sign (skin tone)
+👍🏼 thumbs up sign (skin tone)
+👍🏽 thumbs up sign (skin tone)
+👍🏾 thumbs up sign (skin tone)
+👍🏿 thumbs up sign (skin tone)
+👎 thumbs down sign
+👎🏻 thumbs down sign (skin tone)
+👎🏼 thumbs down sign (skin tone)
+👎🏽 thumbs down sign (skin tone)
+👎🏾 thumbs down sign (skin tone)
+👎🏿 thumbs down sign (skin tone)
+👏 clapping hands sign
+👏🏻 clapping hands sign (skin tone)
+👏🏼 clapping hands sign (skin tone)
+👏🏽 clapping hands sign (skin tone)
+👏🏾 clapping hands sign (skin tone)
+👏🏿 clapping hands sign (skin tone)
+👐 open hands sign
+👐🏻 open hands sign (skin tone)
+👐🏼 open hands sign (skin tone)
+👐🏽 open hands sign (skin tone)
+👐🏾 open hands sign (skin tone)
+👐🏿 open hands sign (skin tone)
+👑 crown
+👒 womans hat
+👓 eyeglasses
+👔 necktie
+👕 t-shirt
+👖 jeans
+👗 dress
+👘 kimono
+👙 bikini
+👚 womans clothes
+👛 purse
+👜 handbag
+👝 pouch
+👞 mans shoe
+👟 athletic shoe
+👠 high-heeled shoe
+👡 womans sandal
+👢 womans boots
+👣 footprints
+👤 bust in silhouette
+👥 busts in silhouette
+👦 boy
+👦🏻 boy (skin tone)
+👦🏼 boy (skin tone)
+👦🏽 boy (skin tone)
+👦🏾 boy (skin tone)
+👦🏿 boy (skin tone)
+👧 girl
+👧🏻 girl (skin tone)
+👧🏼 girl (skin tone)
+👧🏽 girl (skin tone)
+👧🏾 girl (skin tone)
+👧🏿 girl (skin tone)
+👨‍🌾 man farmer
+👨🏻‍🌾 man farmer (skin tone)
+👨🏼‍🌾 man farmer (skin tone)
+👨🏽‍🌾 man farmer (skin tone)
+👨🏾‍🌾 man farmer (skin tone)
+👨🏿‍🌾 man farmer (skin tone)
+👨‍🍳 man cook
+👨🏻‍🍳 man cook (skin tone)
+👨🏼‍🍳 man cook (skin tone)
+👨🏽‍🍳 man cook (skin tone)
+👨🏾‍🍳 man cook (skin tone)
+👨🏿‍🍳 man cook (skin tone)
+👨‍🍼 man feeding baby
+👨🏻‍🍼 man feeding baby (skin tone)
+👨🏼‍🍼 man feeding baby (skin tone)
+👨🏽‍🍼 man feeding baby (skin tone)
+👨🏾‍🍼 man feeding baby (skin tone)
+👨🏿‍🍼 man feeding baby (skin tone)
+👨‍🎓 man student
+👨🏻‍🎓 man student (skin tone)
+👨🏼‍🎓 man student (skin tone)
+👨🏽‍🎓 man student (skin tone)
+👨🏾‍🎓 man student (skin tone)
+👨🏿‍🎓 man student (skin tone)
+👨‍🎤 man singer
+👨🏻‍🎤 man singer (skin tone)
+👨🏼‍🎤 man singer (skin tone)
+👨🏽‍🎤 man singer (skin tone)
+👨🏾‍🎤 man singer (skin tone)
+👨🏿‍🎤 man singer (skin tone)
+👨‍🎨 man artist
+👨🏻‍🎨 man artist (skin tone)
+👨🏼‍🎨 man artist (skin tone)
+👨🏽‍🎨 man artist (skin tone)
+👨🏾‍🎨 man artist (skin tone)
+👨🏿‍🎨 man artist (skin tone)
+👨‍🏫 man teacher
+👨🏻‍🏫 man teacher (skin tone)
+👨🏼‍🏫 man teacher (skin tone)
+👨🏽‍🏫 man teacher (skin tone)
+👨🏾‍🏫 man teacher (skin tone)
+👨🏿‍🏫 man teacher (skin tone)
+👨‍🏭 man factory worker
+👨🏻‍🏭 man factory worker (skin tone)
+👨🏼‍🏭 man factory worker (skin tone)
+👨🏽‍🏭 man factory worker (skin tone)
+👨🏾‍🏭 man factory worker (skin tone)
+👨🏿‍🏭 man factory worker (skin tone)
+👨‍👦‍👦 family: man, boy, boy
+👨‍👦 family: man, boy
+👨‍👧‍👦 family: man, girl, boy
+👨‍👧‍👧 family: man, girl, girl
+👨‍👧 family: man, girl
+👨‍👩‍👦 family: man, woman, boy
+👨‍👩‍👦‍👦 family: man, woman, boy, boy
+👨‍👩‍👧 family: man, woman, girl
+👨‍👩‍👧‍👦 family: man, woman, girl, boy
+👨‍👩‍👧‍👧 family: man, woman, girl, girl
+👨‍💻 man technologist
+👨🏻‍💻 man technologist (skin tone)
+👨🏼‍💻 man technologist (skin tone)
+👨🏽‍💻 man technologist (skin tone)
+👨🏾‍💻 man technologist (skin tone)
+👨🏿‍💻 man technologist (skin tone)
+👨‍💼 man office worker
+👨🏻‍💼 man office worker (skin tone)
+👨🏼‍💼 man office worker (skin tone)
+👨🏽‍💼 man office worker (skin tone)
+👨🏾‍💼 man office worker (skin tone)
+👨🏿‍💼 man office worker (skin tone)
+👨‍🔧 man mechanic
+👨🏻‍🔧 man mechanic (skin tone)
+👨🏼‍🔧 man mechanic (skin tone)
+👨🏽‍🔧 man mechanic (skin tone)
+👨🏾‍🔧 man mechanic (skin tone)
+👨🏿‍🔧 man mechanic (skin tone)
+👨‍🔬 man scientist
+👨🏻‍🔬 man scientist (skin tone)
+👨🏼‍🔬 man scientist (skin tone)
+👨🏽‍🔬 man scientist (skin tone)
+👨🏾‍🔬 man scientist (skin tone)
+👨🏿‍🔬 man scientist (skin tone)
+👨‍🚀 man astronaut
+👨🏻‍🚀 man astronaut (skin tone)
+👨🏼‍🚀 man astronaut (skin tone)
+👨🏽‍🚀 man astronaut (skin tone)
+👨🏾‍🚀 man astronaut (skin tone)
+👨🏿‍🚀 man astronaut (skin tone)
+👨‍🚒 man firefighter
+👨🏻‍🚒 man firefighter (skin tone)
+👨🏼‍🚒 man firefighter (skin tone)
+👨🏽‍🚒 man firefighter (skin tone)
+👨🏾‍🚒 man firefighter (skin tone)
+👨🏿‍🚒 man firefighter (skin tone)
+👨‍🦯‍➡️ man with white cane facing right
+👨🏻‍🦯‍➡️ man with white cane facing right (skin tone)
+👨🏼‍🦯‍➡️ man with white cane facing right (skin tone)
+👨🏽‍🦯‍➡️ man with white cane facing right (skin tone)
+👨🏾‍🦯‍➡️ man with white cane facing right (skin tone)
+👨🏿‍🦯‍➡️ man with white cane facing right (skin tone)
+👨‍🦯 man with white cane
+👨🏻‍🦯 man with white cane (skin tone)
+👨🏼‍🦯 man with white cane (skin tone)
+👨🏽‍🦯 man with white cane (skin tone)
+👨🏾‍🦯 man with white cane (skin tone)
+👨🏿‍🦯 man with white cane (skin tone)
+👨‍🦰 man: red hair
+👨🏻‍🦰 man: red hair (skin tone)
+👨🏼‍🦰 man: red hair (skin tone)
+👨🏽‍🦰 man: red hair (skin tone)
+👨🏾‍🦰 man: red hair (skin tone)
+👨🏿‍🦰 man: red hair (skin tone)
+👨‍🦱 man: curly hair
+👨🏻‍🦱 man: curly hair (skin tone)
+👨🏼‍🦱 man: curly hair (skin tone)
+👨🏽‍🦱 man: curly hair (skin tone)
+👨🏾‍🦱 man: curly hair (skin tone)
+👨🏿‍🦱 man: curly hair (skin tone)
+👨‍🦲 man: bald
+👨🏻‍🦲 man: bald (skin tone)
+👨🏼‍🦲 man: bald (skin tone)
+👨🏽‍🦲 man: bald (skin tone)
+👨🏾‍🦲 man: bald (skin tone)
+👨🏿‍🦲 man: bald (skin tone)
+👨‍🦳 man: white hair
+👨🏻‍🦳 man: white hair (skin tone)
+👨🏼‍🦳 man: white hair (skin tone)
+👨🏽‍🦳 man: white hair (skin tone)
+👨🏾‍🦳 man: white hair (skin tone)
+👨🏿‍🦳 man: white hair (skin tone)
+👨‍🦼‍➡️ man in motorized wheelchair facing right
+👨🏻‍🦼‍➡️ man in motorized wheelchair facing right (skin tone)
+👨🏼‍🦼‍➡️ man in motorized wheelchair facing right (skin tone)
+👨🏽‍🦼‍➡️ man in motorized wheelchair facing right (skin tone)
+👨🏾‍🦼‍➡️ man in motorized wheelchair facing right (skin tone)
+👨🏿‍🦼‍➡️ man in motorized wheelchair facing right (skin tone)
+👨‍🦼 man in motorized wheelchair
+👨🏻‍🦼 man in motorized wheelchair (skin tone)
+👨🏼‍🦼 man in motorized wheelchair (skin tone)
+👨🏽‍🦼 man in motorized wheelchair (skin tone)
+👨🏾‍🦼 man in motorized wheelchair (skin tone)
+👨🏿‍🦼 man in motorized wheelchair (skin tone)
+👨‍🦽‍➡️ man in manual wheelchair facing right
+👨🏻‍🦽‍➡️ man in manual wheelchair facing right (skin tone)
+👨🏼‍🦽‍➡️ man in manual wheelchair facing right (skin tone)
+👨🏽‍🦽‍➡️ man in manual wheelchair facing right (skin tone)
+👨🏾‍🦽‍➡️ man in manual wheelchair facing right (skin tone)
+👨🏿‍🦽‍➡️ man in manual wheelchair facing right (skin tone)
+👨‍🦽 man in manual wheelchair
+👨🏻‍🦽 man in manual wheelchair (skin tone)
+👨🏼‍🦽 man in manual wheelchair (skin tone)
+👨🏽‍🦽 man in manual wheelchair (skin tone)
+👨🏾‍🦽 man in manual wheelchair (skin tone)
+👨🏿‍🦽 man in manual wheelchair (skin tone)
+👨‍⚕️ man health worker
+👨🏻‍⚕️ man health worker (skin tone)
+👨🏼‍⚕️ man health worker (skin tone)
+👨🏽‍⚕️ man health worker (skin tone)
+👨🏾‍⚕️ man health worker (skin tone)
+👨🏿‍⚕️ man health worker (skin tone)
+👨‍⚖️ man judge
+👨🏻‍⚖️ man judge (skin tone)
+👨🏼‍⚖️ man judge (skin tone)
+👨🏽‍⚖️ man judge (skin tone)
+👨🏾‍⚖️ man judge (skin tone)
+👨🏿‍⚖️ man judge (skin tone)
+👨‍✈️ man pilot
+👨🏻‍✈️ man pilot (skin tone)
+👨🏼‍✈️ man pilot (skin tone)
+👨🏽‍✈️ man pilot (skin tone)
+👨🏾‍✈️ man pilot (skin tone)
+👨🏿‍✈️ man pilot (skin tone)
+👨 man
+👨🏻 man (skin tone)
+👨🏼 man (skin tone)
+👨🏽 man (skin tone)
+👨🏾 man (skin tone)
+👨🏿 man (skin tone)
+👩‍🌾 woman farmer
+👩🏻‍🌾 woman farmer (skin tone)
+👩🏼‍🌾 woman farmer (skin tone)
+👩🏽‍🌾 woman farmer (skin tone)
+👩🏾‍🌾 woman farmer (skin tone)
+👩🏿‍🌾 woman farmer (skin tone)
+👩‍🍳 woman cook
+👩🏻‍🍳 woman cook (skin tone)
+👩🏼‍🍳 woman cook (skin tone)
+👩🏽‍🍳 woman cook (skin tone)
+👩🏾‍🍳 woman cook (skin tone)
+👩🏿‍🍳 woman cook (skin tone)
+👩‍🍼 woman feeding baby
+👩🏻‍🍼 woman feeding baby (skin tone)
+👩🏼‍🍼 woman feeding baby (skin tone)
+👩🏽‍🍼 woman feeding baby (skin tone)
+👩🏾‍🍼 woman feeding baby (skin tone)
+👩🏿‍🍼 woman feeding baby (skin tone)
+👩‍🎓 woman student
+👩🏻‍🎓 woman student (skin tone)
+👩🏼‍🎓 woman student (skin tone)
+👩🏽‍🎓 woman student (skin tone)
+👩🏾‍🎓 woman student (skin tone)
+👩🏿‍🎓 woman student (skin tone)
+👩‍🎤 woman singer
+👩🏻‍🎤 woman singer (skin tone)
+👩🏼‍🎤 woman singer (skin tone)
+👩🏽‍🎤 woman singer (skin tone)
+👩🏾‍🎤 woman singer (skin tone)
+👩🏿‍🎤 woman singer (skin tone)
+👩‍🎨 woman artist
+👩🏻‍🎨 woman artist (skin tone)
+👩🏼‍🎨 woman artist (skin tone)
+👩🏽‍🎨 woman artist (skin tone)
+👩🏾‍🎨 woman artist (skin tone)
+👩🏿‍🎨 woman artist (skin tone)
+👩‍🏫 woman teacher
+👩🏻‍🏫 woman teacher (skin tone)
+👩🏼‍🏫 woman teacher (skin tone)
+👩🏽‍🏫 woman teacher (skin tone)
+👩🏾‍🏫 woman teacher (skin tone)
+👩🏿‍🏫 woman teacher (skin tone)
+👩‍🏭 woman factory worker
+👩🏻‍🏭 woman factory worker (skin tone)
+👩🏼‍🏭 woman factory worker (skin tone)
+👩🏽‍🏭 woman factory worker (skin tone)
+👩🏾‍🏭 woman factory worker (skin tone)
+👩🏿‍🏭 woman factory worker (skin tone)
+👩‍👦‍👦 family: woman, boy, boy
+👩‍👦 family: woman, boy
+👩‍👧‍👦 family: woman, girl, boy
+👩‍👧‍👧 family: woman, girl, girl
+👩‍👧 family: woman, girl
+👩‍💻 woman technologist
+👩🏻‍💻 woman technologist (skin tone)
+👩🏼‍💻 woman technologist (skin tone)
+👩🏽‍💻 woman technologist (skin tone)
+👩🏾‍💻 woman technologist (skin tone)
+👩🏿‍💻 woman technologist (skin tone)
+👩‍💼 woman office worker
+👩🏻‍💼 woman office worker (skin tone)
+👩🏼‍💼 woman office worker (skin tone)
+👩🏽‍💼 woman office worker (skin tone)
+👩🏾‍💼 woman office worker (skin tone)
+👩🏿‍💼 woman office worker (skin tone)
+👩‍🔧 woman mechanic
+👩🏻‍🔧 woman mechanic (skin tone)
+👩🏼‍🔧 woman mechanic (skin tone)
+👩🏽‍🔧 woman mechanic (skin tone)
+👩🏾‍🔧 woman mechanic (skin tone)
+👩🏿‍🔧 woman mechanic (skin tone)
+👩‍🔬 woman scientist
+👩🏻‍🔬 woman scientist (skin tone)
+👩🏼‍🔬 woman scientist (skin tone)
+👩🏽‍🔬 woman scientist (skin tone)
+👩🏾‍🔬 woman scientist (skin tone)
+👩🏿‍🔬 woman scientist (skin tone)
+👩‍🚀 woman astronaut
+👩🏻‍🚀 woman astronaut (skin tone)
+👩🏼‍🚀 woman astronaut (skin tone)
+👩🏽‍🚀 woman astronaut (skin tone)
+👩🏾‍🚀 woman astronaut (skin tone)
+👩🏿‍🚀 woman astronaut (skin tone)
+👩‍🚒 woman firefighter
+👩🏻‍🚒 woman firefighter (skin tone)
+👩🏼‍🚒 woman firefighter (skin tone)
+👩🏽‍🚒 woman firefighter (skin tone)
+👩🏾‍🚒 woman firefighter (skin tone)
+👩🏿‍🚒 woman firefighter (skin tone)
+👩‍🦯‍➡️ woman with white cane facing right
+👩🏻‍🦯‍➡️ woman with white cane facing right (skin tone)
+👩🏼‍🦯‍➡️ woman with white cane facing right (skin tone)
+👩🏽‍🦯‍➡️ woman with white cane facing right (skin tone)
+👩🏾‍🦯‍➡️ woman with white cane facing right (skin tone)
+👩🏿‍🦯‍➡️ woman with white cane facing right (skin tone)
+👩‍🦯 woman with white cane
+👩🏻‍🦯 woman with white cane (skin tone)
+👩🏼‍🦯 woman with white cane (skin tone)
+👩🏽‍🦯 woman with white cane (skin tone)
+👩🏾‍🦯 woman with white cane (skin tone)
+👩🏿‍🦯 woman with white cane (skin tone)
+👩‍🦰 woman: red hair
+👩🏻‍🦰 woman: red hair (skin tone)
+👩🏼‍🦰 woman: red hair (skin tone)
+👩🏽‍🦰 woman: red hair (skin tone)
+👩🏾‍🦰 woman: red hair (skin tone)
+👩🏿‍🦰 woman: red hair (skin tone)
+👩‍🦱 woman: curly hair
+👩🏻‍🦱 woman: curly hair (skin tone)
+👩🏼‍🦱 woman: curly hair (skin tone)
+👩🏽‍🦱 woman: curly hair (skin tone)
+👩🏾‍🦱 woman: curly hair (skin tone)
+👩🏿‍🦱 woman: curly hair (skin tone)
+👩‍🦲 woman: bald
+👩🏻‍🦲 woman: bald (skin tone)
+👩🏼‍🦲 woman: bald (skin tone)
+👩🏽‍🦲 woman: bald (skin tone)
+👩🏾‍🦲 woman: bald (skin tone)
+👩🏿‍🦲 woman: bald (skin tone)
+👩‍🦳 woman: white hair
+👩🏻‍🦳 woman: white hair (skin tone)
+👩🏼‍🦳 woman: white hair (skin tone)
+👩🏽‍🦳 woman: white hair (skin tone)
+👩🏾‍🦳 woman: white hair (skin tone)
+👩🏿‍🦳 woman: white hair (skin tone)
+👩‍🦼‍➡️ woman in motorized wheelchair facing right
+👩🏻‍🦼‍➡️ woman in motorized wheelchair facing right (skin tone)
+👩🏼‍🦼‍➡️ woman in motorized wheelchair facing right (skin tone)
+👩🏽‍🦼‍➡️ woman in motorized wheelchair facing right (skin tone)
+👩🏾‍🦼‍➡️ woman in motorized wheelchair facing right (skin tone)
+👩🏿‍🦼‍➡️ woman in motorized wheelchair facing right (skin tone)
+👩‍🦼 woman in motorized wheelchair
+👩🏻‍🦼 woman in motorized wheelchair (skin tone)
+👩🏼‍🦼 woman in motorized wheelchair (skin tone)
+👩🏽‍🦼 woman in motorized wheelchair (skin tone)
+👩🏾‍🦼 woman in motorized wheelchair (skin tone)
+👩🏿‍🦼 woman in motorized wheelchair (skin tone)
+👩‍🦽‍➡️ woman in manual wheelchair facing right
+👩🏻‍🦽‍➡️ woman in manual wheelchair facing right (skin tone)
+👩🏼‍🦽‍➡️ woman in manual wheelchair facing right (skin tone)
+👩🏽‍🦽‍➡️ woman in manual wheelchair facing right (skin tone)
+👩🏾‍🦽‍➡️ woman in manual wheelchair facing right (skin tone)
+👩🏿‍🦽‍➡️ woman in manual wheelchair facing right (skin tone)
+👩‍🦽 woman in manual wheelchair
+👩🏻‍🦽 woman in manual wheelchair (skin tone)
+👩🏼‍🦽 woman in manual wheelchair (skin tone)
+👩🏽‍🦽 woman in manual wheelchair (skin tone)
+👩🏾‍🦽 woman in manual wheelchair (skin tone)
+👩🏿‍🦽 woman in manual wheelchair (skin tone)
+👩‍⚕️ woman health worker
+👩🏻‍⚕️ woman health worker (skin tone)
+👩🏼‍⚕️ woman health worker (skin tone)
+👩🏽‍⚕️ woman health worker (skin tone)
+👩🏾‍⚕️ woman health worker (skin tone)
+👩🏿‍⚕️ woman health worker (skin tone)
+👩‍⚖️ woman judge
+👩🏻‍⚖️ woman judge (skin tone)
+👩🏼‍⚖️ woman judge (skin tone)
+👩🏽‍⚖️ woman judge (skin tone)
+👩🏾‍⚖️ woman judge (skin tone)
+👩🏿‍⚖️ woman judge (skin tone)
+👩‍✈️ woman pilot
+👩🏻‍✈️ woman pilot (skin tone)
+👩🏼‍✈️ woman pilot (skin tone)
+👩🏽‍✈️ woman pilot (skin tone)
+👩🏾‍✈️ woman pilot (skin tone)
+👩🏿‍✈️ woman pilot (skin tone)
+👩‍❤️‍👨 couple with heart: woman, man
+👩🏻‍❤️‍👨🏻 couple with heart: woman, man (skin tone)
+👩🏻‍❤️‍👨🏼 couple with heart: woman, man (skin tone)
+👩🏻‍❤️‍👨🏽 couple with heart: woman, man (skin tone)
+👩🏻‍❤️‍👨🏾 couple with heart: woman, man (skin tone)
+👩🏻‍❤️‍👨🏿 couple with heart: woman, man (skin tone)
+👩🏼‍❤️‍👨🏻 couple with heart: woman, man (skin tone)
+👩🏼‍❤️‍👨🏼 couple with heart: woman, man (skin tone)
+👩🏼‍❤️‍👨🏽 couple with heart: woman, man (skin tone)
+👩🏼‍❤️‍👨🏾 couple with heart: woman, man (skin tone)
+👩🏼‍❤️‍👨🏿 couple with heart: woman, man (skin tone)
+👩🏽‍❤️‍👨🏻 couple with heart: woman, man (skin tone)
+👩🏽‍❤️‍👨🏼 couple with heart: woman, man (skin tone)
+👩🏽‍❤️‍👨🏽 couple with heart: woman, man (skin tone)
+👩🏽‍❤️‍👨🏾 couple with heart: woman, man (skin tone)
+👩🏽‍❤️‍👨🏿 couple with heart: woman, man (skin tone)
+👩🏾‍❤️‍👨🏻 couple with heart: woman, man (skin tone)
+👩🏾‍❤️‍👨🏼 couple with heart: woman, man (skin tone)
+👩🏾‍❤️‍👨🏽 couple with heart: woman, man (skin tone)
+👩🏾‍❤️‍👨🏾 couple with heart: woman, man (skin tone)
+👩🏾‍❤️‍👨🏿 couple with heart: woman, man (skin tone)
+👩🏿‍❤️‍👨🏻 couple with heart: woman, man (skin tone)
+👩🏿‍❤️‍👨🏼 couple with heart: woman, man (skin tone)
+👩🏿‍❤️‍👨🏽 couple with heart: woman, man (skin tone)
+👩🏿‍❤️‍👨🏾 couple with heart: woman, man (skin tone)
+👩🏿‍❤️‍👨🏿 couple with heart: woman, man (skin tone)
+👩‍❤️‍💋‍👨 kiss: woman, man
+👩🏻‍❤️‍💋‍👨🏻 kiss: woman, man (skin tone)
+👩🏻‍❤️‍💋‍👨🏼 kiss: woman, man (skin tone)
+👩🏻‍❤️‍💋‍👨🏽 kiss: woman, man (skin tone)
+👩🏻‍❤️‍💋‍👨🏾 kiss: woman, man (skin tone)
+👩🏻‍❤️‍💋‍👨🏿 kiss: woman, man (skin tone)
+👩🏼‍❤️‍💋‍👨🏻 kiss: woman, man (skin tone)
+👩🏼‍❤️‍💋‍👨🏼 kiss: woman, man (skin tone)
+👩🏼‍❤️‍💋‍👨🏽 kiss: woman, man (skin tone)
+👩🏼‍❤️‍💋‍👨🏾 kiss: woman, man (skin tone)
+👩🏼‍❤️‍💋‍👨🏿 kiss: woman, man (skin tone)
+👩🏽‍❤️‍💋‍👨🏻 kiss: woman, man (skin tone)
+👩🏽‍❤️‍💋‍👨🏼 kiss: woman, man (skin tone)
+👩🏽‍❤️‍💋‍👨🏽 kiss: woman, man (skin tone)
+👩🏽‍❤️‍💋‍👨🏾 kiss: woman, man (skin tone)
+👩🏽‍❤️‍💋‍👨🏿 kiss: woman, man (skin tone)
+👩🏾‍❤️‍💋‍👨🏻 kiss: woman, man (skin tone)
+👩🏾‍❤️‍💋‍👨🏼 kiss: woman, man (skin tone)
+👩🏾‍❤️‍💋‍👨🏽 kiss: woman, man (skin tone)
+👩🏾‍❤️‍💋‍👨🏾 kiss: woman, man (skin tone)
+👩🏾‍❤️‍💋‍👨🏿 kiss: woman, man (skin tone)
+👩🏿‍❤️‍💋‍👨🏻 kiss: woman, man (skin tone)
+👩🏿‍❤️‍💋‍👨🏼 kiss: woman, man (skin tone)
+👩🏿‍❤️‍💋‍👨🏽 kiss: woman, man (skin tone)
+👩🏿‍❤️‍💋‍👨🏾 kiss: woman, man (skin tone)
+👩🏿‍❤️‍💋‍👨🏿 kiss: woman, man (skin tone)
+👩 woman
+👩🏻 woman (skin tone)
+👩🏼 woman (skin tone)
+👩🏽 woman (skin tone)
+👩🏾 woman (skin tone)
+👩🏿 woman (skin tone)
+👪 family
+👫 man and woman holding hands
+👫🏻 man and woman holding hands (skin tone)
+👫🏼 man and woman holding hands (skin tone)
+👫🏽 man and woman holding hands (skin tone)
+👫🏾 man and woman holding hands (skin tone)
+👫🏿 man and woman holding hands (skin tone)
+👩🏻‍🤝‍👨🏼 man and woman holding hands (skin tone)
+👩🏻‍🤝‍👨🏽 man and woman holding hands (skin tone)
+👩🏻‍🤝‍👨🏾 man and woman holding hands (skin tone)
+👩🏻‍🤝‍👨🏿 man and woman holding hands (skin tone)
+👩🏼‍🤝‍👨🏻 man and woman holding hands (skin tone)
+👩🏼‍🤝‍👨🏽 man and woman holding hands (skin tone)
+👩🏼‍🤝‍👨🏾 man and woman holding hands (skin tone)
+👩🏼‍🤝‍👨🏿 man and woman holding hands (skin tone)
+👩🏽‍🤝‍👨🏻 man and woman holding hands (skin tone)
+👩🏽‍🤝‍👨🏼 man and woman holding hands (skin tone)
+👩🏽‍🤝‍👨🏾 man and woman holding hands (skin tone)
+👩🏽‍🤝‍👨🏿 man and woman holding hands (skin tone)
+👩🏾‍🤝‍👨🏻 man and woman holding hands (skin tone)
+👩🏾‍🤝‍👨🏼 man and woman holding hands (skin tone)
+👩🏾‍🤝‍👨🏽 man and woman holding hands (skin tone)
+👩🏾‍🤝‍👨🏿 man and woman holding hands (skin tone)
+👩🏿‍🤝‍👨🏻 man and woman holding hands (skin tone)
+👩🏿‍🤝‍👨🏼 man and woman holding hands (skin tone)
+👩🏿‍🤝‍👨🏽 man and woman holding hands (skin tone)
+👩🏿‍🤝‍👨🏾 man and woman holding hands (skin tone)
+👮‍♀️ woman police officer
+👮🏻‍♀️ woman police officer (skin tone)
+👮🏼‍♀️ woman police officer (skin tone)
+👮🏽‍♀️ woman police officer (skin tone)
+👮🏾‍♀️ woman police officer (skin tone)
+👮🏿‍♀️ woman police officer (skin tone)
+👮‍♂️ man police officer
+👮🏻‍♂️ man police officer (skin tone)
+👮🏼‍♂️ man police officer (skin tone)
+👮🏽‍♂️ man police officer (skin tone)
+👮🏾‍♂️ man police officer (skin tone)
+👮🏿‍♂️ man police officer (skin tone)
+👮 police officer
+👮🏻 police officer (skin tone)
+👮🏼 police officer (skin tone)
+👮🏽 police officer (skin tone)
+👮🏾 police officer (skin tone)
+👮🏿 police officer (skin tone)
+👯‍♀️ women with bunny ears
+👯‍♂️ men with bunny ears
+👯 woman with bunny ears
+👰‍♀️ woman with veil
+👰🏻‍♀️ woman with veil (skin tone)
+👰🏼‍♀️ woman with veil (skin tone)
+👰🏽‍♀️ woman with veil (skin tone)
+👰🏾‍♀️ woman with veil (skin tone)
+👰🏿‍♀️ woman with veil (skin tone)
+👰‍♂️ man with veil
+👰🏻‍♂️ man with veil (skin tone)
+👰🏼‍♂️ man with veil (skin tone)
+👰🏽‍♂️ man with veil (skin tone)
+👰🏾‍♂️ man with veil (skin tone)
+👰🏿‍♂️ man with veil (skin tone)
+👰 bride with veil
+👰🏻 bride with veil (skin tone)
+👰🏼 bride with veil (skin tone)
+👰🏽 bride with veil (skin tone)
+👰🏾 bride with veil (skin tone)
+👰🏿 bride with veil (skin tone)
+👱‍♀️ woman: blond hair
+👱🏻‍♀️ woman: blond hair (skin tone)
+👱🏼‍♀️ woman: blond hair (skin tone)
+👱🏽‍♀️ woman: blond hair (skin tone)
+👱🏾‍♀️ woman: blond hair (skin tone)
+👱🏿‍♀️ woman: blond hair (skin tone)
+👱‍♂️ man: blond hair
+👱🏻‍♂️ man: blond hair (skin tone)
+👱🏼‍♂️ man: blond hair (skin tone)
+👱🏽‍♂️ man: blond hair (skin tone)
+👱🏾‍♂️ man: blond hair (skin tone)
+👱🏿‍♂️ man: blond hair (skin tone)
+👱 person with blond hair
+👱🏻 person with blond hair (skin tone)
+👱🏼 person with blond hair (skin tone)
+👱🏽 person with blond hair (skin tone)
+👱🏾 person with blond hair (skin tone)
+👱🏿 person with blond hair (skin tone)
+👲 man with gua pi mao
+👲🏻 man with gua pi mao (skin tone)
+👲🏼 man with gua pi mao (skin tone)
+👲🏽 man with gua pi mao (skin tone)
+👲🏾 man with gua pi mao (skin tone)
+👲🏿 man with gua pi mao (skin tone)
+👳‍♀️ woman wearing turban
+👳🏻‍♀️ woman wearing turban (skin tone)
+👳🏼‍♀️ woman wearing turban (skin tone)
+👳🏽‍♀️ woman wearing turban (skin tone)
+👳🏾‍♀️ woman wearing turban (skin tone)
+👳🏿‍♀️ woman wearing turban (skin tone)
+👳‍♂️ man wearing turban
+👳🏻‍♂️ man wearing turban (skin tone)
+👳🏼‍♂️ man wearing turban (skin tone)
+👳🏽‍♂️ man wearing turban (skin tone)
+👳🏾‍♂️ man wearing turban (skin tone)
+👳🏿‍♂️ man wearing turban (skin tone)
+👳 man with turban
+👳🏻 man with turban (skin tone)
+👳🏼 man with turban (skin tone)
+👳🏽 man with turban (skin tone)
+👳🏾 man with turban (skin tone)
+👳🏿 man with turban (skin tone)
+👴 older man
+👴🏻 older man (skin tone)
+👴🏼 older man (skin tone)
+👴🏽 older man (skin tone)
+👴🏾 older man (skin tone)
+👴🏿 older man (skin tone)
+👵 older woman
+👵🏻 older woman (skin tone)
+👵🏼 older woman (skin tone)
+👵🏽 older woman (skin tone)
+👵🏾 older woman (skin tone)
+👵🏿 older woman (skin tone)
+👶 baby
+👶🏻 baby (skin tone)
+👶🏼 baby (skin tone)
+👶🏽 baby (skin tone)
+👶🏾 baby (skin tone)
+👶🏿 baby (skin tone)
+👷‍♀️ woman construction worker
+👷🏻‍♀️ woman construction worker (skin tone)
+👷🏼‍♀️ woman construction worker (skin tone)
+👷🏽‍♀️ woman construction worker (skin tone)
+👷🏾‍♀️ woman construction worker (skin tone)
+👷🏿‍♀️ woman construction worker (skin tone)
+👷‍♂️ man construction worker
+👷🏻‍♂️ man construction worker (skin tone)
+👷🏼‍♂️ man construction worker (skin tone)
+👷🏽‍♂️ man construction worker (skin tone)
+👷🏾‍♂️ man construction worker (skin tone)
+👷🏿‍♂️ man construction worker (skin tone)
+👷 construction worker
+👷🏻 construction worker (skin tone)
+👷🏼 construction worker (skin tone)
+👷🏽 construction worker (skin tone)
+👷🏾 construction worker (skin tone)
+👷🏿 construction worker (skin tone)
+👸 princess
+👸🏻 princess (skin tone)
+👸🏼 princess (skin tone)
+👸🏽 princess (skin tone)
+👸🏾 princess (skin tone)
+👸🏿 princess (skin tone)
+👹 japanese ogre
+👺 japanese goblin
+👻 ghost
+👼 baby angel
+👼🏻 baby angel (skin tone)
+👼🏼 baby angel (skin tone)
+👼🏽 baby angel (skin tone)
+👼🏾 baby angel (skin tone)
+👼🏿 baby angel (skin tone)
+👽 extraterrestrial alien
+👾 alien monster
+👿 imp
+💀 skull
+💁‍♀️ woman tipping hand
+💁🏻‍♀️ woman tipping hand (skin tone)
+💁🏼‍♀️ woman tipping hand (skin tone)
+💁🏽‍♀️ woman tipping hand (skin tone)
+💁🏾‍♀️ woman tipping hand (skin tone)
+💁🏿‍♀️ woman tipping hand (skin tone)
+💁‍♂️ man tipping hand
+💁🏻‍♂️ man tipping hand (skin tone)
+💁🏼‍♂️ man tipping hand (skin tone)
+💁🏽‍♂️ man tipping hand (skin tone)
+💁🏾‍♂️ man tipping hand (skin tone)
+💁🏿‍♂️ man tipping hand (skin tone)
+💁 information desk person
+💁🏻 information desk person (skin tone)
+💁🏼 information desk person (skin tone)
+💁🏽 information desk person (skin tone)
+💁🏾 information desk person (skin tone)
+💁🏿 information desk person (skin tone)
+💂‍♀️ woman guard
+💂🏻‍♀️ woman guard (skin tone)
+💂🏼‍♀️ woman guard (skin tone)
+💂🏽‍♀️ woman guard (skin tone)
+💂🏾‍♀️ woman guard (skin tone)
+💂🏿‍♀️ woman guard (skin tone)
+💂‍♂️ man guard
+💂🏻‍♂️ man guard (skin tone)
+💂🏼‍♂️ man guard (skin tone)
+💂🏽‍♂️ man guard (skin tone)
+💂🏾‍♂️ man guard (skin tone)
+💂🏿‍♂️ man guard (skin tone)
+💂 guardsman
+💂🏻 guardsman (skin tone)
+💂🏼 guardsman (skin tone)
+💂🏽 guardsman (skin tone)
+💂🏾 guardsman (skin tone)
+💂🏿 guardsman (skin tone)
+💃 dancer
+💃🏻 dancer (skin tone)
+💃🏼 dancer (skin tone)
+💃🏽 dancer (skin tone)
+💃🏾 dancer (skin tone)
+💃🏿 dancer (skin tone)
+💄 lipstick
+💅 nail polish
+💅🏻 nail polish (skin tone)
+💅🏼 nail polish (skin tone)
+💅🏽 nail polish (skin tone)
+💅🏾 nail polish (skin tone)
+💅🏿 nail polish (skin tone)
+💆‍♀️ woman getting massage
+💆🏻‍♀️ woman getting massage (skin tone)
+💆🏼‍♀️ woman getting massage (skin tone)
+💆🏽‍♀️ woman getting massage (skin tone)
+💆🏾‍♀️ woman getting massage (skin tone)
+💆🏿‍♀️ woman getting massage (skin tone)
+💆‍♂️ man getting massage
+💆🏻‍♂️ man getting massage (skin tone)
+💆🏼‍♂️ man getting massage (skin tone)
+💆🏽‍♂️ man getting massage (skin tone)
+💆🏾‍♂️ man getting massage (skin tone)
+💆🏿‍♂️ man getting massage (skin tone)
+💆 face massage
+💆🏻 face massage (skin tone)
+💆🏼 face massage (skin tone)
+💆🏽 face massage (skin tone)
+💆🏾 face massage (skin tone)
+💆🏿 face massage (skin tone)
+💇‍♀️ woman getting haircut
+💇🏻‍♀️ woman getting haircut (skin tone)
+💇🏼‍♀️ woman getting haircut (skin tone)
+💇🏽‍♀️ woman getting haircut (skin tone)
+💇🏾‍♀️ woman getting haircut (skin tone)
+💇🏿‍♀️ woman getting haircut (skin tone)
+💇‍♂️ man getting haircut
+💇🏻‍♂️ man getting haircut (skin tone)
+💇🏼‍♂️ man getting haircut (skin tone)
+💇🏽‍♂️ man getting haircut (skin tone)
+💇🏾‍♂️ man getting haircut (skin tone)
+💇🏿‍♂️ man getting haircut (skin tone)
+💇 haircut
+💇🏻 haircut (skin tone)
+💇🏼 haircut (skin tone)
+💇🏽 haircut (skin tone)
+💇🏾 haircut (skin tone)
+💇🏿 haircut (skin tone)
+💈 barber pole
+💉 syringe
+💊 pill
+💋 kiss mark
+💌 love letter
+💍 ring
+💎 gem stone
+💏 kiss
+💏🏻 kiss (skin tone)
+💏🏼 kiss (skin tone)
+💏🏽 kiss (skin tone)
+💏🏾 kiss (skin tone)
+💏🏿 kiss (skin tone)
+🧑🏻‍❤️‍💋‍🧑🏼 kiss (skin tone)
+🧑🏻‍❤️‍💋‍🧑🏽 kiss (skin tone)
+🧑🏻‍❤️‍💋‍🧑🏾 kiss (skin tone)
+🧑🏻‍❤️‍💋‍🧑🏿 kiss (skin tone)
+🧑🏼‍❤️‍💋‍🧑🏻 kiss (skin tone)
+🧑🏼‍❤️‍💋‍🧑🏽 kiss (skin tone)
+🧑🏼‍❤️‍💋‍🧑🏾 kiss (skin tone)
+🧑🏼‍❤️‍💋‍🧑🏿 kiss (skin tone)
+🧑🏽‍❤️‍💋‍🧑🏻 kiss (skin tone)
+🧑🏽‍❤️‍💋‍🧑🏼 kiss (skin tone)
+🧑🏽‍❤️‍💋‍🧑🏾 kiss (skin tone)
+🧑🏽‍❤️‍💋‍🧑🏿 kiss (skin tone)
+🧑🏾‍❤️‍💋‍🧑🏻 kiss (skin tone)
+🧑🏾‍❤️‍💋‍🧑🏼 kiss (skin tone)
+🧑🏾‍❤️‍💋‍🧑🏽 kiss (skin tone)
+🧑🏾‍❤️‍💋‍🧑🏿 kiss (skin tone)
+🧑🏿‍❤️‍💋‍🧑🏻 kiss (skin tone)
+🧑🏿‍❤️‍💋‍🧑🏼 kiss (skin tone)
+🧑🏿‍❤️‍💋‍🧑🏽 kiss (skin tone)
+🧑🏿‍❤️‍💋‍🧑🏾 kiss (skin tone)
+💐 bouquet
+💑 couple with heart
+💑🏻 couple with heart (skin tone)
+💑🏼 couple with heart (skin tone)
+💑🏽 couple with heart (skin tone)
+💑🏾 couple with heart (skin tone)
+💑🏿 couple with heart (skin tone)
+🧑🏻‍❤️‍🧑🏼 couple with heart (skin tone)
+🧑🏻‍❤️‍🧑🏽 couple with heart (skin tone)
+🧑🏻‍❤️‍🧑🏾 couple with heart (skin tone)
+🧑🏻‍❤️‍🧑🏿 couple with heart (skin tone)
+🧑🏼‍❤️‍🧑🏻 couple with heart (skin tone)
+🧑🏼‍❤️‍🧑🏽 couple with heart (skin tone)
+🧑🏼‍❤️‍🧑🏾 couple with heart (skin tone)
+🧑🏼‍❤️‍🧑🏿 couple with heart (skin tone)
+🧑🏽‍❤️‍🧑🏻 couple with heart (skin tone)
+🧑🏽‍❤️‍🧑🏼 couple with heart (skin tone)
+🧑🏽‍❤️‍🧑🏾 couple with heart (skin tone)
+🧑🏽‍❤️‍🧑🏿 couple with heart (skin tone)
+🧑🏾‍❤️‍🧑🏻 couple with heart (skin tone)
+🧑🏾‍❤️‍🧑🏼 couple with heart (skin tone)
+🧑🏾‍❤️‍🧑🏽 couple with heart (skin tone)
+🧑🏾‍❤️‍🧑🏿 couple with heart (skin tone)
+🧑🏿‍❤️‍🧑🏻 couple with heart (skin tone)
+🧑🏿‍❤️‍🧑🏼 couple with heart (skin tone)
+🧑🏿‍❤️‍🧑🏽 couple with heart (skin tone)
+🧑🏿‍❤️‍🧑🏾 couple with heart (skin tone)
+💒 wedding
+💓 beating heart
+💔 broken heart
+💕 two hearts
+💖 sparkling heart
+💗 growing heart
+💘 heart with arrow
+💙 blue heart
+💚 green heart
+💛 yellow heart
+💜 purple heart
+💝 heart with ribbon
+💞 revolving hearts
+💟 heart decoration
+💠 diamond shape with a dot inside
+💡 electric light bulb
+💢 anger symbol
+💣 bomb
+💤 sleeping symbol
+💥 collision symbol
+💦 splashing sweat symbol
+💧 droplet
+💨 dash symbol
+💩 pile of poo
+💪 flexed biceps
+💪🏻 flexed biceps (skin tone)
+💪🏼 flexed biceps (skin tone)
+💪🏽 flexed biceps (skin tone)
+💪🏾 flexed biceps (skin tone)
+💪🏿 flexed biceps (skin tone)
+💫 dizzy symbol
+💬 speech balloon
+💭 thought balloon
+💮 white flower
+💯 hundred points symbol
+💰 money bag
+💱 currency exchange
+💲 heavy dollar sign
+💳 credit card
+💴 banknote with yen sign
+💵 banknote with dollar sign
+💶 banknote with euro sign
+💷 banknote with pound sign
+💸 money with wings
+💹 chart with upwards trend and yen sign
+💺 seat
+💻 personal computer
+💼 briefcase
+💽 minidisc
+💾 floppy disk
+💿 optical disc
+📀 dvd
+📁 file folder
+📂 open file folder
+📃 page with curl
+📄 page facing up
+📅 calendar
+📆 tear-off calendar
+📇 card index
+📈 chart with upwards trend
+📉 chart with downwards trend
+📊 bar chart
+📋 clipboard
+📌 pushpin
+📍 round pushpin
+📎 paperclip
+📏 straight ruler
+📐 triangular ruler
+📑 bookmark tabs
+📒 ledger
+📓 notebook
+📔 notebook with decorative cover
+📕 closed book
+📖 open book
+📗 green book
+📘 blue book
+📙 orange book
+📚 books
+📛 name badge
+📜 scroll
+📝 memo
+📞 telephone receiver
+📟 pager
+📠 fax machine
+📡 satellite antenna
+📢 public address loudspeaker
+📣 cheering megaphone
+📤 outbox tray
+📥 inbox tray
+📦 package
+📧 e-mail symbol
+📨 incoming envelope
+📩 envelope with downwards arrow above
+📪 closed mailbox with lowered flag
+📫 closed mailbox with raised flag
+📬 open mailbox with raised flag
+📭 open mailbox with lowered flag
+📮 postbox
+📯 postal horn
+📰 newspaper
+📱 mobile phone
+📲 mobile phone with rightwards arrow at left
+📳 vibration mode
+📴 mobile phone off
+📵 no mobile phones
+📶 antenna with bars
+📷 camera
+📸 camera with flash
+📹 video camera
+📺 television
+📻 radio
+📼 videocassette
+📽️ film projector
+📿 prayer beads
+🔀 twisted rightwards arrows
+🔁 clockwise rightwards and leftwards open circle arrows
+🔂 clockwise rightwards and leftwards open circle arrows with circled one overlay
+🔃 clockwise downwards and upwards open circle arrows
+🔄 anticlockwise downwards and upwards open circle arrows
+🔅 low brightness symbol
+🔆 high brightness symbol
+🔇 speaker with cancellation stroke
+🔈 speaker
+🔉 speaker with one sound wave
+🔊 speaker with three sound waves
+🔋 battery
+🔌 electric plug
+🔍 left-pointing magnifying glass
+🔎 right-pointing magnifying glass
+🔏 lock with ink pen
+🔐 closed lock with key
+🔑 key
+🔒 lock
+🔓 open lock
+🔔 bell
+🔕 bell with cancellation stroke
+🔖 bookmark
+🔗 link symbol
+🔘 radio button
+🔙 back with leftwards arrow above
+🔚 end with leftwards arrow above
+🔛 on with exclamation mark with left right arrow above
+🔜 soon with rightwards arrow above
+🔝 top with upwards arrow above
+🔞 no one under eighteen symbol
+🔟 keycap ten
+🔠 input symbol for latin capital letters
+🔡 input symbol for latin small letters
+🔢 input symbol for numbers
+🔣 input symbol for symbols
+🔤 input symbol for latin letters
+🔥 fire
+🔦 electric torch
+🔧 wrench
+🔨 hammer
+🔩 nut and bolt
+🔪 hocho
+🔫 pistol
+🔬 microscope
+🔭 telescope
+🔮 crystal ball
+🔯 six pointed star with middle dot
+🔰 japanese symbol for beginner
+🔱 trident emblem
+🔲 black square button
+🔳 white square button
+🔴 large red circle
+🔵 large blue circle
+🔶 large orange diamond
+🔷 large blue diamond
+🔸 small orange diamond
+🔹 small blue diamond
+🔺 up-pointing red triangle
+🔻 down-pointing red triangle
+🔼 up-pointing small red triangle
+🔽 down-pointing small red triangle
+🕉️ om
+🕊️ dove
+🕋 kaaba
+🕌 mosque
+🕍 synagogue
+🕎 menorah with nine branches
+🕐 clock face one oclock
+🕑 clock face two oclock
+🕒 clock face three oclock
+🕓 clock face four oclock
+🕔 clock face five oclock
+🕕 clock face six oclock
+🕖 clock face seven oclock
+🕗 clock face eight oclock
+🕘 clock face nine oclock
+🕙 clock face ten oclock
+🕚 clock face eleven oclock
+🕛 clock face twelve oclock
+🕜 clock face one-thirty
+🕝 clock face two-thirty
+🕞 clock face three-thirty
+🕟 clock face four-thirty
+🕠 clock face five-thirty
+🕡 clock face six-thirty
+🕢 clock face seven-thirty
+🕣 clock face eight-thirty
+🕤 clock face nine-thirty
+🕥 clock face ten-thirty
+🕦 clock face eleven-thirty
+🕧 clock face twelve-thirty
+🕯️ candle
+🕰️ mantelpiece clock
+🕳️ hole
+🕴️ person in suit levitating
+🕴🏻 person in suit levitating (skin tone)
+🕴🏼 person in suit levitating (skin tone)
+🕴🏽 person in suit levitating (skin tone)
+🕴🏾 person in suit levitating (skin tone)
+🕴🏿 person in suit levitating (skin tone)
+🕵️‍♀️ woman detective
+🕵🏻‍♀️ woman detective (skin tone)
+🕵🏼‍♀️ woman detective (skin tone)
+🕵🏽‍♀️ woman detective (skin tone)
+🕵🏾‍♀️ woman detective (skin tone)
+🕵🏿‍♀️ woman detective (skin tone)
+🕵️‍♂️ man detective
+🕵🏻‍♂️ man detective (skin tone)
+🕵🏼‍♂️ man detective (skin tone)
+🕵🏽‍♂️ man detective (skin tone)
+🕵🏾‍♂️ man detective (skin tone)
+🕵🏿‍♂️ man detective (skin tone)
+🕵️ detective
+🕵🏻 detective (skin tone)
+🕵🏼 detective (skin tone)
+🕵🏽 detective (skin tone)
+🕵🏾 detective (skin tone)
+🕵🏿 detective (skin tone)
+🕶️ sunglasses
+🕷️ spider
+🕸️ spider web
+🕹️ joystick
+🕺 man dancing
+🕺🏻 man dancing (skin tone)
+🕺🏼 man dancing (skin tone)
+🕺🏽 man dancing (skin tone)
+🕺🏾 man dancing (skin tone)
+🕺🏿 man dancing (skin tone)
+🖇️ linked paperclips
+🖊️ pen
+🖋️ fountain pen
+🖌️ paintbrush
+🖍️ crayon
+🖐️ hand with fingers splayed
+🖐🏻 hand with fingers splayed (skin tone)
+🖐🏼 hand with fingers splayed (skin tone)
+🖐🏽 hand with fingers splayed (skin tone)
+🖐🏾 hand with fingers splayed (skin tone)
+🖐🏿 hand with fingers splayed (skin tone)
+🖕 reversed hand with middle finger extended
+🖕🏻 reversed hand with middle finger extended (skin tone)
+🖕🏼 reversed hand with middle finger extended (skin tone)
+🖕🏽 reversed hand with middle finger extended (skin tone)
+🖕🏾 reversed hand with middle finger extended (skin tone)
+🖕🏿 reversed hand with middle finger extended (skin tone)
+🖖 raised hand with part between middle and ring fingers
+🖖🏻 raised hand with part between middle and ring fingers (skin tone)
+🖖🏼 raised hand with part between middle and ring fingers (skin tone)
+🖖🏽 raised hand with part between middle and ring fingers (skin tone)
+🖖🏾 raised hand with part between middle and ring fingers (skin tone)
+🖖🏿 raised hand with part between middle and ring fingers (skin tone)
+🖤 black heart
+🖥️ desktop computer
+🖨️ printer
+🖱️ computer mouse
+🖲️ trackball
+🖼️ framed picture
+🗂️ card index dividers
+🗃️ card file box
+🗄️ file cabinet
+🗑️ wastebasket
+🗒️ spiral notepad
+🗓️ spiral calendar
+🗜️ clamp
+🗝️ old key
+🗞️ rolled-up newspaper
+🗡️ dagger
+🗣️ speaking head
+🗨️ left speech bubble
+🗯️ right anger bubble
+🗳️ ballot box with ballot
+🗺️ world map
+🗻 mount fuji
+🗼 tokyo tower
+🗽 statue of liberty
+🗾 silhouette of japan
+🗿 moyai
+😀 grinning face
+😁 grinning face with smiling eyes
+😂 face with tears of joy
+😃 smiling face with open mouth
+😄 smiling face with open mouth and smiling eyes
+😅 smiling face with open mouth and cold sweat
+😆 smiling face with open mouth and tightly-closed eyes
+😇 smiling face with halo
+😈 smiling face with horns
+😉 winking face
+😊 smiling face with smiling eyes
+😋 face savouring delicious food
+😌 relieved face
+😍 smiling face with heart-shaped eyes
+😎 smiling face with sunglasses
+😏 smirking face
+😐 neutral face
+😑 expressionless face
+😒 unamused face
+😓 face with cold sweat
+😔 pensive face
+😕 confused face
+😖 confounded face
+😗 kissing face
+😘 face throwing a kiss
+😙 kissing face with smiling eyes
+😚 kissing face with closed eyes
+😛 face with stuck-out tongue
+😜 face with stuck-out tongue and winking eye
+😝 face with stuck-out tongue and tightly-closed eyes
+😞 disappointed face
+😟 worried face
+😠 angry face
+😡 pouting face
+😢 crying face
+😣 persevering face
+😤 face with look of triumph
+😥 disappointed but relieved face
+😦 frowning face with open mouth
+😧 anguished face
+😨 fearful face
+😩 weary face
+😪 sleepy face
+😫 tired face
+😬 grimacing face
+😭 loudly crying face
+😮‍💨 face exhaling
+😮 face with open mouth
+😯 hushed face
+😰 face with open mouth and cold sweat
+😱 face screaming in fear
+😲 astonished face
+😳 flushed face
+😴 sleeping face
+😵‍💫 face with spiral eyes
+😵 dizzy face
+😶‍🌫️ face in clouds
+😶 face without mouth
+😷 face with medical mask
+😸 grinning cat face with smiling eyes
+😹 cat face with tears of joy
+😺 smiling cat face with open mouth
+😻 smiling cat face with heart-shaped eyes
+😼 cat face with wry smile
+😽 kissing cat face with closed eyes
+😾 pouting cat face
+😿 crying cat face
+🙀 weary cat face
+🙁 slightly frowning face
+🙂‍↔️ head shaking horizontally
+🙂‍↕️ head shaking vertically
+🙂 slightly smiling face
+🙃 upside-down face
+🙄 face with rolling eyes
+🙅‍♀️ woman gesturing no
+🙅🏻‍♀️ woman gesturing no (skin tone)
+🙅🏼‍♀️ woman gesturing no (skin tone)
+🙅🏽‍♀️ woman gesturing no (skin tone)
+🙅🏾‍♀️ woman gesturing no (skin tone)
+🙅🏿‍♀️ woman gesturing no (skin tone)
+🙅‍♂️ man gesturing no
+🙅🏻‍♂️ man gesturing no (skin tone)
+🙅🏼‍♂️ man gesturing no (skin tone)
+🙅🏽‍♂️ man gesturing no (skin tone)
+🙅🏾‍♂️ man gesturing no (skin tone)
+🙅🏿‍♂️ man gesturing no (skin tone)
+🙅 face with no good gesture
+🙅🏻 face with no good gesture (skin tone)
+🙅🏼 face with no good gesture (skin tone)
+🙅🏽 face with no good gesture (skin tone)
+🙅🏾 face with no good gesture (skin tone)
+🙅🏿 face with no good gesture (skin tone)
+🙆‍♀️ woman gesturing ok
+🙆🏻‍♀️ woman gesturing ok (skin tone)
+🙆🏼‍♀️ woman gesturing ok (skin tone)
+🙆🏽‍♀️ woman gesturing ok (skin tone)
+🙆🏾‍♀️ woman gesturing ok (skin tone)
+🙆🏿‍♀️ woman gesturing ok (skin tone)
+🙆‍♂️ man gesturing ok
+🙆🏻‍♂️ man gesturing ok (skin tone)
+🙆🏼‍♂️ man gesturing ok (skin tone)
+🙆🏽‍♂️ man gesturing ok (skin tone)
+🙆🏾‍♂️ man gesturing ok (skin tone)
+🙆🏿‍♂️ man gesturing ok (skin tone)
+🙆 face with ok gesture
+🙆🏻 face with ok gesture (skin tone)
+🙆🏼 face with ok gesture (skin tone)
+🙆🏽 face with ok gesture (skin tone)
+🙆🏾 face with ok gesture (skin tone)
+🙆🏿 face with ok gesture (skin tone)
+🙇‍♀️ woman bowing
+🙇🏻‍♀️ woman bowing (skin tone)
+🙇🏼‍♀️ woman bowing (skin tone)
+🙇🏽‍♀️ woman bowing (skin tone)
+🙇🏾‍♀️ woman bowing (skin tone)
+🙇🏿‍♀️ woman bowing (skin tone)
+🙇‍♂️ man bowing
+🙇🏻‍♂️ man bowing (skin tone)
+🙇🏼‍♂️ man bowing (skin tone)
+🙇🏽‍♂️ man bowing (skin tone)
+🙇🏾‍♂️ man bowing (skin tone)
+🙇🏿‍♂️ man bowing (skin tone)
+🙇 person bowing deeply
+🙇🏻 person bowing deeply (skin tone)
+🙇🏼 person bowing deeply (skin tone)
+🙇🏽 person bowing deeply (skin tone)
+🙇🏾 person bowing deeply (skin tone)
+🙇🏿 person bowing deeply (skin tone)
+🙈 see-no-evil monkey
+🙉 hear-no-evil monkey
+🙊 speak-no-evil monkey
+🙋‍♀️ woman raising hand
+🙋🏻‍♀️ woman raising hand (skin tone)
+🙋🏼‍♀️ woman raising hand (skin tone)
+🙋🏽‍♀️ woman raising hand (skin tone)
+🙋🏾‍♀️ woman raising hand (skin tone)
+🙋🏿‍♀️ woman raising hand (skin tone)
+🙋‍♂️ man raising hand
+🙋🏻‍♂️ man raising hand (skin tone)
+🙋🏼‍♂️ man raising hand (skin tone)
+🙋🏽‍♂️ man raising hand (skin tone)
+🙋🏾‍♂️ man raising hand (skin tone)
+🙋🏿‍♂️ man raising hand (skin tone)
+🙋 happy person raising one hand
+🙋🏻 happy person raising one hand (skin tone)
+🙋🏼 happy person raising one hand (skin tone)
+🙋🏽 happy person raising one hand (skin tone)
+🙋🏾 happy person raising one hand (skin tone)
+🙋🏿 happy person raising one hand (skin tone)
+🙌 person raising both hands in celebration
+🙌🏻 person raising both hands in celebration (skin tone)
+🙌🏼 person raising both hands in celebration (skin tone)
+🙌🏽 person raising both hands in celebration (skin tone)
+🙌🏾 person raising both hands in celebration (skin tone)
+🙌🏿 person raising both hands in celebration (skin tone)
+🙍‍♀️ woman frowning
+🙍🏻‍♀️ woman frowning (skin tone)
+🙍🏼‍♀️ woman frowning (skin tone)
+🙍🏽‍♀️ woman frowning (skin tone)
+🙍🏾‍♀️ woman frowning (skin tone)
+🙍🏿‍♀️ woman frowning (skin tone)
+🙍‍♂️ man frowning
+🙍🏻‍♂️ man frowning (skin tone)
+🙍🏼‍♂️ man frowning (skin tone)
+🙍🏽‍♂️ man frowning (skin tone)
+🙍🏾‍♂️ man frowning (skin tone)
+🙍🏿‍♂️ man frowning (skin tone)
+🙍 person frowning
+🙍🏻 person frowning (skin tone)
+🙍🏼 person frowning (skin tone)
+🙍🏽 person frowning (skin tone)
+🙍🏾 person frowning (skin tone)
+🙍🏿 person frowning (skin tone)
+🙎‍♀️ woman pouting
+🙎🏻‍♀️ woman pouting (skin tone)
+🙎🏼‍♀️ woman pouting (skin tone)
+🙎🏽‍♀️ woman pouting (skin tone)
+🙎🏾‍♀️ woman pouting (skin tone)
+🙎🏿‍♀️ woman pouting (skin tone)
+🙎‍♂️ man pouting
+🙎🏻‍♂️ man pouting (skin tone)
+🙎🏼‍♂️ man pouting (skin tone)
+🙎🏽‍♂️ man pouting (skin tone)
+🙎🏾‍♂️ man pouting (skin tone)
+🙎🏿‍♂️ man pouting (skin tone)
+🙎 person with pouting face
+🙎🏻 person with pouting face (skin tone)
+🙎🏼 person with pouting face (skin tone)
+🙎🏽 person with pouting face (skin tone)
+🙎🏾 person with pouting face (skin tone)
+🙎🏿 person with pouting face (skin tone)
+🙏 person with folded hands
+🙏🏻 person with folded hands (skin tone)
+🙏🏼 person with folded hands (skin tone)
+🙏🏽 person with folded hands (skin tone)
+🙏🏾 person with folded hands (skin tone)
+🙏🏿 person with folded hands (skin tone)
+🚀 rocket
+🚁 helicopter
+🚂 steam locomotive
+🚃 railway car
+🚄 high-speed train
+🚅 high-speed train with bullet nose
+🚆 train
+🚇 metro
+🚈 light rail
+🚉 station
+🚊 tram
+🚋 tram car
+🚌 bus
+🚍 oncoming bus
+🚎 trolleybus
+🚏 bus stop
+🚐 minibus
+🚑 ambulance
+🚒 fire engine
+🚓 police car
+🚔 oncoming police car
+🚕 taxi
+🚖 oncoming taxi
+🚗 automobile
+🚘 oncoming automobile
+🚙 recreational vehicle
+🚚 delivery truck
+🚛 articulated lorry
+🚜 tractor
+🚝 monorail
+🚞 mountain railway
+🚟 suspension railway
+🚠 mountain cableway
+🚡 aerial tramway
+🚢 ship
+🚣‍♀️ woman rowing boat
+🚣🏻‍♀️ woman rowing boat (skin tone)
+🚣🏼‍♀️ woman rowing boat (skin tone)
+🚣🏽‍♀️ woman rowing boat (skin tone)
+🚣🏾‍♀️ woman rowing boat (skin tone)
+🚣🏿‍♀️ woman rowing boat (skin tone)
+🚣‍♂️ man rowing boat
+🚣🏻‍♂️ man rowing boat (skin tone)
+🚣🏼‍♂️ man rowing boat (skin tone)
+🚣🏽‍♂️ man rowing boat (skin tone)
+🚣🏾‍♂️ man rowing boat (skin tone)
+🚣🏿‍♂️ man rowing boat (skin tone)
+🚣 rowboat
+🚣🏻 rowboat (skin tone)
+🚣🏼 rowboat (skin tone)
+🚣🏽 rowboat (skin tone)
+🚣🏾 rowboat (skin tone)
+🚣🏿 rowboat (skin tone)
+🚤 speedboat
+🚥 horizontal traffic light
+🚦 vertical traffic light
+🚧 construction sign
+🚨 police cars revolving light
+🚩 triangular flag on post
+🚪 door
+🚫 no entry sign
+🚬 smoking symbol
+🚭 no smoking symbol
+🚮 put litter in its place symbol
+🚯 do not litter symbol
+🚰 potable water symbol
+🚱 non-potable water symbol
+🚲 bicycle
+🚳 no bicycles
+🚴‍♀️ woman biking
+🚴🏻‍♀️ woman biking (skin tone)
+🚴🏼‍♀️ woman biking (skin tone)
+🚴🏽‍♀️ woman biking (skin tone)
+🚴🏾‍♀️ woman biking (skin tone)
+🚴🏿‍♀️ woman biking (skin tone)
+🚴‍♂️ man biking
+🚴🏻‍♂️ man biking (skin tone)
+🚴🏼‍♂️ man biking (skin tone)
+🚴🏽‍♂️ man biking (skin tone)
+🚴🏾‍♂️ man biking (skin tone)
+🚴🏿‍♂️ man biking (skin tone)
+🚴 bicyclist
+🚴🏻 bicyclist (skin tone)
+🚴🏼 bicyclist (skin tone)
+🚴🏽 bicyclist (skin tone)
+🚴🏾 bicyclist (skin tone)
+🚴🏿 bicyclist (skin tone)
+🚵‍♀️ woman mountain biking
+🚵🏻‍♀️ woman mountain biking (skin tone)
+🚵🏼‍♀️ woman mountain biking (skin tone)
+🚵🏽‍♀️ woman mountain biking (skin tone)
+🚵🏾‍♀️ woman mountain biking (skin tone)
+🚵🏿‍♀️ woman mountain biking (skin tone)
+🚵‍♂️ man mountain biking
+🚵🏻‍♂️ man mountain biking (skin tone)
+🚵🏼‍♂️ man mountain biking (skin tone)
+🚵🏽‍♂️ man mountain biking (skin tone)
+🚵🏾‍♂️ man mountain biking (skin tone)
+🚵🏿‍♂️ man mountain biking (skin tone)
+🚵 mountain bicyclist
+🚵🏻 mountain bicyclist (skin tone)
+🚵🏼 mountain bicyclist (skin tone)
+🚵🏽 mountain bicyclist (skin tone)
+🚵🏾 mountain bicyclist (skin tone)
+🚵🏿 mountain bicyclist (skin tone)
+🚶‍♀️ woman walking
+🚶🏻‍♀️ woman walking (skin tone)
+🚶🏼‍♀️ woman walking (skin tone)
+🚶🏽‍♀️ woman walking (skin tone)
+🚶🏾‍♀️ woman walking (skin tone)
+🚶🏿‍♀️ woman walking (skin tone)
+🚶‍♀️‍➡️ woman walking facing right
+🚶🏻‍♀️‍➡️ woman walking facing right (skin tone)
+🚶🏼‍♀️‍➡️ woman walking facing right (skin tone)
+🚶🏽‍♀️‍➡️ woman walking facing right (skin tone)
+🚶🏾‍♀️‍➡️ woman walking facing right (skin tone)
+🚶🏿‍♀️‍➡️ woman walking facing right (skin tone)
+🚶‍♂️ man walking
+🚶🏻‍♂️ man walking (skin tone)
+🚶🏼‍♂️ man walking (skin tone)
+🚶🏽‍♂️ man walking (skin tone)
+🚶🏾‍♂️ man walking (skin tone)
+🚶🏿‍♂️ man walking (skin tone)
+🚶‍♂️‍➡️ man walking facing right
+🚶🏻‍♂️‍➡️ man walking facing right (skin tone)
+🚶🏼‍♂️‍➡️ man walking facing right (skin tone)
+🚶🏽‍♂️‍➡️ man walking facing right (skin tone)
+🚶🏾‍♂️‍➡️ man walking facing right (skin tone)
+🚶🏿‍♂️‍➡️ man walking facing right (skin tone)
+🚶‍➡️ person walking facing right
+🚶🏻‍➡️ person walking facing right (skin tone)
+🚶🏼‍➡️ person walking facing right (skin tone)
+🚶🏽‍➡️ person walking facing right (skin tone)
+🚶🏾‍➡️ person walking facing right (skin tone)
+🚶🏿‍➡️ person walking facing right (skin tone)
+🚶 pedestrian
+🚶🏻 pedestrian (skin tone)
+🚶🏼 pedestrian (skin tone)
+🚶🏽 pedestrian (skin tone)
+🚶🏾 pedestrian (skin tone)
+🚶🏿 pedestrian (skin tone)
+🚷 no pedestrians
+🚸 children crossing
+🚹 mens symbol
+🚺 womens symbol
+🚻 restroom
+🚼 baby symbol
+🚽 toilet
+🚾 water closet
+🚿 shower
+🛀 bath
+🛀🏻 bath (skin tone)
+🛀🏼 bath (skin tone)
+🛀🏽 bath (skin tone)
+🛀🏾 bath (skin tone)
+🛀🏿 bath (skin tone)
+🛁 bathtub
+🛂 passport control
+🛃 customs
+🛄 baggage claim
+🛅 left luggage
+🛋️ couch and lamp
+🛌 sleeping accommodation
+🛌🏻 sleeping accommodation (skin tone)
+🛌🏼 sleeping accommodation (skin tone)
+🛌🏽 sleeping accommodation (skin tone)
+🛌🏾 sleeping accommodation (skin tone)
+🛌🏿 sleeping accommodation (skin tone)
+🛍️ shopping bags
+🛎️ bellhop bell
+🛏️ bed
+🛐 place of worship
+🛑 octagonal sign
+🛒 shopping trolley
+🛕 hindu temple
+🛖 hut
+🛗 elevator
+🛜 wireless
+🛝 playground slide
+🛞 wheel
+🛟 ring buoy
+🛠️ hammer and wrench
+🛡️ shield
+🛢️ oil drum
+🛣️ motorway
+🛤️ railway track
+🛥️ motor boat
+🛩️ small airplane
+🛫 airplane departure
+🛬 airplane arriving
+🛰️ satellite
+🛳️ passenger ship
+🛴 scooter
+🛵 motor scooter
+🛶 canoe
+🛷 sled
+🛸 flying saucer
+🛹 skateboard
+🛺 auto rickshaw
+🛻 pickup truck
+🛼 roller skate
+🟠 large orange circle
+🟡 large yellow circle
+🟢 large green circle
+🟣 large purple circle
+🟤 large brown circle
+🟥 large red square
+🟦 large blue square
+🟧 large orange square
+🟨 large yellow square
+🟩 large green square
+🟪 large purple square
+🟫 large brown square
+🟰 heavy equals sign
+🤌 pinched fingers
+🤌🏻 pinched fingers (skin tone)
+🤌🏼 pinched fingers (skin tone)
+🤌🏽 pinched fingers (skin tone)
+🤌🏾 pinched fingers (skin tone)
+🤌🏿 pinched fingers (skin tone)
+🤍 white heart
+🤎 brown heart
+🤏 pinching hand
+🤏🏻 pinching hand (skin tone)
+🤏🏼 pinching hand (skin tone)
+🤏🏽 pinching hand (skin tone)
+🤏🏾 pinching hand (skin tone)
+🤏🏿 pinching hand (skin tone)
+🤐 zipper-mouth face
+🤑 money-mouth face
+🤒 face with thermometer
+🤓 nerd face
+🤔 thinking face
+🤕 face with head-bandage
+🤖 robot face
+🤗 hugging face
+🤘 sign of the horns
+🤘🏻 sign of the horns (skin tone)
+🤘🏼 sign of the horns (skin tone)
+🤘🏽 sign of the horns (skin tone)
+🤘🏾 sign of the horns (skin tone)
+🤘🏿 sign of the horns (skin tone)
+🤙 call me hand
+🤙🏻 call me hand (skin tone)
+🤙🏼 call me hand (skin tone)
+🤙🏽 call me hand (skin tone)
+🤙🏾 call me hand (skin tone)
+🤙🏿 call me hand (skin tone)
+🤚 raised back of hand
+🤚🏻 raised back of hand (skin tone)
+🤚🏼 raised back of hand (skin tone)
+🤚🏽 raised back of hand (skin tone)
+🤚🏾 raised back of hand (skin tone)
+🤚🏿 raised back of hand (skin tone)
+🤛 left-facing fist
+🤛🏻 left-facing fist (skin tone)
+🤛🏼 left-facing fist (skin tone)
+🤛🏽 left-facing fist (skin tone)
+🤛🏾 left-facing fist (skin tone)
+🤛🏿 left-facing fist (skin tone)
+🤜 right-facing fist
+🤜🏻 right-facing fist (skin tone)
+🤜🏼 right-facing fist (skin tone)
+🤜🏽 right-facing fist (skin tone)
+🤜🏾 right-facing fist (skin tone)
+🤜🏿 right-facing fist (skin tone)
+🤝 handshake
+🤝🏻 handshake (skin tone)
+🤝🏼 handshake (skin tone)
+🤝🏽 handshake (skin tone)
+🤝🏾 handshake (skin tone)
+🤝🏿 handshake (skin tone)
+🫱🏻‍🫲🏼 handshake (skin tone)
+🫱🏻‍🫲🏽 handshake (skin tone)
+🫱🏻‍🫲🏾 handshake (skin tone)
+🫱🏻‍🫲🏿 handshake (skin tone)
+🫱🏼‍🫲🏻 handshake (skin tone)
+🫱🏼‍🫲🏽 handshake (skin tone)
+🫱🏼‍🫲🏾 handshake (skin tone)
+🫱🏼‍🫲🏿 handshake (skin tone)
+🫱🏽‍🫲🏻 handshake (skin tone)
+🫱🏽‍🫲🏼 handshake (skin tone)
+🫱🏽‍🫲🏾 handshake (skin tone)
+🫱🏽‍🫲🏿 handshake (skin tone)
+🫱🏾‍🫲🏻 handshake (skin tone)
+🫱🏾‍🫲🏼 handshake (skin tone)
+🫱🏾‍🫲🏽 handshake (skin tone)
+🫱🏾‍🫲🏿 handshake (skin tone)
+🫱🏿‍🫲🏻 handshake (skin tone)
+🫱🏿‍🫲🏼 handshake (skin tone)
+🫱🏿‍🫲🏽 handshake (skin tone)
+🫱🏿‍🫲🏾 handshake (skin tone)
+🤞 hand with index and middle fingers crossed
+🤞🏻 hand with index and middle fingers crossed (skin tone)
+🤞🏼 hand with index and middle fingers crossed (skin tone)
+🤞🏽 hand with index and middle fingers crossed (skin tone)
+🤞🏾 hand with index and middle fingers crossed (skin tone)
+🤞🏿 hand with index and middle fingers crossed (skin tone)
+🤟 i love you hand sign
+🤟🏻 i love you hand sign (skin tone)
+🤟🏼 i love you hand sign (skin tone)
+🤟🏽 i love you hand sign (skin tone)
+🤟🏾 i love you hand sign (skin tone)
+🤟🏿 i love you hand sign (skin tone)
+🤠 face with cowboy hat
+🤡 clown face
+🤢 nauseated face
+🤣 rolling on the floor laughing
+🤤 drooling face
+🤥 lying face
+🤦‍♀️ woman facepalming
+🤦🏻‍♀️ woman facepalming (skin tone)
+🤦🏼‍♀️ woman facepalming (skin tone)
+🤦🏽‍♀️ woman facepalming (skin tone)
+🤦🏾‍♀️ woman facepalming (skin tone)
+🤦🏿‍♀️ woman facepalming (skin tone)
+🤦‍♂️ man facepalming
+🤦🏻‍♂️ man facepalming (skin tone)
+🤦🏼‍♂️ man facepalming (skin tone)
+🤦🏽‍♂️ man facepalming (skin tone)
+🤦🏾‍♂️ man facepalming (skin tone)
+🤦🏿‍♂️ man facepalming (skin tone)
+🤦 face palm
+🤦🏻 face palm (skin tone)
+🤦🏼 face palm (skin tone)
+🤦🏽 face palm (skin tone)
+🤦🏾 face palm (skin tone)
+🤦🏿 face palm (skin tone)
+🤧 sneezing face
+🤨 face with one eyebrow raised
+🤩 grinning face with star eyes
+🤪 grinning face with one large and one small eye
+🤫 face with finger covering closed lips
+🤬 serious face with symbols covering mouth
+🤭 smiling face with smiling eyes and hand covering mouth
+🤮 face with open mouth vomiting
+🤯 shocked face with exploding head
+🤰 pregnant woman
+🤰🏻 pregnant woman (skin tone)
+🤰🏼 pregnant woman (skin tone)
+🤰🏽 pregnant woman (skin tone)
+🤰🏾 pregnant woman (skin tone)
+🤰🏿 pregnant woman (skin tone)
+🤱 breast-feeding
+🤱🏻 breast-feeding (skin tone)
+🤱🏼 breast-feeding (skin tone)
+🤱🏽 breast-feeding (skin tone)
+🤱🏾 breast-feeding (skin tone)
+🤱🏿 breast-feeding (skin tone)
+🤲 palms up together
+🤲🏻 palms up together (skin tone)
+🤲🏼 palms up together (skin tone)
+🤲🏽 palms up together (skin tone)
+🤲🏾 palms up together (skin tone)
+🤲🏿 palms up together (skin tone)
+🤳 selfie
+🤳🏻 selfie (skin tone)
+🤳🏼 selfie (skin tone)
+🤳🏽 selfie (skin tone)
+🤳🏾 selfie (skin tone)
+🤳🏿 selfie (skin tone)
+🤴 prince
+🤴🏻 prince (skin tone)
+🤴🏼 prince (skin tone)
+🤴🏽 prince (skin tone)
+🤴🏾 prince (skin tone)
+🤴🏿 prince (skin tone)
+🤵‍♀️ woman in tuxedo
+🤵🏻‍♀️ woman in tuxedo (skin tone)
+🤵🏼‍♀️ woman in tuxedo (skin tone)
+🤵🏽‍♀️ woman in tuxedo (skin tone)
+🤵🏾‍♀️ woman in tuxedo (skin tone)
+🤵🏿‍♀️ woman in tuxedo (skin tone)
+🤵‍♂️ man in tuxedo
+🤵🏻‍♂️ man in tuxedo (skin tone)
+🤵🏼‍♂️ man in tuxedo (skin tone)
+🤵🏽‍♂️ man in tuxedo (skin tone)
+🤵🏾‍♂️ man in tuxedo (skin tone)
+🤵🏿‍♂️ man in tuxedo (skin tone)
+🤵 man in tuxedo
+🤵🏻 man in tuxedo (skin tone)
+🤵🏼 man in tuxedo (skin tone)
+🤵🏽 man in tuxedo (skin tone)
+🤵🏾 man in tuxedo (skin tone)
+🤵🏿 man in tuxedo (skin tone)
+🤶 mother christmas
+🤶🏻 mother christmas (skin tone)
+🤶🏼 mother christmas (skin tone)
+🤶🏽 mother christmas (skin tone)
+🤶🏾 mother christmas (skin tone)
+🤶🏿 mother christmas (skin tone)
+🤷‍♀️ woman shrugging
+🤷🏻‍♀️ woman shrugging (skin tone)
+🤷🏼‍♀️ woman shrugging (skin tone)
+🤷🏽‍♀️ woman shrugging (skin tone)
+🤷🏾‍♀️ woman shrugging (skin tone)
+🤷🏿‍♀️ woman shrugging (skin tone)
+🤷‍♂️ man shrugging
+🤷🏻‍♂️ man shrugging (skin tone)
+🤷🏼‍♂️ man shrugging (skin tone)
+🤷🏽‍♂️ man shrugging (skin tone)
+🤷🏾‍♂️ man shrugging (skin tone)
+🤷🏿‍♂️ man shrugging (skin tone)
+🤷 shrug
+🤷🏻 shrug (skin tone)
+🤷🏼 shrug (skin tone)
+🤷🏽 shrug (skin tone)
+🤷🏾 shrug (skin tone)
+🤷🏿 shrug (skin tone)
+🤸‍♀️ woman cartwheeling
+🤸🏻‍♀️ woman cartwheeling (skin tone)
+🤸🏼‍♀️ woman cartwheeling (skin tone)
+🤸🏽‍♀️ woman cartwheeling (skin tone)
+🤸🏾‍♀️ woman cartwheeling (skin tone)
+🤸🏿‍♀️ woman cartwheeling (skin tone)
+🤸‍♂️ man cartwheeling
+🤸🏻‍♂️ man cartwheeling (skin tone)
+🤸🏼‍♂️ man cartwheeling (skin tone)
+🤸🏽‍♂️ man cartwheeling (skin tone)
+🤸🏾‍♂️ man cartwheeling (skin tone)
+🤸🏿‍♂️ man cartwheeling (skin tone)
+🤸 person doing cartwheel
+🤸🏻 person doing cartwheel (skin tone)
+🤸🏼 person doing cartwheel (skin tone)
+🤸🏽 person doing cartwheel (skin tone)
+🤸🏾 person doing cartwheel (skin tone)
+🤸🏿 person doing cartwheel (skin tone)
+🤹‍♀️ woman juggling
+🤹🏻‍♀️ woman juggling (skin tone)
+🤹🏼‍♀️ woman juggling (skin tone)
+🤹🏽‍♀️ woman juggling (skin tone)
+🤹🏾‍♀️ woman juggling (skin tone)
+🤹🏿‍♀️ woman juggling (skin tone)
+🤹‍♂️ man juggling
+🤹🏻‍♂️ man juggling (skin tone)
+🤹🏼‍♂️ man juggling (skin tone)
+🤹🏽‍♂️ man juggling (skin tone)
+🤹🏾‍♂️ man juggling (skin tone)
+🤹🏿‍♂️ man juggling (skin tone)
+🤹 juggling
+🤹🏻 juggling (skin tone)
+🤹🏼 juggling (skin tone)
+🤹🏽 juggling (skin tone)
+🤹🏾 juggling (skin tone)
+🤹🏿 juggling (skin tone)
+🤺 fencer
+🤼‍♀️ women wrestling
+🤼‍♂️ men wrestling
+🤼 wrestlers
+🤽‍♀️ woman playing water polo
+🤽🏻‍♀️ woman playing water polo (skin tone)
+🤽🏼‍♀️ woman playing water polo (skin tone)
+🤽🏽‍♀️ woman playing water polo (skin tone)
+🤽🏾‍♀️ woman playing water polo (skin tone)
+🤽🏿‍♀️ woman playing water polo (skin tone)
+🤽‍♂️ man playing water polo
+🤽🏻‍♂️ man playing water polo (skin tone)
+🤽🏼‍♂️ man playing water polo (skin tone)
+🤽🏽‍♂️ man playing water polo (skin tone)
+🤽🏾‍♂️ man playing water polo (skin tone)
+🤽🏿‍♂️ man playing water polo (skin tone)
+🤽 water polo
+🤽🏻 water polo (skin tone)
+🤽🏼 water polo (skin tone)
+🤽🏽 water polo (skin tone)
+🤽🏾 water polo (skin tone)
+🤽🏿 water polo (skin tone)
+🤾‍♀️ woman playing handball
+🤾🏻‍♀️ woman playing handball (skin tone)
+🤾🏼‍♀️ woman playing handball (skin tone)
+🤾🏽‍♀️ woman playing handball (skin tone)
+🤾🏾‍♀️ woman playing handball (skin tone)
+🤾🏿‍♀️ woman playing handball (skin tone)
+🤾‍♂️ man playing handball
+🤾🏻‍♂️ man playing handball (skin tone)
+🤾🏼‍♂️ man playing handball (skin tone)
+🤾🏽‍♂️ man playing handball (skin tone)
+🤾🏾‍♂️ man playing handball (skin tone)
+🤾🏿‍♂️ man playing handball (skin tone)
+🤾 handball
+🤾🏻 handball (skin tone)
+🤾🏼 handball (skin tone)
+🤾🏽 handball (skin tone)
+🤾🏾 handball (skin tone)
+🤾🏿 handball (skin tone)
+🤿 diving mask
+🥀 wilted flower
+🥁 drum with drumsticks
+🥂 clinking glasses
+🥃 tumbler glass
+🥄 spoon
+🥅 goal net
+🥇 first place medal
+🥈 second place medal
+🥉 third place medal
+🥊 boxing glove
+🥋 martial arts uniform
+🥌 curling stone
+🥍 lacrosse stick and ball
+🥎 softball
+🥏 flying disc
+🥐 croissant
+🥑 avocado
+🥒 cucumber
+🥓 bacon
+🥔 potato
+🥕 carrot
+🥖 baguette bread
+🥗 green salad
+🥘 shallow pan of food
+🥙 stuffed flatbread
+🥚 egg
+🥛 glass of milk
+🥜 peanuts
+🥝 kiwifruit
+🥞 pancakes
+🥟 dumpling
+🥠 fortune cookie
+🥡 takeout box
+🥢 chopsticks
+🥣 bowl with spoon
+🥤 cup with straw
+🥥 coconut
+🥦 broccoli
+🥧 pie
+🥨 pretzel
+🥩 cut of meat
+🥪 sandwich
+🥫 canned food
+🥬 leafy green
+🥭 mango
+🥮 moon cake
+🥯 bagel
+🥰 smiling face with smiling eyes and three hearts
+🥱 yawning face
+🥲 smiling face with tear
+🥳 face with party horn and party hat
+🥴 face with uneven eyes and wavy mouth
+🥵 overheated face
+🥶 freezing face
+🥷 ninja
+🥷🏻 ninja (skin tone)
+🥷🏼 ninja (skin tone)
+🥷🏽 ninja (skin tone)
+🥷🏾 ninja (skin tone)
+🥷🏿 ninja (skin tone)
+🥸 disguised face
+🥹 face holding back tears
+🥺 face with pleading eyes
+🥻 sari
+🥼 lab coat
+🥽 goggles
+🥾 hiking boot
+🥿 flat shoe
+🦀 crab
+🦁 lion face
+🦂 scorpion
+🦃 turkey
+🦄 unicorn face
+🦅 eagle
+🦆 duck
+🦇 bat
+🦈 shark
+🦉 owl
+🦊 fox face
+🦋 butterfly
+🦌 deer
+🦍 gorilla
+🦎 lizard
+🦏 rhinoceros
+🦐 shrimp
+🦑 squid
+🦒 giraffe face
+🦓 zebra face
+🦔 hedgehog
+🦕 sauropod
+🦖 t-rex
+🦗 cricket
+🦘 kangaroo
+🦙 llama
+🦚 peacock
+🦛 hippopotamus
+🦜 parrot
+🦝 raccoon
+🦞 lobster
+🦟 mosquito
+🦠 microbe
+🦡 badger
+🦢 swan
+🦣 mammoth
+🦤 dodo
+🦥 sloth
+🦦 otter
+🦧 orangutan
+🦨 skunk
+🦩 flamingo
+🦪 oyster
+🦫 beaver
+🦬 bison
+🦭 seal
+🦮 guide dog
+🦯 probing cane
+🦴 bone
+🦵 leg
+🦵🏻 leg (skin tone)
+🦵🏼 leg (skin tone)
+🦵🏽 leg (skin tone)
+🦵🏾 leg (skin tone)
+🦵🏿 leg (skin tone)
+🦶 foot
+🦶🏻 foot (skin tone)
+🦶🏼 foot (skin tone)
+🦶🏽 foot (skin tone)
+🦶🏾 foot (skin tone)
+🦶🏿 foot (skin tone)
+🦷 tooth
+🦸‍♀️ woman superhero
+🦸🏻‍♀️ woman superhero (skin tone)
+🦸🏼‍♀️ woman superhero (skin tone)
+🦸🏽‍♀️ woman superhero (skin tone)
+🦸🏾‍♀️ woman superhero (skin tone)
+🦸🏿‍♀️ woman superhero (skin tone)
+🦸‍♂️ man superhero
+🦸🏻‍♂️ man superhero (skin tone)
+🦸🏼‍♂️ man superhero (skin tone)
+🦸🏽‍♂️ man superhero (skin tone)
+🦸🏾‍♂️ man superhero (skin tone)
+🦸🏿‍♂️ man superhero (skin tone)
+🦸 superhero
+🦸🏻 superhero (skin tone)
+🦸🏼 superhero (skin tone)
+🦸🏽 superhero (skin tone)
+🦸🏾 superhero (skin tone)
+🦸🏿 superhero (skin tone)
+🦹‍♀️ woman supervillain
+🦹🏻‍♀️ woman supervillain (skin tone)
+🦹🏼‍♀️ woman supervillain (skin tone)
+🦹🏽‍♀️ woman supervillain (skin tone)
+🦹🏾‍♀️ woman supervillain (skin tone)
+🦹🏿‍♀️ woman supervillain (skin tone)
+🦹‍♂️ man supervillain
+🦹🏻‍♂️ man supervillain (skin tone)
+🦹🏼‍♂️ man supervillain (skin tone)
+🦹🏽‍♂️ man supervillain (skin tone)
+🦹🏾‍♂️ man supervillain (skin tone)
+🦹🏿‍♂️ man supervillain (skin tone)
+🦹 supervillain
+🦹🏻 supervillain (skin tone)
+🦹🏼 supervillain (skin tone)
+🦹🏽 supervillain (skin tone)
+🦹🏾 supervillain (skin tone)
+🦹🏿 supervillain (skin tone)
+🦺 safety vest
+🦻 ear with hearing aid
+🦻🏻 ear with hearing aid (skin tone)
+🦻🏼 ear with hearing aid (skin tone)
+🦻🏽 ear with hearing aid (skin tone)
+🦻🏾 ear with hearing aid (skin tone)
+🦻🏿 ear with hearing aid (skin tone)
+🦼 motorized wheelchair
+🦽 manual wheelchair
+🦾 mechanical arm
+🦿 mechanical leg
+🧀 cheese wedge
+🧁 cupcake
+🧂 salt shaker
+🧃 beverage box
+🧄 garlic
+🧅 onion
+🧆 falafel
+🧇 waffle
+🧈 butter
+🧉 mate drink
+🧊 ice cube
+🧋 bubble tea
+🧌 troll
+🧍‍♀️ woman standing
+🧍🏻‍♀️ woman standing (skin tone)
+🧍🏼‍♀️ woman standing (skin tone)
+🧍🏽‍♀️ woman standing (skin tone)
+🧍🏾‍♀️ woman standing (skin tone)
+🧍🏿‍♀️ woman standing (skin tone)
+🧍‍♂️ man standing
+🧍🏻‍♂️ man standing (skin tone)
+🧍🏼‍♂️ man standing (skin tone)
+🧍🏽‍♂️ man standing (skin tone)
+🧍🏾‍♂️ man standing (skin tone)
+🧍🏿‍♂️ man standing (skin tone)
+🧍 standing person
+🧍🏻 standing person (skin tone)
+🧍🏼 standing person (skin tone)
+🧍🏽 standing person (skin tone)
+🧍🏾 standing person (skin tone)
+🧍🏿 standing person (skin tone)
+🧎‍♀️ woman kneeling
+🧎🏻‍♀️ woman kneeling (skin tone)
+🧎🏼‍♀️ woman kneeling (skin tone)
+🧎🏽‍♀️ woman kneeling (skin tone)
+🧎🏾‍♀️ woman kneeling (skin tone)
+🧎🏿‍♀️ woman kneeling (skin tone)
+🧎‍♀️‍➡️ woman kneeling facing right
+🧎🏻‍♀️‍➡️ woman kneeling facing right (skin tone)
+🧎🏼‍♀️‍➡️ woman kneeling facing right (skin tone)
+🧎🏽‍♀️‍➡️ woman kneeling facing right (skin tone)
+🧎🏾‍♀️‍➡️ woman kneeling facing right (skin tone)
+🧎🏿‍♀️‍➡️ woman kneeling facing right (skin tone)
+🧎‍♂️ man kneeling
+🧎🏻‍♂️ man kneeling (skin tone)
+🧎🏼‍♂️ man kneeling (skin tone)
+🧎🏽‍♂️ man kneeling (skin tone)
+🧎🏾‍♂️ man kneeling (skin tone)
+🧎🏿‍♂️ man kneeling (skin tone)
+🧎‍♂️‍➡️ man kneeling facing right
+🧎🏻‍♂️‍➡️ man kneeling facing right (skin tone)
+🧎🏼‍♂️‍➡️ man kneeling facing right (skin tone)
+🧎🏽‍♂️‍➡️ man kneeling facing right (skin tone)
+🧎🏾‍♂️‍➡️ man kneeling facing right (skin tone)
+🧎🏿‍♂️‍➡️ man kneeling facing right (skin tone)
+🧎‍➡️ person kneeling facing right
+🧎🏻‍➡️ person kneeling facing right (skin tone)
+🧎🏼‍➡️ person kneeling facing right (skin tone)
+🧎🏽‍➡️ person kneeling facing right (skin tone)
+🧎🏾‍➡️ person kneeling facing right (skin tone)
+🧎🏿‍➡️ person kneeling facing right (skin tone)
+🧎 kneeling person
+🧎🏻 kneeling person (skin tone)
+🧎🏼 kneeling person (skin tone)
+🧎🏽 kneeling person (skin tone)
+🧎🏾 kneeling person (skin tone)
+🧎🏿 kneeling person (skin tone)
+🧏‍♀️ deaf woman
+🧏🏻‍♀️ deaf woman (skin tone)
+🧏🏼‍♀️ deaf woman (skin tone)
+🧏🏽‍♀️ deaf woman (skin tone)
+🧏🏾‍♀️ deaf woman (skin tone)
+🧏🏿‍♀️ deaf woman (skin tone)
+🧏‍♂️ deaf man
+🧏🏻‍♂️ deaf man (skin tone)
+🧏🏼‍♂️ deaf man (skin tone)
+🧏🏽‍♂️ deaf man (skin tone)
+🧏🏾‍♂️ deaf man (skin tone)
+🧏🏿‍♂️ deaf man (skin tone)
+🧏 deaf person
+🧏🏻 deaf person (skin tone)
+🧏🏼 deaf person (skin tone)
+🧏🏽 deaf person (skin tone)
+🧏🏾 deaf person (skin tone)
+🧏🏿 deaf person (skin tone)
+🧐 face with monocle
+🧑‍🌾 farmer
+🧑🏻‍🌾 farmer (skin tone)
+🧑🏼‍🌾 farmer (skin tone)
+🧑🏽‍🌾 farmer (skin tone)
+🧑🏾‍🌾 farmer (skin tone)
+🧑🏿‍🌾 farmer (skin tone)
+🧑‍🍳 cook
+🧑🏻‍🍳 cook (skin tone)
+🧑🏼‍🍳 cook (skin tone)
+🧑🏽‍🍳 cook (skin tone)
+🧑🏾‍🍳 cook (skin tone)
+🧑🏿‍🍳 cook (skin tone)
+🧑‍🍼 person feeding baby
+🧑🏻‍🍼 person feeding baby (skin tone)
+🧑🏼‍🍼 person feeding baby (skin tone)
+🧑🏽‍🍼 person feeding baby (skin tone)
+🧑🏾‍🍼 person feeding baby (skin tone)
+🧑🏿‍🍼 person feeding baby (skin tone)
+🧑‍🎄 mx claus
+🧑🏻‍🎄 mx claus (skin tone)
+🧑🏼‍🎄 mx claus (skin tone)
+🧑🏽‍🎄 mx claus (skin tone)
+🧑🏾‍🎄 mx claus (skin tone)
+🧑🏿‍🎄 mx claus (skin tone)
+🧑‍🎓 student
+🧑🏻‍🎓 student (skin tone)
+🧑🏼‍🎓 student (skin tone)
+🧑🏽‍🎓 student (skin tone)
+🧑🏾‍🎓 student (skin tone)
+🧑🏿‍🎓 student (skin tone)
+🧑‍🎤 singer
+🧑🏻‍🎤 singer (skin tone)
+🧑🏼‍🎤 singer (skin tone)
+🧑🏽‍🎤 singer (skin tone)
+🧑🏾‍🎤 singer (skin tone)
+🧑🏿‍🎤 singer (skin tone)
+🧑‍🎨 artist
+🧑🏻‍🎨 artist (skin tone)
+🧑🏼‍🎨 artist (skin tone)
+🧑🏽‍🎨 artist (skin tone)
+🧑🏾‍🎨 artist (skin tone)
+🧑🏿‍🎨 artist (skin tone)
+🧑‍🏫 teacher
+🧑🏻‍🏫 teacher (skin tone)
+🧑🏼‍🏫 teacher (skin tone)
+🧑🏽‍🏫 teacher (skin tone)
+🧑🏾‍🏫 teacher (skin tone)
+🧑🏿‍🏫 teacher (skin tone)
+🧑‍🏭 factory worker
+🧑🏻‍🏭 factory worker (skin tone)
+🧑🏼‍🏭 factory worker (skin tone)
+🧑🏽‍🏭 factory worker (skin tone)
+🧑🏾‍🏭 factory worker (skin tone)
+🧑🏿‍🏭 factory worker (skin tone)
+🧑‍💻 technologist
+🧑🏻‍💻 technologist (skin tone)
+🧑🏼‍💻 technologist (skin tone)
+🧑🏽‍💻 technologist (skin tone)
+🧑🏾‍💻 technologist (skin tone)
+🧑🏿‍💻 technologist (skin tone)
+🧑‍💼 office worker
+🧑🏻‍💼 office worker (skin tone)
+🧑🏼‍💼 office worker (skin tone)
+🧑🏽‍💼 office worker (skin tone)
+🧑🏾‍💼 office worker (skin tone)
+🧑🏿‍💼 office worker (skin tone)
+🧑‍🔧 mechanic
+🧑🏻‍🔧 mechanic (skin tone)
+🧑🏼‍🔧 mechanic (skin tone)
+🧑🏽‍🔧 mechanic (skin tone)
+🧑🏾‍🔧 mechanic (skin tone)
+🧑🏿‍🔧 mechanic (skin tone)
+🧑‍🔬 scientist
+🧑🏻‍🔬 scientist (skin tone)
+🧑🏼‍🔬 scientist (skin tone)
+🧑🏽‍🔬 scientist (skin tone)
+🧑🏾‍🔬 scientist (skin tone)
+🧑🏿‍🔬 scientist (skin tone)
+🧑‍🚀 astronaut
+🧑🏻‍🚀 astronaut (skin tone)
+🧑🏼‍🚀 astronaut (skin tone)
+🧑🏽‍🚀 astronaut (skin tone)
+🧑🏾‍🚀 astronaut (skin tone)
+🧑🏿‍🚀 astronaut (skin tone)
+🧑‍🚒 firefighter
+🧑🏻‍🚒 firefighter (skin tone)
+🧑🏼‍🚒 firefighter (skin tone)
+🧑🏽‍🚒 firefighter (skin tone)
+🧑🏾‍🚒 firefighter (skin tone)
+🧑🏿‍🚒 firefighter (skin tone)
+🧑‍🤝‍🧑 people holding hands
+🧑🏻‍🤝‍🧑🏻 people holding hands (skin tone)
+🧑🏻‍🤝‍🧑🏼 people holding hands (skin tone)
+🧑🏻‍🤝‍🧑🏽 people holding hands (skin tone)
+🧑🏻‍🤝‍🧑🏾 people holding hands (skin tone)
+🧑🏻‍🤝‍🧑🏿 people holding hands (skin tone)
+🧑🏼‍🤝‍🧑🏻 people holding hands (skin tone)
+🧑🏼‍🤝‍🧑🏼 people holding hands (skin tone)
+🧑🏼‍🤝‍🧑🏽 people holding hands (skin tone)
+🧑🏼‍🤝‍🧑🏾 people holding hands (skin tone)
+🧑🏼‍🤝‍🧑🏿 people holding hands (skin tone)
+🧑🏽‍🤝‍🧑🏻 people holding hands (skin tone)
+🧑🏽‍🤝‍🧑🏼 people holding hands (skin tone)
+🧑🏽‍🤝‍🧑🏽 people holding hands (skin tone)
+🧑🏽‍🤝‍🧑🏾 people holding hands (skin tone)
+🧑🏽‍🤝‍🧑🏿 people holding hands (skin tone)
+🧑🏾‍🤝‍🧑🏻 people holding hands (skin tone)
+🧑🏾‍🤝‍🧑🏼 people holding hands (skin tone)
+🧑🏾‍🤝‍🧑🏽 people holding hands (skin tone)
+🧑🏾‍🤝‍🧑🏾 people holding hands (skin tone)
+🧑🏾‍🤝‍🧑🏿 people holding hands (skin tone)
+🧑🏿‍🤝‍🧑🏻 people holding hands (skin tone)
+🧑🏿‍🤝‍🧑🏼 people holding hands (skin tone)
+🧑🏿‍🤝‍🧑🏽 people holding hands (skin tone)
+🧑🏿‍🤝‍🧑🏾 people holding hands (skin tone)
+🧑🏿‍🤝‍🧑🏿 people holding hands (skin tone)
+🧑‍🦯‍➡️ person with white cane facing right
+🧑🏻‍🦯‍➡️ person with white cane facing right (skin tone)
+🧑🏼‍🦯‍➡️ person with white cane facing right (skin tone)
+🧑🏽‍🦯‍➡️ person with white cane facing right (skin tone)
+🧑🏾‍🦯‍➡️ person with white cane facing right (skin tone)
+🧑🏿‍🦯‍➡️ person with white cane facing right (skin tone)
+🧑‍🦯 person with white cane
+🧑🏻‍🦯 person with white cane (skin tone)
+🧑🏼‍🦯 person with white cane (skin tone)
+🧑🏽‍🦯 person with white cane (skin tone)
+🧑🏾‍🦯 person with white cane (skin tone)
+🧑🏿‍🦯 person with white cane (skin tone)
+🧑‍🦰 person: red hair
+🧑🏻‍🦰 person: red hair (skin tone)
+🧑🏼‍🦰 person: red hair (skin tone)
+🧑🏽‍🦰 person: red hair (skin tone)
+🧑🏾‍🦰 person: red hair (skin tone)
+🧑🏿‍🦰 person: red hair (skin tone)
+🧑‍🦱 person: curly hair
+🧑🏻‍🦱 person: curly hair (skin tone)
+🧑🏼‍🦱 person: curly hair (skin tone)
+🧑🏽‍🦱 person: curly hair (skin tone)
+🧑🏾‍🦱 person: curly hair (skin tone)
+🧑🏿‍🦱 person: curly hair (skin tone)
+🧑‍🦲 person: bald
+🧑🏻‍🦲 person: bald (skin tone)
+🧑🏼‍🦲 person: bald (skin tone)
+🧑🏽‍🦲 person: bald (skin tone)
+🧑🏾‍🦲 person: bald (skin tone)
+🧑🏿‍🦲 person: bald (skin tone)
+🧑‍🦳 person: white hair
+🧑🏻‍🦳 person: white hair (skin tone)
+🧑🏼‍🦳 person: white hair (skin tone)
+🧑🏽‍🦳 person: white hair (skin tone)
+🧑🏾‍🦳 person: white hair (skin tone)
+🧑🏿‍🦳 person: white hair (skin tone)
+🧑‍🦼‍➡️ person in motorized wheelchair facing right
+🧑🏻‍🦼‍➡️ person in motorized wheelchair facing right (skin tone)
+🧑🏼‍🦼‍➡️ person in motorized wheelchair facing right (skin tone)
+🧑🏽‍🦼‍➡️ person in motorized wheelchair facing right (skin tone)
+🧑🏾‍🦼‍➡️ person in motorized wheelchair facing right (skin tone)
+🧑🏿‍🦼‍➡️ person in motorized wheelchair facing right (skin tone)
+🧑‍🦼 person in motorized wheelchair
+🧑🏻‍🦼 person in motorized wheelchair (skin tone)
+🧑🏼‍🦼 person in motorized wheelchair (skin tone)
+🧑🏽‍🦼 person in motorized wheelchair (skin tone)
+🧑🏾‍🦼 person in motorized wheelchair (skin tone)
+🧑🏿‍🦼 person in motorized wheelchair (skin tone)
+🧑‍🦽‍➡️ person in manual wheelchair facing right
+🧑🏻‍🦽‍➡️ person in manual wheelchair facing right (skin tone)
+🧑🏼‍🦽‍➡️ person in manual wheelchair facing right (skin tone)
+🧑🏽‍🦽‍➡️ person in manual wheelchair facing right (skin tone)
+🧑🏾‍🦽‍➡️ person in manual wheelchair facing right (skin tone)
+🧑🏿‍🦽‍➡️ person in manual wheelchair facing right (skin tone)
+🧑‍🦽 person in manual wheelchair
+🧑🏻‍🦽 person in manual wheelchair (skin tone)
+🧑🏼‍🦽 person in manual wheelchair (skin tone)
+🧑🏽‍🦽 person in manual wheelchair (skin tone)
+🧑🏾‍🦽 person in manual wheelchair (skin tone)
+🧑🏿‍🦽 person in manual wheelchair (skin tone)
+🧑‍🧑‍🧒 family: adult, adult, child
+🧑‍🧑‍🧒‍🧒 family: adult, adult, child, child
+🧑‍🧒‍🧒 family: adult, child, child
+🧑‍🧒 family: adult, child
+🧑‍⚕️ health worker
+🧑🏻‍⚕️ health worker (skin tone)
+🧑🏼‍⚕️ health worker (skin tone)
+🧑🏽‍⚕️ health worker (skin tone)
+🧑🏾‍⚕️ health worker (skin tone)
+🧑🏿‍⚕️ health worker (skin tone)
+🧑‍⚖️ judge
+🧑🏻‍⚖️ judge (skin tone)
+🧑🏼‍⚖️ judge (skin tone)
+🧑🏽‍⚖️ judge (skin tone)
+🧑🏾‍⚖️ judge (skin tone)
+🧑🏿‍⚖️ judge (skin tone)
+🧑‍✈️ pilot
+🧑🏻‍✈️ pilot (skin tone)
+🧑🏼‍✈️ pilot (skin tone)
+🧑🏽‍✈️ pilot (skin tone)
+🧑🏾‍✈️ pilot (skin tone)
+🧑🏿‍✈️ pilot (skin tone)
+🧑 adult
+🧑🏻 adult (skin tone)
+🧑🏼 adult (skin tone)
+🧑🏽 adult (skin tone)
+🧑🏾 adult (skin tone)
+🧑🏿 adult (skin tone)
+🧒 child
+🧒🏻 child (skin tone)
+🧒🏼 child (skin tone)
+🧒🏽 child (skin tone)
+🧒🏾 child (skin tone)
+🧒🏿 child (skin tone)
+🧓 older adult
+🧓🏻 older adult (skin tone)
+🧓🏼 older adult (skin tone)
+🧓🏽 older adult (skin tone)
+🧓🏾 older adult (skin tone)
+🧓🏿 older adult (skin tone)
+🧔‍♀️ woman: beard
+🧔🏻‍♀️ woman: beard (skin tone)
+🧔🏼‍♀️ woman: beard (skin tone)
+🧔🏽‍♀️ woman: beard (skin tone)
+🧔🏾‍♀️ woman: beard (skin tone)
+🧔🏿‍♀️ woman: beard (skin tone)
+🧔‍♂️ man: beard
+🧔🏻‍♂️ man: beard (skin tone)
+🧔🏼‍♂️ man: beard (skin tone)
+🧔🏽‍♂️ man: beard (skin tone)
+🧔🏾‍♂️ man: beard (skin tone)
+🧔🏿‍♂️ man: beard (skin tone)
+🧔 bearded person
+🧔🏻 bearded person (skin tone)
+🧔🏼 bearded person (skin tone)
+🧔🏽 bearded person (skin tone)
+🧔🏾 bearded person (skin tone)
+🧔🏿 bearded person (skin tone)
+🧕 person with headscarf
+🧕🏻 person with headscarf (skin tone)
+🧕🏼 person with headscarf (skin tone)
+🧕🏽 person with headscarf (skin tone)
+🧕🏾 person with headscarf (skin tone)
+🧕🏿 person with headscarf (skin tone)
+🧖‍♀️ woman in steamy room
+🧖🏻‍♀️ woman in steamy room (skin tone)
+🧖🏼‍♀️ woman in steamy room (skin tone)
+🧖🏽‍♀️ woman in steamy room (skin tone)
+🧖🏾‍♀️ woman in steamy room (skin tone)
+🧖🏿‍♀️ woman in steamy room (skin tone)
+🧖‍♂️ man in steamy room
+🧖🏻‍♂️ man in steamy room (skin tone)
+🧖🏼‍♂️ man in steamy room (skin tone)
+🧖🏽‍♂️ man in steamy room (skin tone)
+🧖🏾‍♂️ man in steamy room (skin tone)
+🧖🏿‍♂️ man in steamy room (skin tone)
+🧖 person in steamy room
+🧖🏻 person in steamy room (skin tone)
+🧖🏼 person in steamy room (skin tone)
+🧖🏽 person in steamy room (skin tone)
+🧖🏾 person in steamy room (skin tone)
+🧖🏿 person in steamy room (skin tone)
+🧗‍♀️ woman climbing
+🧗🏻‍♀️ woman climbing (skin tone)
+🧗🏼‍♀️ woman climbing (skin tone)
+🧗🏽‍♀️ woman climbing (skin tone)
+🧗🏾‍♀️ woman climbing (skin tone)
+🧗🏿‍♀️ woman climbing (skin tone)
+🧗‍♂️ man climbing
+🧗🏻‍♂️ man climbing (skin tone)
+🧗🏼‍♂️ man climbing (skin tone)
+🧗🏽‍♂️ man climbing (skin tone)
+🧗🏾‍♂️ man climbing (skin tone)
+🧗🏿‍♂️ man climbing (skin tone)
+🧗 person climbing
+🧗🏻 person climbing (skin tone)
+🧗🏼 person climbing (skin tone)
+🧗🏽 person climbing (skin tone)
+🧗🏾 person climbing (skin tone)
+🧗🏿 person climbing (skin tone)
+🧘‍♀️ woman in lotus position
+🧘🏻‍♀️ woman in lotus position (skin tone)
+🧘🏼‍♀️ woman in lotus position (skin tone)
+🧘🏽‍♀️ woman in lotus position (skin tone)
+🧘🏾‍♀️ woman in lotus position (skin tone)
+🧘🏿‍♀️ woman in lotus position (skin tone)
+🧘‍♂️ man in lotus position
+🧘🏻‍♂️ man in lotus position (skin tone)
+🧘🏼‍♂️ man in lotus position (skin tone)
+🧘🏽‍♂️ man in lotus position (skin tone)
+🧘🏾‍♂️ man in lotus position (skin tone)
+🧘🏿‍♂️ man in lotus position (skin tone)
+🧘 person in lotus position
+🧘🏻 person in lotus position (skin tone)
+🧘🏼 person in lotus position (skin tone)
+🧘🏽 person in lotus position (skin tone)
+🧘🏾 person in lotus position (skin tone)
+🧘🏿 person in lotus position (skin tone)
+🧙‍♀️ woman mage
+🧙🏻‍♀️ woman mage (skin tone)
+🧙🏼‍♀️ woman mage (skin tone)
+🧙🏽‍♀️ woman mage (skin tone)
+🧙🏾‍♀️ woman mage (skin tone)
+🧙🏿‍♀️ woman mage (skin tone)
+🧙‍♂️ man mage
+🧙🏻‍♂️ man mage (skin tone)
+🧙🏼‍♂️ man mage (skin tone)
+🧙🏽‍♂️ man mage (skin tone)
+🧙🏾‍♂️ man mage (skin tone)
+🧙🏿‍♂️ man mage (skin tone)
+🧙 mage
+🧙🏻 mage (skin tone)
+🧙🏼 mage (skin tone)
+🧙🏽 mage (skin tone)
+🧙🏾 mage (skin tone)
+🧙🏿 mage (skin tone)
+🧚‍♀️ woman fairy
+🧚🏻‍♀️ woman fairy (skin tone)
+🧚🏼‍♀️ woman fairy (skin tone)
+🧚🏽‍♀️ woman fairy (skin tone)
+🧚🏾‍♀️ woman fairy (skin tone)
+🧚🏿‍♀️ woman fairy (skin tone)
+🧚‍♂️ man fairy
+🧚🏻‍♂️ man fairy (skin tone)
+🧚🏼‍♂️ man fairy (skin tone)
+🧚🏽‍♂️ man fairy (skin tone)
+🧚🏾‍♂️ man fairy (skin tone)
+🧚🏿‍♂️ man fairy (skin tone)
+🧚 fairy
+🧚🏻 fairy (skin tone)
+🧚🏼 fairy (skin tone)
+🧚🏽 fairy (skin tone)
+🧚🏾 fairy (skin tone)
+🧚🏿 fairy (skin tone)
+🧛‍♀️ woman vampire
+🧛🏻‍♀️ woman vampire (skin tone)
+🧛🏼‍♀️ woman vampire (skin tone)
+🧛🏽‍♀️ woman vampire (skin tone)
+🧛🏾‍♀️ woman vampire (skin tone)
+🧛🏿‍♀️ woman vampire (skin tone)
+🧛‍♂️ man vampire
+🧛🏻‍♂️ man vampire (skin tone)
+🧛🏼‍♂️ man vampire (skin tone)
+🧛🏽‍♂️ man vampire (skin tone)
+🧛🏾‍♂️ man vampire (skin tone)
+🧛🏿‍♂️ man vampire (skin tone)
+🧛 vampire
+🧛🏻 vampire (skin tone)
+🧛🏼 vampire (skin tone)
+🧛🏽 vampire (skin tone)
+🧛🏾 vampire (skin tone)
+🧛🏿 vampire (skin tone)
+🧜‍♀️ mermaid
+🧜🏻‍♀️ mermaid (skin tone)
+🧜🏼‍♀️ mermaid (skin tone)
+🧜🏽‍♀️ mermaid (skin tone)
+🧜🏾‍♀️ mermaid (skin tone)
+🧜🏿‍♀️ mermaid (skin tone)
+🧜‍♂️ merman
+🧜🏻‍♂️ merman (skin tone)
+🧜🏼‍♂️ merman (skin tone)
+🧜🏽‍♂️ merman (skin tone)
+🧜🏾‍♂️ merman (skin tone)
+🧜🏿‍♂️ merman (skin tone)
+🧜 merperson
+🧜🏻 merperson (skin tone)
+🧜🏼 merperson (skin tone)
+🧜🏽 merperson (skin tone)
+🧜🏾 merperson (skin tone)
+🧜🏿 merperson (skin tone)
+🧝‍♀️ woman elf
+🧝🏻‍♀️ woman elf (skin tone)
+🧝🏼‍♀️ woman elf (skin tone)
+🧝🏽‍♀️ woman elf (skin tone)
+🧝🏾‍♀️ woman elf (skin tone)
+🧝🏿‍♀️ woman elf (skin tone)
+🧝‍♂️ man elf
+🧝🏻‍♂️ man elf (skin tone)
+🧝🏼‍♂️ man elf (skin tone)
+🧝🏽‍♂️ man elf (skin tone)
+🧝🏾‍♂️ man elf (skin tone)
+🧝🏿‍♂️ man elf (skin tone)
+🧝 elf
+🧝🏻 elf (skin tone)
+🧝🏼 elf (skin tone)
+🧝🏽 elf (skin tone)
+🧝🏾 elf (skin tone)
+🧝🏿 elf (skin tone)
+🧞‍♀️ woman genie
+🧞‍♂️ man genie
+🧞 genie
+🧟‍♀️ woman zombie
+🧟‍♂️ man zombie
+🧟 zombie
+🧠 brain
+🧡 orange heart
+🧢 billed cap
+🧣 scarf
+🧤 gloves
+🧥 coat
+🧦 socks
+🧧 red gift envelope
+🧨 firecracker
+🧩 jigsaw puzzle piece
+🧪 test tube
+🧫 petri dish
+🧬 dna double helix
+🧭 compass
+🧮 abacus
+🧯 fire extinguisher
+🧰 toolbox
+🧱 brick
+🧲 magnet
+🧳 luggage
+🧴 lotion bottle
+🧵 spool of thread
+🧶 ball of yarn
+🧷 safety pin
+🧸 teddy bear
+🧹 broom
+🧺 basket
+🧻 roll of paper
+🧼 bar of soap
+🧽 sponge
+🧾 receipt
+🧿 nazar amulet
+🩰 ballet shoes
+🩱 one-piece swimsuit
+🩲 briefs
+🩳 shorts
+🩴 thong sandal
+🩵 light blue heart
+🩶 grey heart
+🩷 pink heart
+🩸 drop of blood
+🩹 adhesive bandage
+🩺 stethoscope
+🩻 x-ray
+🩼 crutch
+🪀 yo-yo
+🪁 kite
+🪂 parachute
+🪃 boomerang
+🪄 magic wand
+🪅 pinata
+🪆 nesting dolls
+🪇 maracas
+🪈 flute
+🪐 ringed planet
+🪑 chair
+🪒 razor
+🪓 axe
+🪔 diya lamp
+🪕 banjo
+🪖 military helmet
+🪗 accordion
+🪘 long drum
+🪙 coin
+🪚 carpentry saw
+🪛 screwdriver
+🪜 ladder
+🪝 hook
+🪞 mirror
+🪟 window
+🪠 plunger
+🪡 sewing needle
+🪢 knot
+🪣 bucket
+🪤 mouse trap
+🪥 toothbrush
+🪦 headstone
+🪧 placard
+🪨 rock
+🪩 mirror ball
+🪪 identification card
+🪫 low battery
+🪬 hamsa
+🪭 folding hand fan
+🪮 hair pick
+🪯 khanda
+🪰 fly
+🪱 worm
+🪲 beetle
+🪳 cockroach
+🪴 potted plant
+🪵 wood
+🪶 feather
+🪷 lotus
+🪸 coral
+🪹 empty nest
+🪺 nest with eggs
+🪻 hyacinth
+🪼 jellyfish
+🪽 wing
+🪿 goose
+🫀 anatomical heart
+🫁 lungs
+🫂 people hugging
+🫅 person with crown
+🫅🏻 person with crown (skin tone)
+🫅🏼 person with crown (skin tone)
+🫅🏽 person with crown (skin tone)
+🫅🏾 person with crown (skin tone)
+🫅🏿 person with crown (skin tone)
+🫎 moose
+🫏 donkey
+🫐 blueberries
+🫑 bell pepper
+🫒 olive
+🫓 flatbread
+🫔 tamale
+🫕 fondue
+🫖 teapot
+🫗 pouring liquid
+🫘 beans
+🫙 jar
+🫚 ginger root
+🫛 pea pod
+🫠 melting face
+🫡 saluting face
+🫢 face with open eyes and hand over mouth
+🫣 face with peeking eye
+🫤 face with diagonal mouth
+🫥 dotted line face
+🫦 biting lip
+🫧 bubbles
+🫨 shaking face
+🫰 hand with index finger and thumb crossed
+🫰🏻 hand with index finger and thumb crossed (skin tone)
+🫰🏼 hand with index finger and thumb crossed (skin tone)
+🫰🏽 hand with index finger and thumb crossed (skin tone)
+🫰🏾 hand with index finger and thumb crossed (skin tone)
+🫰🏿 hand with index finger and thumb crossed (skin tone)
+🫱 rightwards hand
+🫱🏻 rightwards hand (skin tone)
+🫱🏼 rightwards hand (skin tone)
+🫱🏽 rightwards hand (skin tone)
+🫱🏾 rightwards hand (skin tone)
+🫱🏿 rightwards hand (skin tone)
+🫲 leftwards hand
+🫲🏻 leftwards hand (skin tone)
+🫲🏼 leftwards hand (skin tone)
+🫲🏽 leftwards hand (skin tone)
+🫲🏾 leftwards hand (skin tone)
+🫲🏿 leftwards hand (skin tone)
+🫳 palm down hand
+🫳🏻 palm down hand (skin tone)
+🫳🏼 palm down hand (skin tone)
+🫳🏽 palm down hand (skin tone)
+🫳🏾 palm down hand (skin tone)
+🫳🏿 palm down hand (skin tone)
+🫴 palm up hand
+🫴🏻 palm up hand (skin tone)
+🫴🏼 palm up hand (skin tone)
+🫴🏽 palm up hand (skin tone)
+🫴🏾 palm up hand (skin tone)
+🫴🏿 palm up hand (skin tone)
+🫵 index pointing at the viewer
+🫵🏻 index pointing at the viewer (skin tone)
+🫵🏼 index pointing at the viewer (skin tone)
+🫵🏽 index pointing at the viewer (skin tone)
+🫵🏾 index pointing at the viewer (skin tone)
+🫵🏿 index pointing at the viewer (skin tone)
+🫶 heart hands
+🫶🏻 heart hands (skin tone)
+🫶🏼 heart hands (skin tone)
+🫶🏽 heart hands (skin tone)
+🫶🏾 heart hands (skin tone)
+🫶🏿 heart hands (skin tone)
+🫷 leftwards pushing hand
+🫷🏻 leftwards pushing hand (skin tone)
+🫷🏼 leftwards pushing hand (skin tone)
+🫷🏽 leftwards pushing hand (skin tone)
+🫷🏾 leftwards pushing hand (skin tone)
+🫷🏿 leftwards pushing hand (skin tone)
+🫸 rightwards pushing hand
+🫸🏻 rightwards pushing hand (skin tone)
+🫸🏼 rightwards pushing hand (skin tone)
+🫸🏽 rightwards pushing hand (skin tone)
+🫸🏾 rightwards pushing hand (skin tone)
+🫸🏿 rightwards pushing hand (skin tone)
+‼️ double exclamation mark
+⁉️ exclamation question mark
+™️ trade mark sign
+ℹ️ information source
+↔️ left right arrow
+↕️ up down arrow
+↖️ north west arrow
+↗️ north east arrow
+↘️ south east arrow
+↙️ south west arrow
+↩️ leftwards arrow with hook
+↪️ rightwards arrow with hook
+⌚ watch
+⌛ hourglass
+⌨️ keyboard
+⏏️ eject button
+⏩ black right-pointing double triangle
+⏪ black left-pointing double triangle
+⏫ black up-pointing double triangle
+⏬ black down-pointing double triangle
+⏭️ next track button
+⏮️ last track button
+⏯️ play or pause button
+⏰ alarm clock
+⏱️ stopwatch
+⏲️ timer clock
+⏳ hourglass with flowing sand
+⏸️ pause button
+⏹️ stop button
+⏺️ record button
+Ⓜ️ circled latin capital letter m
+▪️ black small square
+▫️ white small square
+▶️ black right-pointing triangle
+◀️ black left-pointing triangle
+◻️ white medium square
+◼️ black medium square
+◽ white medium small square
+◾ black medium small square
+☀️ black sun with rays
+☁️ cloud
+☂️ umbrella
+☃️ snowman
+☄️ comet
+☎️ black telephone
+☑️ ballot box with check
+☔ umbrella with rain drops
+☕ hot beverage
+☘️ shamrock
+☝️ white up pointing index
+☝🏻 white up pointing index (skin tone)
+☝🏼 white up pointing index (skin tone)
+☝🏽 white up pointing index (skin tone)
+☝🏾 white up pointing index (skin tone)
+☝🏿 white up pointing index (skin tone)
+☠️ skull and crossbones
+☢️ radioactive
+☣️ biohazard
+☦️ orthodox cross
+☪️ star and crescent
+☮️ peace symbol
+☯️ yin yang
+☸️ wheel of dharma
+☹️ frowning face
+☺️ white smiling face
+♀️ female sign
+♂️ male sign
+♈ aries
+♉ taurus
+♊ gemini
+♋ cancer
+♌ leo
+♍ virgo
+♎ libra
+♏ scorpius
+♐ sagittarius
+♑ capricorn
+♒ aquarius
+♓ pisces
+♟️ chess pawn
+♠️ black spade suit
+♣️ black club suit
+♥️ black heart suit
+♦️ black diamond suit
+♨️ hot springs
+♻️ black universal recycling symbol
+♾️ infinity
+♿ wheelchair symbol
+⚒️ hammer and pick
+⚓ anchor
+⚔️ crossed swords
+⚕️ medical symbol
+⚖️ balance scale
+⚗️ alembic
+⚙️ gear
+⚛️ atom symbol
+⚜️ fleur-de-lis
+⚠️ warning sign
+⚡ high voltage sign
+⚧️ transgender symbol
+⚪ medium white circle
+⚫ medium black circle
+⚰️ coffin
+⚱️ funeral urn
+⚽ soccer ball
+⚾ baseball
+⛄ snowman without snow
+⛅ sun behind cloud
+⛈️ cloud with lightning and rain
+⛎ ophiuchus
+⛏️ pick
+⛑️ rescue worker’s helmet
+⛓️‍💥 broken chain
+⛓️ chains
+⛔ no entry
+⛩️ shinto shrine
+⛪ church
+⛰️ mountain
+⛱️ umbrella on ground
+⛲ fountain
+⛳ flag in hole
+⛴️ ferry
+⛵ sailboat
+⛷️ skier
+⛸️ ice skate
+⛹️‍♀️ woman bouncing ball
+⛹🏻‍♀️ woman bouncing ball (skin tone)
+⛹🏼‍♀️ woman bouncing ball (skin tone)
+⛹🏽‍♀️ woman bouncing ball (skin tone)
+⛹🏾‍♀️ woman bouncing ball (skin tone)
+⛹🏿‍♀️ woman bouncing ball (skin tone)
+⛹️‍♂️ man bouncing ball
+⛹🏻‍♂️ man bouncing ball (skin tone)
+⛹🏼‍♂️ man bouncing ball (skin tone)
+⛹🏽‍♂️ man bouncing ball (skin tone)
+⛹🏾‍♂️ man bouncing ball (skin tone)
+⛹🏿‍♂️ man bouncing ball (skin tone)
+⛹️ person bouncing ball
+⛹🏻 person bouncing ball (skin tone)
+⛹🏼 person bouncing ball (skin tone)
+⛹🏽 person bouncing ball (skin tone)
+⛹🏾 person bouncing ball (skin tone)
+⛹🏿 person bouncing ball (skin tone)
+⛺ tent
+⛽ fuel pump
+✂️ black scissors
+✅ white heavy check mark
+✈️ airplane
+✉️ envelope
+✊ raised fist
+✊🏻 raised fist (skin tone)
+✊🏼 raised fist (skin tone)
+✊🏽 raised fist (skin tone)
+✊🏾 raised fist (skin tone)
+✊🏿 raised fist (skin tone)
+✋ raised hand
+✋🏻 raised hand (skin tone)
+✋🏼 raised hand (skin tone)
+✋🏽 raised hand (skin tone)
+✋🏾 raised hand (skin tone)
+✋🏿 raised hand (skin tone)
+✌️ victory hand
+✌🏻 victory hand (skin tone)
+✌🏼 victory hand (skin tone)
+✌🏽 victory hand (skin tone)
+✌🏾 victory hand (skin tone)
+✌🏿 victory hand (skin tone)
+✍️ writing hand
+✍🏻 writing hand (skin tone)
+✍🏼 writing hand (skin tone)
+✍🏽 writing hand (skin tone)
+✍🏾 writing hand (skin tone)
+✍🏿 writing hand (skin tone)
+✏️ pencil
+✒️ black nib
+✔️ heavy check mark
+✖️ heavy multiplication x
+✝️ latin cross
+✡️ star of david
+✨ sparkles
+✳️ eight spoked asterisk
+✴️ eight pointed black star
+❄️ snowflake
+❇️ sparkle
+❌ cross mark
+❎ negative squared cross mark
+❓ black question mark ornament
+❔ white question mark ornament
+❕ white exclamation mark ornament
+❗ heavy exclamation mark symbol
+❣️ heart exclamation
+❤️‍🔥 heart on fire
+❤️‍🩹 mending heart
+❤️ heavy black heart
+➕ heavy plus sign
+➖ heavy minus sign
+➗ heavy division sign
+➡️ black rightwards arrow
+➰ curly loop
+➿ double curly loop
+⤴️ arrow pointing rightwards then curving upwards
+⤵️ arrow pointing rightwards then curving downwards
+⬅️ leftwards black arrow
+⬆️ upwards black arrow
+⬇️ downwards black arrow
+⬛ black large square
+⬜ white large square
+⭐ white medium star
+⭕ heavy large circle
+〰️ wavy dash
+〽️ part alternation mark
+㊗️ circled ideograph congratulation
+㊙️ circled ideograph secret

@@ -3,11 +3,12 @@
 En liten, avhengighetsfri Win32 emoji-velger.
 
 - `Alt+E` åpner velgeren på skjermen til det aktive vinduet.
-- Skriv for å filtrere på emoji-navn og nøkkelord (substring/fuzzy subsekvens).
+- Skriv for å filtrere på emoji-navn og nøkkelord (substring-søk).
 - `Enter` kopierer valgt emoji til utklippstavlen og lukker vinduet.
 - `Esc` lukker vinduet.
 - Tidligere valg vises først og lagres i `%LOCALAPPDATA%\WinMoji\history.txt`.
 - Ikonet i systemstatusfeltet åpner velgeren ved venstreklikk og har `Exit` ved høyreklikk.
+- Emoji-katalogen leses fra UTF-8-filen `emojis.txt` ved siden av programfilen.
 
 Bygg på Windows med enten Visual Studio eller CMake:
 

@@ -32,43 +32,9 @@ constexpr COLORREF kText = RGB(235, 235, 235);
 constexpr COLORREF kSelected = RGB(38, 79, 120);
 
 struct Emoji {
-    const wchar_t* glyph;
-    const wchar_t* name;
-    const wchar_t* keywords;
-};
-
-// Keep this deliberately boring: one built-in table and ordinary Win32 controls.
-constexpr Emoji kEmoji[] = {
-    {L"😀", L"grinning face", L"smile happy"}, {L"😃", L"smiley face", L"happy joy"},
-    {L"😄", L"smile face", L"happy grin"}, {L"😁", L"beaming face", L"happy teeth"},
-    {L"😆", L"laughing face", L"happy lol"}, {L"😅", L"sweat smile", L"nervous"},
-    {L"😂", L"face with tears", L"laugh cry funny"}, {L"🙂", L"slightly smiling face", L"smile"},
-    {L"🙃", L"upside down face", L"silly"}, {L"😉", L"winking face", L"wink"},
-    {L"😊", L"smiling eyes", L"blush happy"}, {L"😍", L"heart eyes", L"love"},
-    {L"😘", L"face blowing kiss", L"love kiss"}, {L"😎", L"sunglasses", L"cool"},
-    {L"🤔", L"thinking face", L"hmm question"}, {L"😢", L"crying face", L"sad tear"},
-    {L"😭", L"loudly crying face", L"sad tears"}, {L"😡", L"angry face", L"mad rage"},
-    {L"👍", L"thumbs up", L"like yes approve"}, {L"👎", L"thumbs down", L"dislike no"},
-    {L"👏", L"clapping hands", L"applause bravo"}, {L"🙏", L"folded hands", L"please thanks pray"},
-    {L"👋", L"waving hand", L"hello goodbye wave"}, {L"🤝", L"handshake", L"deal agree"},
-    {L"💪", L"flexed biceps", L"strong muscle"}, {L"👌", L"ok hand", L"okay perfect"},
-    {L"✌️", L"victory hand", L"peace two"}, {L"🤞", L"crossed fingers", L"luck hope"},
-    {L"🔥", L"fire", L"lit hot flame"}, {L"✨", L"sparkles", L"stars magic"},
-    {L"⭐", L"star", L"favorite"}, {L"❤️", L"red heart", L"love"},
-    {L"💔", L"broken heart", L"sad love"}, {L"💯", L"hundred points", L"perfect score"},
-    {L"✅", L"check mark", L"done yes success"}, {L"❌", L"cross mark", L"no close wrong"},
-    {L"⚠️", L"warning", L"alert caution"}, {L"🎉", L"party popper", L"celebrate congratulations"},
-    {L"🎂", L"birthday cake", L"birthday celebrate"}, {L"🎁", L"wrapped gift", L"present birthday"},
-    {L"🚀", L"rocket", L"launch ship fast"}, {L"💡", L"light bulb", L"idea tip"},
-    {L"📌", L"pushpin", L"pin important"}, {L"📎", L"paperclip", L"attachment"},
-    {L"📅", L"calendar", L"date schedule"}, {L"💻", L"laptop", L"computer code"},
-    {L"🐶", L"dog", L"puppy pet"}, {L"🐱", L"cat", L"kitten pet"},
-    {L"🐼", L"panda", L"animal bear"}, {L"🦊", L"fox", L"animal"},
-    {L"🍕", L"pizza", L"food"}, {L"🍔", L"hamburger", L"food burger"},
-    {L"☕", L"hot beverage", L"coffee tea"}, {L"🍺", L"beer mug", L"drink cheers"},
-    {L"🌍", L"globe", L"world earth"}, {L"☀️", L"sun", L"weather sunny"},
-    {L"🌈", L"rainbow", L"weather color"}, {L"🎵", L"musical note", L"music sound"},
-    {L"✅", L"check", L"success done"}, {L"➡️", L"right arrow", L"next forward"},
+    std::wstring glyph;
+    std::wstring name;
+    std::wstring keywords;
 };
 
 HWND g_window{};
@@ -78,9 +44,11 @@ WNDPROC g_editProc{};
 WNDPROC g_listProc{};
 HBRUSH g_backgroundBrush{};
 HBRUSH g_inputBrush{};
+HFONT g_emojiFont{};
 NOTIFYICONDATAW g_tray{};
 std::vector<const Emoji*> g_visible;
 std::vector<std::wstring> g_history;
+std::vector<Emoji> g_emojis;
 
 std::wstring Lower(std::wstring text) {
     std::transform(text.begin(), text.end(), text.begin(), [](wchar_t c) {
@@ -89,16 +57,46 @@ std::wstring Lower(std::wstring text) {
     return text;
 }
 
-bool IsSubsequence(const std::wstring& needle, const std::wstring& haystack) {
-    size_t at = 0;
-    for (wchar_t c : haystack) if (at < needle.size() && c == needle[at]) ++at;
-    return at == needle.size();
-}
-
 bool Matches(const Emoji& emoji, const std::wstring& query) {
     if (query.empty()) return true;
-    const auto text = Lower(std::wstring(emoji.name) + L" " + emoji.keywords);
-    return text.find(query) != std::wstring::npos || IsSubsequence(query, text);
+    const auto text = Lower(emoji.name + L" " + emoji.keywords);
+    return text.find(query) != std::wstring::npos;
+}
+
+std::wstring EmojiCatalogPath() {
+    wchar_t path[MAX_PATH]{};
+    GetModuleFileNameW(nullptr, path, static_cast<DWORD>(std::size(path)));
+    std::wstring executable(path);
+    const size_t slash = executable.find_last_of(L"\\/");
+    return (slash == std::wstring::npos ? L"" : executable.substr(0, slash + 1)) + L"emojis.txt";
+}
+
+std::wstring Utf8ToWide(const std::string& value) {
+    if (value.empty()) return L"";
+    const int length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(),
+                                           static_cast<int>(value.size()), nullptr, 0);
+    if (!length) return L"";
+    std::wstring result(length, L'\0');
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(), static_cast<int>(value.size()),
+                        result.data(), length);
+    return result;
+}
+
+bool LoadEmojis() {
+    const std::wstring path = EmojiCatalogPath();
+    std::ifstream file(path.c_str(), std::ios::binary);
+    std::string line;
+    while (std::getline(file, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        const size_t split = line.find_first_of(" \t");
+        if (split == std::string::npos) continue;
+        const size_t nameStart = line.find_first_not_of(" \t", split);
+        if (nameStart == std::string::npos) continue;
+        const std::wstring glyph = Utf8ToWide(line.substr(0, split));
+        const std::wstring name = Utf8ToWide(line.substr(nameStart));
+        if (!glyph.empty() && !name.empty()) g_emojis.push_back({glyph, name, name});
+    }
+    return !g_emojis.empty();
 }
 
 std::wstring HistoryPath() {
@@ -143,7 +141,7 @@ void RefreshList() {
     // Empty searches lead with recently copied emoji; filtered results preserve table order.
     if (query.empty()) {
         for (const auto& recent : g_history) {
-            for (const auto& emoji : kEmoji) {
+            for (const auto& emoji : g_emojis) {
                 if (recent == emoji.glyph && added.insert(recent).second) {
                     g_visible.push_back(&emoji);
                     break;
@@ -151,7 +149,7 @@ void RefreshList() {
             }
         }
     }
-    for (const auto& emoji : kEmoji) {
+    for (const auto& emoji : g_emojis) {
         if (Matches(emoji, query) && added.insert(emoji.glyph).second) g_visible.push_back(&emoji);
     }
     for (const Emoji* emoji : g_visible) {
@@ -306,10 +304,17 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         SetBkMode(item->hDC, TRANSPARENT);
         SetTextColor(item->hDC, kText);
         const Emoji& emoji = *g_visible[item->itemID];
-        const std::wstring row = std::wstring(emoji.glyph) + L"    " + emoji.name;
+        RECT glyph = item->rcItem;
+        glyph.left += 10;
+        glyph.right = glyph.left + 30;
+        const HFONT previous = static_cast<HFONT>(SelectObject(item->hDC, g_emojiFont));
+        DrawTextW(item->hDC, emoji.glyph.c_str(), -1, &glyph, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+        SelectObject(item->hDC, previous);
+
         RECT text = item->rcItem;
-        text.left += 10;
-        DrawTextW(item->hDC, row.c_str(), -1, &text, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+        text.left += 50;
+        text.right -= 10;
+        DrawTextW(item->hDC, emoji.name.c_str(), -1, &text, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
         if (item->itemState & ODS_FOCUS) DrawFocusRect(item->hDC, &item->rcItem);
         return TRUE;
     }
@@ -363,6 +368,10 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
 } // namespace
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
+    if (!LoadEmojis()) {
+        MessageBoxW(nullptr, L"Kunne ikke lese emojis.txt ved siden av WinMoji.exe.", L"WinMoji", MB_ICONERROR);
+        return 1;
+    }
     LoadHistory();
     WNDCLASSW wc{};
     wc.hInstance = instance;
@@ -371,6 +380,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     g_backgroundBrush = CreateSolidBrush(kBackground);
     g_inputBrush = CreateSolidBrush(kInputBackground);
+    // Windows' color emoji font; only the glyph column uses it, not the labels.
+    g_emojiFont = CreateFontW(-22, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                              CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI Emoji");
     wc.hbrBackground = g_backgroundBrush;
     if (!RegisterClassW(&wc)) return 1;
 
@@ -387,6 +400,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
         TranslateMessage(&message);
         DispatchMessageW(&message);
     }
+    DeleteObject(g_emojiFont);
     DeleteObject(g_inputBrush);
     DeleteObject(g_backgroundBrush);
     return static_cast<int>(message.wParam);
