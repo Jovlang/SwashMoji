@@ -20,13 +20,14 @@
 
 namespace {
 
-constexpr wchar_t kClassName[] = L"WinMojiPicker";
+constexpr wchar_t kClassName[] = L"EmoPickerWindow";
 constexpr UINT kHotkeyId = 1;
 constexpr int kPickerWidth = 500;
 constexpr int kPickerHeight = 390;
 constexpr int kEditId = 100;
 constexpr int kListId = 101;
 constexpr int kExitId = 200;
+constexpr int kAppIconId = 101;
 constexpr UINT kTrayMessage = WM_APP + 1;
 constexpr size_t kMaxHistory = 40;
 constexpr COLORREF kBackground = RGB(24, 24, 24);
@@ -52,6 +53,7 @@ WNDPROC g_editProc{};
 WNDPROC g_listProc{};
 HBRUSH g_backgroundBrush{};
 HBRUSH g_inputBrush{};
+HICON g_appIcon{};
 HFONT g_emojiFont{};
 size_t g_emojiFontIndex{};
 std::vector<EmojiFont> g_emojiFonts;
@@ -127,9 +129,15 @@ bool LoadEmojis() {
 std::wstring HistoryPath() {
     wchar_t path[MAX_PATH]{};
     if (FAILED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, path))) return L"history.txt";
-    std::wstring folder = std::wstring(path) + L"\\WinMoji";
+    const std::wstring appData(path);
+    std::wstring folder = appData + L"\\EmoPicker";
     CreateDirectoryW(folder.c_str(), nullptr);
-    return folder + L"\\history.txt";
+    const std::wstring history = folder + L"\\history.txt";
+    if (GetFileAttributesW(history.c_str()) == INVALID_FILE_ATTRIBUTES) {
+        const std::wstring legacyHistory = appData + L"\\WinMoji\\history.txt";
+        CopyFileW(legacyHistory.c_str(), history.c_str(), TRUE);
+    }
+    return history;
 }
 
 void LoadHistory() {
@@ -243,7 +251,7 @@ void SelectEmojiFont(size_t index) {
                                           &g_emojiFormat);
     }
     if (g_window) {
-        const std::wstring title = std::wstring(L"WinMoji — ") + font.name +
+        const std::wstring title = std::wstring(L"EmoPicker — ") + font.name +
                                    (font.color ? L" (color)" : L" (monochrome)");
         SetWindowTextW(g_window, title.c_str());
     }
@@ -349,8 +357,8 @@ void AddTrayIcon(HWND window) {
     g_tray.uID = 1;
     g_tray.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     g_tray.uCallbackMessage = kTrayMessage;
-    g_tray.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
-    lstrcpyW(g_tray.szTip, L"WinMoji — Alt+E");
+    g_tray.hIcon = g_appIcon;
+    lstrcpyW(g_tray.szTip, L"EmoPicker — Alt+E");
     Shell_NotifyIconW(NIM_ADD, &g_tray);
 }
 
@@ -418,11 +426,13 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
     case WM_CREATE: {
         HFONT font = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
         g_edit = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
-                                 0, 0, 0, 0, window, reinterpret_cast<HMENU>(kEditId), nullptr, nullptr);
+                                 0, 0, 0, 0, window,
+                                 reinterpret_cast<HMENU>(static_cast<INT_PTR>(kEditId)), nullptr, nullptr);
         g_list = CreateWindowExW(0, L"LISTBOX", L"",
                                  WS_CHILD | WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT |
                                  LBS_OWNERDRAWFIXED,
-                                 0, 0, 0, 0, window, reinterpret_cast<HMENU>(kListId), nullptr, nullptr);
+                                 0, 0, 0, 0, window,
+                                 reinterpret_cast<HMENU>(static_cast<INT_PTR>(kListId)), nullptr, nullptr);
         SendMessageW(g_edit, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
         SendMessageW(g_list, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
         SetWindowTheme(g_edit, L"DarkMode_Explorer", nullptr);
@@ -516,7 +526,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     if (!LoadEmojis()) {
-        MessageBoxW(nullptr, L"Kunne ikke lese emojis.txt ved siden av WinMoji.exe.", L"WinMoji", MB_ICONERROR);
+        MessageBoxW(nullptr, L"Kunne ikke lese emojis.txt ved siden av EmoPicker.exe.", L"EmoPicker", MB_ICONERROR);
         return 1;
     }
     LoadHistory();
@@ -525,6 +535,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     wc.lpszClassName = kClassName;
     wc.lpfnWndProc = WindowProc;
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    g_appIcon = LoadIconW(instance, MAKEINTRESOURCEW(kAppIconId));
+    wc.hIcon = g_appIcon;
     g_backgroundBrush = CreateSolidBrush(kBackground);
     g_inputBrush = CreateSolidBrush(kInputBackground);
     InitializeColorEmojiDrawing();
@@ -534,12 +546,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     wc.hbrBackground = g_backgroundBrush;
     if (!RegisterClassW(&wc)) return 1;
 
-    g_window = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_TOPMOST, kClassName, L"WinMoji",
+    g_window = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_TOPMOST, kClassName, L"EmoPicker",
                                WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
                                kPickerWidth, kPickerHeight, nullptr, nullptr, instance, nullptr);
     if (!g_window) return 1;
+    SendMessageW(g_window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(g_appIcon));
+    SendMessageW(g_window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(g_appIcon));
     if (!RegisterHotKey(g_window, kHotkeyId, MOD_ALT | MOD_NOREPEAT, 'E')) {
-        MessageBoxW(nullptr, L"Alt+E er allerede i bruk av et annet program.", L"WinMoji", MB_ICONWARNING);
+        MessageBoxW(nullptr, L"Alt+E er allerede i bruk av et annet program.", L"EmoPicker", MB_ICONWARNING);
     }
 
     MSG message;
