@@ -6,6 +6,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - Skriv for å filtrere på emoji-navn og nøkkelord (substring-søk).
 - `Enter` kopierer valgt emoji til utklippstavlen og lukker vinduet.
 - `Esc` lukker vinduet.
+- `Ctrl+F` bytter til neste installerte fargefont eller monokrome emoji-font.
 - Tidligere valg vises først og lagres i `%LOCALAPPDATA%\WinMoji\history.txt`.
 - Ikonet i systemstatusfeltet åpner velgeren ved venstreklikk og har `Exit` ved høyreklikk.
 - Emoji-katalogen leses fra UTF-8-filen `emojis.txt` ved siden av programfilen.

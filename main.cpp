@@ -5,6 +5,9 @@
 #include <shlobj.h>
 #include <shellapi.h>
 #include <uxtheme.h>
+#include <d2d1.h>
+#include <dwrite.h>
+#include <dwrite_3.h>
 
 #include <algorithm>
 #include <cstring>
@@ -37,6 +40,11 @@ struct Emoji {
     std::wstring keywords;
 };
 
+struct EmojiFont {
+    std::wstring name;
+    bool color;
+};
+
 HWND g_window{};
 HWND g_edit{};
 HWND g_list{};
@@ -45,7 +53,13 @@ WNDPROC g_listProc{};
 HBRUSH g_backgroundBrush{};
 HBRUSH g_inputBrush{};
 HFONT g_emojiFont{};
+size_t g_emojiFontIndex{};
+std::vector<EmojiFont> g_emojiFonts;
 NOTIFYICONDATAW g_tray{};
+ID2D1Factory* g_d2dFactory{};
+ID2D1DCRenderTarget* g_d2dTarget{};
+IDWriteFactory3* g_dwriteFactory{};
+IDWriteTextFormat* g_emojiFormat{};
 std::vector<const Emoji*> g_visible;
 std::vector<std::wstring> g_history;
 std::vector<Emoji> g_emojis;
@@ -82,6 +96,17 @@ std::wstring Utf8ToWide(const std::string& value) {
     return result;
 }
 
+std::string WideToUtf8(const std::wstring& value) {
+    if (value.empty()) return "";
+    const int length = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, value.data(),
+                                           static_cast<int>(value.size()), nullptr, 0, nullptr, nullptr);
+    if (!length) return "";
+    std::string result(length, '\0');
+    WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, value.data(), static_cast<int>(value.size()),
+                        result.data(), length, nullptr, nullptr);
+    return result;
+}
+
 bool LoadEmojis() {
     const std::wstring path = EmojiCatalogPath();
     std::ifstream file(path.c_str(), std::ios::binary);
@@ -109,17 +134,19 @@ std::wstring HistoryPath() {
 
 void LoadHistory() {
     const std::wstring path = HistoryPath();
-    std::wifstream file(path.c_str());
-    std::wstring line;
+    std::ifstream file(path.c_str(), std::ios::binary);
+    std::string line;
     while (std::getline(file, line) && g_history.size() < kMaxHistory) {
-        if (!line.empty()) g_history.push_back(line);
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        const std::wstring emoji = Utf8ToWide(line);
+        if (!emoji.empty()) g_history.push_back(emoji);
     }
 }
 
 void SaveHistory() {
     const std::wstring path = HistoryPath();
-    std::wofstream file(path.c_str(), std::ios::trunc);
-    for (const auto& item : g_history) file << item << L'\n';
+    std::ofstream file(path.c_str(), std::ios::binary | std::ios::trunc);
+    for (const auto& item : g_history) file << WideToUtf8(item) << '\n';
 }
 
 void Remember(const wchar_t* glyph) {
@@ -197,6 +224,124 @@ void CenterOnActiveMonitor() {
     SendMessageW(g_edit, EM_SETSEL, 0, -1);
 }
 
+void SelectEmojiFont(size_t index) {
+    if (g_emojiFonts.empty()) return;
+    g_emojiFontIndex = index % g_emojiFonts.size();
+    const EmojiFont& font = g_emojiFonts[g_emojiFontIndex];
+    if (g_emojiFont) DeleteObject(g_emojiFont);
+    g_emojiFont = CreateFontW(-22, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                              CLEARTYPE_QUALITY, DEFAULT_PITCH, font.name.c_str());
+    if (g_emojiFormat) {
+        g_emojiFormat->Release();
+        g_emojiFormat = nullptr;
+    }
+    if (g_dwriteFactory) {
+        g_dwriteFactory->CreateTextFormat(font.name.c_str(), nullptr,
+                                          DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+                                          DWRITE_FONT_STRETCH_NORMAL, 22.0f, L"",
+                                          &g_emojiFormat);
+    }
+    if (g_window) {
+        const std::wstring title = std::wstring(L"WinMoji — ") + font.name +
+                                   (font.color ? L" (color)" : L" (monochrome)");
+        SetWindowTextW(g_window, title.c_str());
+    }
+    if (g_list) InvalidateRect(g_list, nullptr, TRUE);
+}
+
+void CycleEmojiFont() {
+    SelectEmojiFont(g_emojiFontIndex + 1);
+}
+
+void InitializeColorEmojiDrawing() {
+    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &g_d2dFactory))) return;
+    D2D1_RENDER_TARGET_PROPERTIES properties{};
+    properties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    properties.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    if (FAILED(g_d2dFactory->CreateDCRenderTarget(&properties, &g_d2dTarget))) return;
+    if (FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory3),
+                                   reinterpret_cast<IUnknown**>(&g_dwriteFactory)))) return;
+}
+
+void LoadInstalledColorEmojiFonts() {
+    if (!g_dwriteFactory) {
+        g_emojiFonts.push_back({L"Segoe UI Emoji", false});
+        return;
+    }
+    IDWriteFontCollection* collection{};
+    IDWriteFactory* baseFactory = g_dwriteFactory;
+    if (FAILED(baseFactory->GetSystemFontCollection(&collection, FALSE))) return;
+    for (UINT32 i = 0; i < collection->GetFontFamilyCount(); ++i) {
+        IDWriteFontFamily* family{};
+        IDWriteFont* font{};
+        IDWriteFontFace* face{};
+        IDWriteFontFace4* colorFace{};
+        IDWriteLocalizedStrings* names{};
+        if (FAILED(collection->GetFontFamily(i, &family)) ||
+            FAILED(family->GetFirstMatchingFont(DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+                                                DWRITE_FONT_STYLE_NORMAL, &font)) ||
+            FAILED(font->CreateFontFace(&face)) ||
+            FAILED(face->QueryInterface(&colorFace)) || !colorFace->IsColorFont()) {
+            if (colorFace) colorFace->Release();
+            if (face) face->Release();
+            if (font) font->Release();
+            if (family) family->Release();
+            continue;
+        }
+        const BOOL containsGrinningFace = colorFace->HasCharacter(0x1F600);
+        if (containsGrinningFace && SUCCEEDED(family->GetFamilyNames(&names))) {
+            UINT32 locale = 0;
+            BOOL foundLocale = FALSE;
+            names->FindLocaleName(L"en-us", &locale, &foundLocale);
+            if (!foundLocale) locale = 0;
+            UINT32 length = 0;
+            names->GetStringLength(locale, &length);
+            std::wstring name(length + 1, L'\0');
+            names->GetString(locale, name.data(), length + 1);
+            name.resize(length);
+            g_emojiFonts.push_back({name, true});
+            names->Release();
+        }
+        colorFace->Release();
+        face->Release();
+        font->Release();
+        family->Release();
+    }
+    collection->Release();
+    // Keep genuine GDI-style monochrome rendering available after the color choices.
+    g_emojiFonts.push_back({L"Segoe UI Emoji", false});
+    g_emojiFonts.push_back({L"Segoe UI Symbol", false});
+}
+
+void DrawColorEmoji(HDC dc, const RECT& bounds, const std::wstring& glyph) {
+    if (!g_d2dTarget || !g_emojiFormat || FAILED(g_d2dTarget->BindDC(dc, &bounds))) {
+        const HFONT previous = static_cast<HFONT>(SelectObject(dc, g_emojiFont));
+        DrawTextW(dc, glyph.c_str(), -1, const_cast<RECT*>(&bounds),
+                  DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+        SelectObject(dc, previous);
+        return;
+    }
+    g_d2dTarget->BeginDraw();
+    ID2D1SolidColorBrush* brush{};
+    const D2D1_COLOR_F textColor{0.92f, 0.92f, 0.92f, 1.0f};
+    if (SUCCEEDED(g_d2dTarget->CreateSolidColorBrush(textColor, &brush))) {
+        // A DCRenderTarget's coordinate system starts at its current BindDC clip rectangle.
+        const D2D1_RECT_F textBounds{0.0f, 0.0f,
+                                     static_cast<float>(bounds.right - bounds.left),
+                                     static_cast<float>(bounds.bottom - bounds.top)};
+        const auto options = g_emojiFonts[g_emojiFontIndex].color
+                                 ? D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
+                                 : D2D1_DRAW_TEXT_OPTIONS_NONE;
+        g_d2dTarget->DrawTextW(glyph.c_str(), static_cast<UINT32>(glyph.size()), g_emojiFormat,
+                                textBounds, brush, options,
+                                DWRITE_MEASURING_MODE_NATURAL);
+        brush->Release();
+    }
+    g_d2dTarget->EndDraw();
+}
+
 void AddTrayIcon(HWND window) {
     g_tray = {};
     g_tray.cbSize = sizeof(g_tray);
@@ -243,6 +388,10 @@ void MoveSelection(int direction) {
 
 LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lParam) {
     if (message == WM_KEYDOWN) {
+        if (wParam == 'F' && (GetKeyState(VK_CONTROL) & 0x8000)) {
+            CycleEmojiFont();
+            return 0;
+        }
         if (wParam == VK_ESCAPE) {
             ShowWindow(g_window, SW_HIDE);
             return 0;
@@ -307,9 +456,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         RECT glyph = item->rcItem;
         glyph.left += 10;
         glyph.right = glyph.left + 30;
-        const HFONT previous = static_cast<HFONT>(SelectObject(item->hDC, g_emojiFont));
-        DrawTextW(item->hDC, emoji.glyph.c_str(), -1, &glyph, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
-        SelectObject(item->hDC, previous);
+        DrawColorEmoji(item->hDC, glyph, emoji.glyph);
 
         RECT text = item->rcItem;
         text.left += 50;
@@ -380,10 +527,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     g_backgroundBrush = CreateSolidBrush(kBackground);
     g_inputBrush = CreateSolidBrush(kInputBackground);
-    // Windows' color emoji font; only the glyph column uses it, not the labels.
-    g_emojiFont = CreateFontW(-22, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                              CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI Emoji");
+    InitializeColorEmojiDrawing();
+    LoadInstalledColorEmojiFonts();
+    // Only the glyph column uses this font; labels retain the regular UI font.
+    SelectEmojiFont(0);
     wc.hbrBackground = g_backgroundBrush;
     if (!RegisterClassW(&wc)) return 1;
 
@@ -400,6 +547,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
         TranslateMessage(&message);
         DispatchMessageW(&message);
     }
+    if (g_emojiFormat) g_emojiFormat->Release();
+    if (g_dwriteFactory) g_dwriteFactory->Release();
+    if (g_d2dTarget) g_d2dTarget->Release();
+    if (g_d2dFactory) g_d2dFactory->Release();
     DeleteObject(g_emojiFont);
     DeleteObject(g_inputBrush);
     DeleteObject(g_backgroundBrush);

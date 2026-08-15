@@ -8,7 +8,7 @@ endif()
 add_executable(WinMoji WIN32 main.cpp)
 target_compile_features(WinMoji PRIVATE cxx_std_17)
 target_compile_definitions(WinMoji PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(WinMoji PRIVATE user32 shell32 uxtheme)
+target_link_libraries(WinMoji PRIVATE user32 shell32 uxtheme d2d1 dwrite)
 
 # Keep the searchable emoji catalog next to the executable.
 configure_file(emojis.txt emojis.txt COPYONLY)
