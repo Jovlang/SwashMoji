@@ -1,0 +1,6 @@
+# CMake/Ninja build output
+build*/
+
+# Local editor state
+.vs/
+.vscode/
