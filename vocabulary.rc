@@ -1,0 +1,24 @@
+#include <windows.h>
+#include "vocabulary_ids.h"
+
+IDD_VOCABULARY DIALOGEX 0, 0, 450, 316
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "My vocabulary - SwashMoji"
+FONT 10, "Segoe UI"
+BEGIN
+    LTEXT "Your phrases stay on this PC. Save a phrase to find its emoji first.", -1, 12, 10, 426, 16
+    LTEXT "Saved &aliases", -1, 12, 34, 148, 12
+    LISTBOX IDC_ALIASES, 12, 49, 148, 210, LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON "&New", IDC_NEW_ALIAS, 12, 266, 68, 20
+    PUSHBUTTON "&Delete", IDC_DELETE_ALIAS, 88, 266, 72, 20
+    LTEXT "&Phrase", -1, 174, 34, 264, 12
+    EDITTEXT IDC_PHRASE, 174, 49, 264, 22, ES_AUTOHSCROLL
+    LTEXT "Find an &emoji (English or Norwegian)", -1, 174, 80, 264, 12
+    EDITTEXT IDC_TARGET_QUERY, 174, 95, 264, 22, ES_AUTOHSCROLL
+    LTEXT "&Matching emoji (choose one)", -1, 174, 121, 264, 12
+    LISTBOX IDC_TARGET_RESULTS, 174, 136, 264, 89, LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    LTEXT "Choose an emoji above.", IDC_TARGET_PREVIEW, 174, 233, 264, 26
+    PUSHBUTTON "&Save alias", IDC_SAVE_ALIAS, 174, 266, 90, 20
+    PUSHBUTTON "&Close", IDCANCEL, 348, 266, 90, 20
+    LTEXT "", IDC_VOCABULARY_STATUS, 12, 294, 426, 16
+END

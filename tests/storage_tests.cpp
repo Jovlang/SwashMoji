@@ -38,6 +38,8 @@ void Codec() {
     profile.settings = {true, true, 3, 5};
     Remember(profile, L"👍🏽");
     Remember(profile, L"🚀\t\\\n\r✨");
+    profile.aliases[L"på vei"] = {L"PÅ\tvei", {ResultKind::Emoji, L"🚶"}};
+    profile.aliases[L"future combo"] = {L"future combo", {ResultKind::Combination, L"reserved-42"}};
     const auto bytes = EncodeProfile(profile);
     auto decoded = DecodeProfile(bytes);
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 0);
@@ -48,8 +50,9 @@ void Codec() {
     CHECK(decoded.profile.settings.emojiRows == 3 && decoded.profile.settings.skinTone == 5);
     CHECK(EncodeProfile(decoded.profile) == bytes);
     for (size_t size = 0; size < bytes.size(); ++size) CHECK(DecodeProfile(bytes.substr(0, size)).format != ProfileFormat::Valid);
-    CHECK(DecodeProfile("SwashMoji\t2\nend\t0\n").format == ProfileFormat::Unsupported);
-    CHECK(DecodeProfile("SwashMoji\t2").format == ProfileFormat::Unsupported);
+    CHECK(decoded.profile.aliases.at(L"på vei").target.value == L"🚶");
+    CHECK(DecodeProfile("SwashMoji\t3\nend\t0\n").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t3").format == ProfileFormat::Unsupported);
     CHECK(DecodeProfile("\xEF\xBB\xBF" "SwashMoji\t1\r\nsetting\temoji_rows\t2\r\nend\t1\r\n").profile.settings.emojiRows == 2);
     decoded = DecodeProfile("SwashMoji\t1\nusage\trocket\t4294967296\nrecent\tbad\\q\nsetting\temoji_rows\t99\nusage\tgood\t2\nend\t4\n");
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 3);
@@ -59,6 +62,17 @@ void Codec() {
 }
 
 void Migration(const fs::path& root) {
+    const auto v1Directory = root / L"version-one";
+    const std::string v1 = "SwashMoji\t1\nsetting\tskin_tone\t3\nusage\t👍🏽\t8\nrecent\t👍🏽\nend\t3\n";
+    Write(v1Directory / L"profile.tsv", v1);
+    ProfileStorage oldStore(v1Directory);
+    const auto upgraded = oldStore.Load();
+    CHECK(upgraded.migrated && !upgraded.unsaved);
+    CHECK(upgraded.profile.settings.skinTone == 3 && UsageCount(upgraded.profile, L"👍🏽") == 8);
+    CHECK(upgraded.profile.history == std::vector<std::wstring>{L"👍🏽"});
+    CHECK(Read(v1Directory / L"profile.tsv.bak") == v1);
+    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 2);
+    CHECK(!oldStore.Load().migrated);
     const auto directory = root / L"migration";
     const auto fallback = root / L"WinMoji";
     const std::string settings = "position_above_text_field=1\r\nsort_by_usage=1\r\nemoji_rows=3\r\nskin_tone=4\r\n";

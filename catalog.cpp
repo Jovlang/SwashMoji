@@ -56,14 +56,22 @@ bool Catalog::Load(std::istream& input) {
         const size_t separator = first == std::string::npos ? line.find(' ') : first;
         if (separator == std::string::npos) continue;
         const size_t second = first == std::string::npos ? std::string::npos : line.find('\t', first + 1);
+        const size_t third = second == std::string::npos ? std::string::npos : line.find('\t', second + 1);
+        const size_t fourth = third == std::string::npos ? std::string::npos : line.find('\t', third + 1);
         Emoji emoji;
         emoji.glyph = Utf8ToWide(line.substr(0, separator));
         emoji.name = Utf8ToWide(line.substr(separator + 1, second - separator - 1));
-        if (second != std::string::npos) emoji.keywords = Utf8ToWide(line.substr(second + 1));
+        if (second != std::string::npos) emoji.keywords = Utf8ToWide(line.substr(second + 1, third - second - 1));
+        if (third != std::string::npos) emoji.nbName = Utf8ToWide(line.substr(third + 1, fourth - third - 1));
+        if (fourth != std::string::npos) emoji.nbKeywords = Utf8ToWide(line.substr(fourth + 1));
         if (emoji.glyph.empty() || emoji.name.empty() || glyphIndex_.count(emoji.glyph)) continue;
         if (emoji.keywords.empty()) emoji.keywords = emoji.name;
-        emoji.lowerName = Lower(emoji.name);
-        emoji.lowerKeywords = Lower(emoji.keywords);
+        emoji.lowerName = NormalizePhrase(emoji.name);
+        emoji.lowerKeywords = NormalizePhrase(emoji.keywords);
+        emoji.lowerNbName = NormalizePhrase(emoji.nbName);
+        emoji.lowerNbKeywords = NormalizePhrase(emoji.nbKeywords);
+        emoji.nbNameWords = SplitWords(emoji.lowerNbName);
+        emoji.nbKeywordWords = SplitWords(emoji.lowerNbKeywords);
         emoji.nameWords = SplitWords(emoji.lowerName);
         emoji.keywordWords = SplitWords(emoji.lowerKeywords);
         for (const auto& word : emoji.nameWords) emoji.normalizedNameWords.push_back(NormalizeSearchWord(word));
@@ -106,6 +114,34 @@ bool Catalog::Load(std::istream& input) {
 const Emoji* Catalog::Find(const std::wstring& glyph) const {
     const auto found = glyphIndex_.find(glyph);
     return found == glyphIndex_.end() ? nullptr : &entries_[found->second];
+}
+
+const Emoji* Catalog::FindFamily(const EmojiFamilyId& family) const {
+    const auto found = variants_.find(family.value);
+    if (found == variants_.end() || found->second[0] == std::numeric_limits<size_t>::max()) return nullptr;
+    return &entries_[found->second[0]];
+}
+
+bool Catalog::LoadIntents(std::istream& input) {
+    if (!input) return false;
+    std::vector<std::vector<std::wstring>> pending(entries_.size());
+    std::string line;
+    while (std::getline(input, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty() || line[0] == '#') continue;
+        const auto tab = line.find('\t');
+        if (tab == std::string::npos) return false;
+        const auto phrase = NormalizePhrase(Utf8ToWide(line.substr(0, tab)));
+        const auto* emoji = Find(Utf8ToWide(line.substr(tab + 1)));
+        if (phrase.empty() || !emoji) return false;
+        const auto* base = FindFamily(emoji->family);
+        if (!base) return false;
+        auto& intents = pending[static_cast<size_t>(base - entries_.data())];
+        if (std::find(intents.begin(), intents.end(), phrase) == intents.end()) intents.push_back(phrase);
+    }
+    if (input.bad()) return false;
+    for (size_t i = 0; i < entries_.size(); ++i) entries_[i].intents = std::move(pending[i]);
+    return true;
 }
 
 const Emoji* Catalog::PreferredVariant(const Emoji& emoji, int tone) const {

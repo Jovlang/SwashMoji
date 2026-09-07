@@ -8,6 +8,7 @@ struct DecodedProfile {
     ProfileFormat format{ProfileFormat::Invalid};
     Profile profile;
     size_t skippedRecords{};
+    unsigned int version{};
 };
 
 std::string EncodeProfile(const Profile& profile);

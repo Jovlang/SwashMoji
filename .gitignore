@@ -4,3 +4,6 @@ build*/
 # Local editor state
 .vs/
 .vscode/
+
+# Python catalog-generator caches
+__pycache__/

@@ -14,6 +14,8 @@
 #include "search.h"
 #include "storage.h"
 #include "insertion_win32.h"
+#include "vocabulary.h"
+#include <windowsx.h>
 
 #include <algorithm>
 #include <cstring>
@@ -43,6 +45,8 @@ constexpr int kListId = 101;
 constexpr int kStatusId = 102;
 constexpr int kRecoveryId = 103;
 constexpr int kCopyInsteadId = 104;
+constexpr int kTeachPhraseId = 105;
+constexpr int kVocabularyId = 205;
 constexpr int kRecoveryHeight = 68;
 constexpr int kExitId = 200;
 constexpr int kPositionAboveTextFieldId = 201;
@@ -73,6 +77,8 @@ HWND g_status{};
 HWND g_helpWindow{};
 HWND g_recoveryLabel{};
 HWND g_copyInstead{};
+HWND g_teachPhrase{};
+bool g_vocabularyOpen{};
 std::wstring g_recoveryMessage;
 Win32InputPlatform g_inputPlatform;
 InputTarget g_inputTarget;
@@ -126,7 +132,9 @@ std::filesystem::path EmojiCatalogPath() {
 
 bool LoadEmojis() {
     std::ifstream file(EmojiCatalogPath(), std::ios::binary);
-    return g_catalog.Load(file);
+    if (!g_catalog.Load(file)) return false;
+    std::ifstream intents(EmojiCatalogPath().parent_path() / L"intent_phrases.tsv", std::ios::binary);
+    return intents && g_catalog.LoadIntents(intents);
 }
 
 void LoadProfile() {
@@ -162,6 +170,7 @@ void RefreshList() {
     g_session.query = input;
     SendMessageW(g_list, LB_RESETCONTENT, 0, 0);
     g_visible = Search(g_catalog, g_profile, g_session.query);
+    ShowWindow(g_teachPhrase, g_visible.empty() && !NormalizePhrase(g_session.query).empty() ? SW_SHOW : SW_HIDE);
     g_displayVisible.clear();
     g_session.rankingSnapshot.clear();
     for (const auto& result : g_visible) g_session.rankingSnapshot.push_back(result.id);
@@ -192,6 +201,29 @@ void CancelPendingReturn() {
     g_focusReturn.Cancel();
     if (g_returnTimer) KillTimer(g_window, g_returnTimer);
     g_returnTimer = 0;
+}
+
+void OpenVocabulary(bool prefill) {
+    if (g_vocabularyOpen) return;
+    CancelPendingReturn();
+    const int index = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
+    const auto selected = index >= 0 && index < static_cast<int>(g_displayVisible.size())
+        ? g_displayVisible[index].id : ResultId{};
+    g_vocabularyOpen = true;
+    const bool opened = ShowVocabulary(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)),
+        g_catalog, g_profile, prefill ? g_session.query : L"", prefill ? selected : ResultId{},
+        [] { SaveProfile(); return !g_profileUnsaved; });
+    g_vocabularyOpen = false;
+    if (!opened) MessageBoxW(g_window, L"Could not open My vocabulary.", L"SwashMoji", MB_ICONERROR);
+    RefreshList();
+    for (size_t i = 0; i < g_displayVisible.size(); ++i) {
+        if (g_displayVisible[i].id == selected) {
+            SendMessageW(g_list, LB_SETCURSEL, i, 0);
+            g_session.selected = selected;
+            break;
+        }
+    }
+    if (IsWindowVisible(g_window)) SetFocus(g_edit);
 }
 
 void DismissPicker() {
@@ -673,7 +705,7 @@ LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         int leftY = 143;
         DrawHelpRow(dc, 28, leftY, 315, 42, L"Alt+E", L"Open from any app.");
         leftY += 44;
-        DrawHelpRow(dc, 28, leftY, 315, 70, L"Type", L"Search names, Unicode keywords, and aliases. Word order does not matter; close spelling is a fallback.");
+        DrawHelpRow(dc, 28, leftY, 315, 70, L"Type", L"Search in English or Norwegian: names, intent phrases, and your own aliases. Close spelling is a fallback.");
         leftY += 72;
         DrawHelpRow(dc, 28, leftY, 315, 46, L"Arrow keys", L"Move through matching emoji.");
         leftY += 48;
@@ -688,6 +720,8 @@ LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         DrawHelpRow(dc, 28, leftY, 315, 42, L"Esc", L"Close the picker.");
         leftY += 44;
         DrawHelpRow(dc, 28, leftY, 315, 72, L"Alt+C", L"After an insertion error: Copy instead. Check the destination if input was partial.");
+        leftY += 74;
+        DrawHelpRow(dc, 28, leftY, 315, 66, L"Alt+A", L"Add an alias for your selection, or teach a phrase with no matches.");
 
         constexpr int rightX = 374;
         DrawHelpText(dc, L"CUSTOMIZE", RECT{rightX, 112, 690, 136},
@@ -714,7 +748,7 @@ LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
                      RECT{rightX, rightY, 692, rightY + 90}, g_helpBodyFont, kText);
         rightY += 96;
         DrawHelpText(dc,
-                     L"Left-click the tray icon to open. Right-click for sorting, text-field positioning, clearing remembered emoji, and Exit.",
+                     L"Right-click a result to add an alias. In the tray menu, My vocabulary edits or removes your saved aliases. Clearing history keeps them.",
                      RECT{rightX, rightY, 692, rightY + 90}, g_helpBodyFont, kText);
 
         DrawHelpText(dc, L"All usage data is stored locally in %LOCALAPPDATA%\\SwashMoji",
@@ -782,6 +816,7 @@ void ShowTrayMenu() {
     CheckMenuRadioItem(menu, kSortRecentId, kSortMostUsedId,
                        g_sortByUsage ? kSortMostUsedId : kSortRecentId, MF_BYCOMMAND);
     AppendMenuW(menu, MF_STRING, kClearUsageHistoryId, L"Clear remembered emoji...");
+    AppendMenuW(menu, MF_STRING, kVocabularyId, L"My vocabulary...");
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(menu, MF_STRING, kExitId, L"Exit");
     POINT point{};
@@ -801,6 +836,8 @@ void ShowTrayMenu() {
         SetSortMode(true);
     } else if (command == kClearUsageHistoryId) {
         ConfirmAndClearUsageHistory();
+    } else if (command == kVocabularyId) {
+        OpenVocabulary(false);
     } else if (command == kExitId) {
         DestroyWindow(g_window);
     }
@@ -814,6 +851,7 @@ void LayoutChildren(HWND window) {
     const int listY = margin + kInputHeight + 8;
     const int listHeight = g_emojiRows * kResultSize;
     MoveWindow(g_list, margin, listY, area.right - margin * 2, listHeight, TRUE);
+    MoveWindow(g_teachPhrase, margin + 24, listY + 5, area.right - margin * 2 - 48, 36, TRUE);
     MoveWindow(g_status, margin, listY + listHeight + 5, area.right - margin * 2,
                kStatusHeight, TRUE);
     const int recoveryY = listY + listHeight + 8 + (g_statusVisible ? kStatusHeight + 5 : 0);
@@ -832,6 +870,28 @@ void MoveSelection(int direction) {
 
 LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lParam) {
     const WNDPROC original = control == g_edit ? g_editProc : g_listProc;
+    if (control == g_list && message == WM_CONTEXTMENU) {
+        POINT point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+        if (point.x == -1 && point.y == -1) {
+            RECT area{};
+            GetWindowRect(control, &area);
+            point = {area.left + 12, area.bottom};
+        } else {
+            POINT local = point;
+            ScreenToClient(control, &local);
+            const auto item = SendMessageW(control, LB_ITEMFROMPOINT, 0, MAKELPARAM(local.x, local.y));
+            if (HIWORD(item)) return 0;
+            SendMessageW(control, LB_SETCURSEL, LOWORD(item), 0);
+        }
+        if (g_displayVisible.empty()) return 0;
+        HMENU menu = CreatePopupMenu();
+        AppendMenuW(menu, MF_STRING, kVocabularyId, L"Add alias...\tAlt+A");
+        const auto command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON,
+            point.x, point.y, 0, g_window, nullptr);
+        DestroyMenu(menu);
+        if (command == kVocabularyId) OpenVocabulary(true);
+        return 0;
+    }
     if (control == g_list && message == WM_LBUTTONUP) {
         const LRESULT result = CallWindowProcW(original, control, message, wParam, lParam);
         InsertSelection(true);
@@ -892,6 +952,9 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
             0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kRecoveryId)), nullptr, nullptr);
         g_copyInstead = CreateWindowExW(0, L"BUTTON", L"&Copy instead", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
             0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kCopyInsteadId)), nullptr, nullptr);
+        g_teachPhrase = CreateWindowExW(0, L"BUTTON", L"No matches. Teach this phrase (Alt+A)", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+            0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kTeachPhraseId)), nullptr, nullptr);
+        SendMessageW(g_teachPhrase, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
         SendMessageW(g_recoveryLabel, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
         SendMessageW(g_copyInstead, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
         SendMessageW(g_edit, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
@@ -951,6 +1014,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         SetBkColor(reinterpret_cast<HDC>(wParam), kBackground);
         return reinterpret_cast<LRESULT>(g_backgroundBrush);
     case WM_COMMAND:
+        if (LOWORD(wParam) == kTeachPhraseId && HIWORD(wParam) == BN_CLICKED) OpenVocabulary(true);
         if (LOWORD(wParam) == kCopyInsteadId && HIWORD(wParam) == BN_CLICKED) CopySelection();
         if (LOWORD(wParam) == kEditId && HIWORD(wParam) == EN_CHANGE) RefreshList();
         return 0;
@@ -970,6 +1034,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         }
         break;
     case WM_HOTKEY:
+        if (g_vocabularyOpen) return 0;
         if (wParam == kHotkeyId) {
             SetWindowTextW(g_edit, L"");
             CenterOnActiveMonitor();
@@ -993,10 +1058,12 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         }
         break;
     case kShowPickerMessage:
+        if (g_vocabularyOpen) return 0;
         SetWindowTextW(g_edit, L"");
         CenterOnActiveMonitor();
         return 0;
     case kTrayMessage:
+        if (g_vocabularyOpen) return 0;
         switch (LOWORD(lParam)) {
         case WM_LBUTTONUP:
         case NIN_SELECT:
@@ -1033,7 +1100,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
         return 0;
     }
     if (!LoadEmojis()) {
-        MessageBoxW(nullptr, L"Kunne ikke lese emojis.txt ved siden av SwashMoji.exe.", L"SwashMoji", MB_ICONERROR);
+        MessageBoxW(nullptr, L"Could not read emojis.txt or intent_phrases.tsv beside SwashMoji.exe.", L"SwashMoji", MB_ICONERROR);
         return 1;
     }
     LoadProfile();
@@ -1108,6 +1175,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
         const bool firstKeyPress = !(message.lParam & (1u << 30));
         const bool pickerKey = (message.message == WM_KEYDOWN || message.message == WM_SYSKEYDOWN) &&
             (message.hwnd == g_window || IsChild(g_window, message.hwnd));
+        if (pickerKey && altPressed && firstKeyPress && message.wParam == 'A') {
+            OpenVocabulary(true);
+            continue;
+        }
+        if (pickerKey && message.hwnd == g_teachPhrase) {
+            if (message.wParam == VK_RETURN) { OpenVocabulary(true); continue; }
+            if (message.wParam == VK_ESCAPE) { DismissPicker(); continue; }
+        }
         if (pickerKey && message.hwnd == g_copyInstead && message.wParam == VK_ESCAPE) {
             DismissPicker();
             continue;

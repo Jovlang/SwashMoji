@@ -1,6 +1,15 @@
 # SwashMoji: implementation plan for all five improvements
 
-Status: M0 and M1 implemented on 2026-09-07; M2–M6 remain planned.
+Status: M0, M1 and M2 implemented on 2026-09-07; M3–M6 remain planned.
+
+M2 delivery: pinned CLDR English/Bokmål catalog with Norwegian inheritance and
+English fallback, 49 separate curated intent phrases, Unicode normalization,
+priority-ranked personal aliases, and a native My vocabulary editor accessible
+from results, empty search and the tray. Profile version 2 migrates version 1
+without changing history/settings. The 109-query acceptance corpus and all exact
+catalog-name invariants pass. Native integration verifies alias CRUD/reload,
+cancelled edits, preserved picker state/target, and real external text delivery.
+See `docs/search.md` for behavior, provenance, test commands and scope.
 
 M0 delivery: shared catalog/text/search/personalization/storage modules, stable
 family/result identities and picker-session state, version 1 profile migration,

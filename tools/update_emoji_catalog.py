@@ -1,90 +1,125 @@
 #!/usr/bin/env python3
-"""Enrich emojis.txt with pinned Unicode CLDR English names and keywords."""
+"""Generate the bilingual catalog from pinned CLDR. Runtime stays offline.
 
+First run: --download --cldr-dir build/cldr. Subsequent runs need only the cache.
+Missing locale files are accepted only when CLDR returns HTTP 404.
+"""
 from __future__ import annotations
-
 import argparse
-from collections import defaultdict
+import hashlib
+import json
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import urlopen
 import xml.etree.ElementTree as ET
 
-
-CLDR_VERSION = "48.2"
 CLDR_TAG = "release-48-2"
 CLDR_BASE = f"https://raw.githubusercontent.com/unicode-org/cldr/{CLDR_TAG}/common"
-CLDR_FILES = (
-    f"{CLDR_BASE}/annotationsDerived/en.xml",
-    f"{CLDR_BASE}/annotations/en.xml",
-)
-
-# CLDR deliberately stays formal. These few high-value aliases cover how people
-# commonly search for expressive faces without turning the catalog into a thesaurus.
-ALIASES = {
-    "😂": ("funny", "haha", "hilarious", "lmao", "lol", "rofl"),
-    "🤣": ("funny", "haha", "hilarious", "lmao", "lol", "rofl"),
-    "😆": ("haha", "laugh", "lol"),
-    "😹": ("haha", "laugh", "lol"),
-    "🤭": ("giggle", "laugh"),
-}
 
 
 def normalized_glyph(value: str) -> str:
     return value.replace("\ufe0f", "")
 
 
-def load_cldr() -> tuple[dict[str, str], dict[str, set[str]]]:
-    names: dict[str, str] = {}
-    keywords: dict[str, set[str]] = defaultdict(set)
+class Sources:
+    def __init__(self, directory: Path, download: bool = False):
+        self.directory, self.download = directory, download
+        self.hashes: dict[str, str | None] = {}
 
-    # Derived annotations establish the full catalog; hand-authored annotations
-    # are read second so their preferred short names win.
-    for url in CLDR_FILES:
-        with urlopen(url) as response:
-            root = ET.fromstring(response.read())
-        for annotation in root.findall(".//annotation"):
-            glyph = normalized_glyph(annotation.attrib.get("cp", ""))
-            text = (annotation.text or "").strip()
-            if not glyph or not text:
+    def read(self, path: str, optional: bool = False):
+        local = self.directory / path
+        missing = local.with_suffix(".missing")
+        if not local.exists() and not missing.exists() and self.download:
+            local.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with urlopen(f"{CLDR_BASE}/{path}", timeout=60) as response:
+                    local.write_bytes(response.read())
+            except HTTPError as error:
+                if error.code != 404 or not optional:
+                    raise
+                missing.write_text("404\n", encoding="ascii")
+        if optional and missing.exists() and not local.exists():
+            self.hashes[path] = None
+            return None
+        data = local.read_bytes()  # An incomplete offline cache is an error.
+        self.hashes[path] = hashlib.sha256(data).hexdigest()
+        return ET.fromstring(data)
+
+
+def parent_chain(locale: str, supplemental) -> list[str]:
+    parents = {}
+    for group in supplemental.findall(".//parentLocales"):
+        if group.get("component"):
+            continue
+        for item in group.findall("parentLocale"):
+            for child in item.get("locales", "").split():
+                parents[child] = item.get("parent", "root")
+    chain = []
+    while locale != "root":
+        if locale in chain:
+            raise ValueError("CLDR locale inheritance cycle")
+        chain.append(locale)
+        locale = parents.get(locale, locale.rsplit("_", 1)[0] if "_" in locale else "root")
+    return list(reversed(chain))
+
+
+def load_locale(sources: Sources, locale: str, supplemental):
+    names, keywords = {}, {}
+    for inherited in parent_chain(locale, supplemental):
+        for folder in ("annotationsDerived", "annotations"):
+            root = sources.read(f"{folder}/{inherited}.xml", optional=inherited != "en")
+            if root is None:
                 continue
-            if annotation.attrib.get("type") == "tts":
-                names[glyph] = text
-            else:
-                keywords[glyph].update(part.strip() for part in text.split("|") if part.strip())
+            for annotation in root.findall(".//annotation"):
+                glyph = normalized_glyph(annotation.get("cp", ""))
+                text = (annotation.text or "").strip()
+                if not glyph or not text or text == "↑↑↑":
+                    continue
+                if annotation.get("type") == "tts":
+                    names[glyph] = text
+                else:
+                    keywords[glyph] = {part.strip() for part in text.split("|") if part.strip()}
     return names, keywords
 
 
-def parse_catalog_line(line: str) -> tuple[str, str]:
-    if "\t" in line:
-        fields = line.split("\t", 2)
-        return fields[0], fields[1]
-    return tuple(line.split(maxsplit=1))  # type: ignore[return-value]
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("catalog", nargs="?", type=Path, default=Path("emojis.txt"))
-    args = parser.parse_args()
-
-    names, cldr_keywords = load_cldr()
-    output: list[str] = []
-    matched = 0
-    for raw_line in args.catalog.read_text(encoding="utf-8-sig").splitlines():
-        if not raw_line.strip():
+def generate(catalog: str, sources: Sources) -> str:
+    supplemental = sources.read("supplemental/supplementalData.xml")
+    en_names, en_keywords = load_locale(sources, "en", supplemental)
+    nb_names, nb_keywords = load_locale(sources, "nb", supplemental)
+    output = []
+    for line in catalog.splitlines():
+        if not line.strip():
             continue
-        glyph, old_name = parse_catalog_line(raw_line)
+        fields = line.split("\t") if "\t" in line else line.split(maxsplit=1)
+        glyph, old_name = fields[:2]
         key = normalized_glyph(glyph)
-        name = names.get(key, old_name)
-        if key in names:
-            matched += 1
-        keywords = set(cldr_keywords.get(key, ()))
-        keywords.update((name, old_name))
-        keywords.update(ALIASES.get(key, ()))
-        searchable = " | ".join(sorted(keywords, key=str.casefold))
-        output.append(f"{glyph}\t{name}\t{searchable}")
+        name = en_names.get(key, old_name)
+        words = set(en_keywords.get(key, ())) | {name, old_name}
+        # Preserve existing English search vocabulary, including informal aliases.
+        if len(fields) >= 3:
+            words.update(part.strip() for part in fields[2].split("|") if part.strip())
+        nb_name = nb_names.get(key, name)
+        nb_words = set(nb_keywords.get(key, en_keywords.get(key, ()))) | {nb_name}
+        join = lambda values: " | ".join(sorted(values, key=lambda value: (value.casefold(), value)))
+        output.append("\t".join((glyph, name, join(words), nb_name, join(nb_words))))
+    return "\n".join(output) + "\n"
 
-    args.catalog.write_text("\n".join(output) + "\n", encoding="utf-8", newline="\n")
-    print(f"Updated {len(output)} entries ({matched} matched CLDR {CLDR_VERSION}).")
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("catalog", nargs="?", type=Path, default=Path("emojis.txt"))
+    parser.add_argument("--cldr-dir", type=Path, default=Path("build/cldr"))
+    parser.add_argument("--download", action="store_true")
+    parser.add_argument("--manifest", type=Path, default=Path("data/catalog_sources.json"))
+    args = parser.parse_args()
+    sources = Sources(args.cldr_dir, args.download)
+    result = generate(args.catalog.read_text(encoding="utf-8-sig"), sources)
+    args.catalog.write_text(result, encoding="utf-8", newline="\n")
+    args.manifest.parent.mkdir(parents=True, exist_ok=True)
+    args.manifest.write_text(json.dumps({"cldr_tag": CLDR_TAG, "base_url": CLDR_BASE,
+        "locale": "nb", "fallback": "en", "files_sha256": sources.hashes},
+        indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    print(f"Generated {len(result.splitlines())} bilingual entries from {CLDR_TAG}.")
 
 
 if __name__ == "__main__":

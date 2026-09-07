@@ -28,7 +28,7 @@ void SearchBehavior() {
     const auto catalog = Fixture();
     Profile profile;
     CHECK(Search(catalog, profile, L"rocket").front().payload == L"🚀");
-    CHECK(Search(catalog, profile, L"ROCKET").front().match.tier == 7);
+    CHECK(Search(catalog, profile, L"ROCKET").front().match.tier == 8);
     CHECK(Search(catalog, profile, L"rock").front().payload == L"🚀");
     CHECK(Search(catalog, profile, L"launch").front().payload == L"🚀");
     CHECK(Search(catalog, profile, L"rcoket").front().payload == L"🚀");

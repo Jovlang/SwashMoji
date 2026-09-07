@@ -1,0 +1,110 @@
+# class<TAB>query<TAB>acceptable top-three glyph (or - for no match)
+name	rocket	🚀
+name	RAKETT	🚀
+name	coffee	☕
+name	hot beverage	☕
+name	dog face	🐶
+name	cat face	🐱
+name	red heart	❤️
+name	blue heart	💙
+name	green heart	💚
+name	yellow heart	💛
+name	purple heart	💜
+name	broken heart	💔
+name	thumbs up	👍
+name	thumbs down	👎
+name	clapping hands	👏
+name	folded hands	🙏
+name	crossed fingers	🤞
+name	waving hand	👋
+name	light bulb	💡
+name	alarm clock	⏰
+name	birthday cake	🎂
+name	party popper	🎉
+name	check mark button	✅
+name	bouquet	💐
+name	thought balloon	💭
+name	person walking	🚶
+name	person shrugging	🤷
+name	sleeping face	😴
+name	grinning face	😀
+name	face with tears of joy	😂
+name	rolling on the floor laughing	🤣
+name	woman technologist	👩‍💻
+name	man technologist	👨‍💻
+name	fire	🔥
+name	star	⭐
+name	sparkles	✨
+name	pizza	🍕
+name	taco	🌮
+name	avocado	🥑
+name	banana	🍌
+intent	well done	👏
+intent	good job	👏
+intent	bra jobbet	👏
+intent	godt jobbet	👏
+intent	tusen takk	🙏
+intent	thank you	🙏
+intent	thanks a lot	🙏
+intent	fingers crossed	🤞
+intent	krysser fingrene	🤞
+intent	lykke til	🤞
+intent	good luck	🤞
+intent	running late	⏰
+intent	jeg er forsinket	⏰
+intent	på vei	🚶
+intent	on my way	🚶
+intent	need coffee	☕
+intent	trenger kaffe	☕
+intent	happy birthday	🎂
+intent	gratulerer med dagen	🎂
+intent	get well soon	💐
+intent	god bedring	💐
+intent	thinking of you	💭
+intent	tenker på deg	💭
+intent	love you	❤️
+intent	glad i deg	❤️
+intent	great idea	💡
+intent	god idé	💡
+intent	let's celebrate	🎉
+intent	dette må feires	🎉
+intent	mission accomplished	✅
+intent	oppdrag utført	✅
+intent	see you later	👋
+intent	vi ses	👋
+intent	helt enig	👍
+intent	sounds good	👍
+intent	no idea	🤷
+intent	aner ikke	🤷
+intent	that was close	😅
+intent	det var nære	😅
+intent	so tired	😴
+intent	så trøtt	😴
+intent	awkward	😬
+intent	kleint	😬
+intent	finally	🙌
+intent	endelig	🙌
+intent	oops	😅
+intent	ops	😅
+intent	takk	🙏
+intent	thanks	🙏
+normalization	  BRA---JOBBET!!  	👏
+normalization	PÅ VEI	🚶
+normalization	på vei	🚶
+normalization	GOD IDÉ	💡
+normalization	ＳＰＡＲＫＬＥＳ	✨
+normalization	SÅ TRØTT	😴
+normalization	DET VAR NÆRE	😅
+typo	rcoket	🚀
+typo	rakxett	🚀
+typo	krysser fingreneq	🤞
+typo	gratulrer med dagen	🎂
+glyph	👍🏽	👍🏽
+glyph	👩‍💻	👩‍💻
+glyph	❤️	❤️
+alias	min kaffepause	☕
+alias	MIN---KAFFEPAUSE	☕
+alias	kaffepause nå	☕
+none	zzqvxyblorf	-
+none	rakett banan gratulerer	-
+none	!!!	-

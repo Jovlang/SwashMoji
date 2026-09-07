@@ -4,7 +4,9 @@ En liten, avhengighetsfri Win32 emoji-velger.
 
 - `Alt+E` åpner velgeren på skjermen til det aktive vinduet.
 - Høyreklikk systemstatusikonet for plassering, sortering og sletting av lokal brukshistorikk.
-- Skriv for å søke på emoji-navn, Unicode-nøkkelord og vanlige aliaser; treff rangeres etter navn, relevans og brukshistorikk, og skrivefeil tolereres når det ikke finnes vanlige treff.
+- Søk på engelsk og norsk bokmål samtidig: navn, Unicode-nøkkelord og uttrykk som `bra jobbet`, `på vei` og `thank you`. Skrivefeil tolereres når det ikke finnes vanlige treff.
+- Høyreklikk et treff og velg **Add alias**, eller bruk `Alt+A`. Søket fylles inn som forslag til din egen frase. Uten treff kan du velge **Teach this phrase** og finne ønsket emoji.
+- **My vocabulary** i systemstatusmenyen lar deg opprette, endre og slette aliaser. **Save alias** lagrer; **Close** forkaster utkastet. Lagrede aliaser beholdes når brukshistorikken slettes.
 - Treff vises i én til tre emoji-rader; bruk `Alt+1`, `Alt+2` eller `Alt+3` for å velge antall rader, og piltastene for å flytte markeringen.
 - Klikk en emoji for å sette den inn og gå tilbake til SwashMoji.
 - `Enter` setter valgt emoji direkte inn i det aktive programmet uten å endre utklippstavlen.
@@ -24,7 +26,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.
 - Brukshistorikken kan slettes fra systemstatusmenyen etter en bekreftelse.
 - Ikonet i systemstatusfeltet åpner velgeren ved venstreklikk og har `Exit` ved høyreklikk.
-- Emoji-katalogen leses fra UTF-8-filen `emojis.txt` ved siden av programfilen.
+- Emoji-katalogen og uttrykkene leses fra UTF-8-filene `emojis.txt` og `intent_phrases.tsv` ved siden av programfilen. Begge må følge med når programmet flyttes.
 
 Bygg med den native Visual Studio 2022-verktøykjeden:
 
@@ -60,4 +62,8 @@ og `docs/insertion.md` for innsetting, feilhåndtering og testdekning.
 
 Søkenavn og nøkkelord er basert på [Unicode CLDR 48.2](https://cldr.unicode.org/),
 lisensiert under [Unicode License v3](https://www.unicode.org/license.txt). Katalogen kan
-oppdateres reproducerbart med `tools\update_emoji_catalog.py`.
+oppdateres med `python tools\update_emoji_catalog.py --download --cldr-dir build\cldr`.
+Gjenta uten `--download` for å bruke den lokale kildekopien. Se `docs/search.md`
+for kildeversjoner, språkregler, aliasgrenser og tester. Kjør generatortestene
+med `python tests\test_catalog_generator.py`; CTest inkluderer dem automatisk
+når CMake finner Python 3.

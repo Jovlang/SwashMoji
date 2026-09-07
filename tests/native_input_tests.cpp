@@ -144,4 +144,5 @@ int wmain(int argc, wchar_t** argv) {
         std::cout << "Native Win32 edit received exact emoji sequences and repeat input; clipboard unchanged; stale/internal targets rejected.\n";
         report("PASS: native Win32 edit received exact multi-code-point emoji and repeat input; clipboard unchanged; stale/internal targets rejected.");
     } catch (const std::exception& error) { report(std::string("FAIL: ") + error.what()); std::cerr << error.what() << '\n'; return 1; }
+    return 0;
 }

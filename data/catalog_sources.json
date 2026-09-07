@@ -1,0 +1,15 @@
+{
+  "base_url": "https://raw.githubusercontent.com/unicode-org/cldr/release-48-2/common",
+  "cldr_tag": "release-48-2",
+  "fallback": "en",
+  "files_sha256": {
+    "annotations/en.xml": "8511aadd046fdba2f0ffe590266ced8bbf48175ad139b2675d85d7141057b235",
+    "annotations/nb.xml": null,
+    "annotations/no.xml": "6512f9f6777f919f455602757e780ac53fcae66232a85f88a75f96e26284961e",
+    "annotationsDerived/en.xml": "d76bd041c8c9e7b00b716aff8b7d9dbf509877010e191d5efd068be2553e066e",
+    "annotationsDerived/nb.xml": null,
+    "annotationsDerived/no.xml": "962ac21fb95360950c5478604d20e1f95bda75fc1ac41be15b273c0f29a8656f",
+    "supplemental/supplementalData.xml": "cd2af39aef82fdbfba4d591c87548203350538ad2318486d104b3b38b8d62f1a"
+  },
+  "locale": "nb"
+}

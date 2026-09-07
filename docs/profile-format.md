@@ -1,18 +1,19 @@
-# Local profile format (M0)
+# Local profile format (M0–M2)
 
 The runtime uses `%LOCALAPPDATA%\SwashMoji\profile.tsv`. All profile tests pass an
 isolated directory explicitly; they never resolve or change the user's profile.
 
-## Version 1
+## Version 2
 
 Files are UTF-8 with LF line endings. The reader also accepts a UTF-8 BOM and CRLF.
-The header is `SwashMoji<TAB>1`. Following lines contain typed records:
+The header is `SwashMoji<TAB>2`. Following lines contain typed records:
 
 | Record | Fields after the record type |
 | --- | --- |
 | `setting` | setting name, unsigned integer value |
 | `recent` | exact emoji glyph, newest records first |
 | `usage` | exact emoji glyph, nonzero unsigned 32-bit count |
+| `alias` | display phrase, target kind (`emoji` or reserved `combination`), stable target ID |
 | `end` | number of preceding records, excluding the header |
 
 The final `end` record and its terminating newline are mandatory. They detect
@@ -30,14 +31,26 @@ Settings are `position_above_text_field` and `sort_by_usage` (0–1), `emoji_row
 (1–3), and `skin_tone` (0–5). Defaults match the previous application. Font and
 status-line visibility remain session-only, as before M0.
 
-M0 stores exact glyph usage to preserve current ranking. Family aggregation,
-query learning, aliases, pins, and combinations belong to later milestones.
+Usage still stores exact glyphs. Family aggregation, query learning, pins, and
+combinations belong to later milestones. M2 adds up to 500 aliases; phrases have
+at most 96 UTF-16 code units and must normalize to at least one letter or digit.
+The normalized phrase is the unique lookup key; the original phrase is kept for
+display. Duplicate normalized records are skipped (first valid record wins).
+Missing catalog targets are retained so they can be repaired/deleted in My
+vocabulary; they do not produce search results. New targets must be existing
+emoji-family IDs. Combination IDs are reserved for M5.
+
 Introduce a new profile version when adding persistent record types so an older
 executable cannot silently discard new data. Unknown versions are read-only.
 The shared `ResultId` already distinguishes emoji-family IDs from combination IDs;
 neither pointer values nor catalog indices are persisted.
 
 ## Migration and persistence
+
+Version 1 profiles are read with settings, exact-glyph history, and counts intact,
+then atomically upgraded to version 2. The previous complete version 1 file becomes
+the backup. A failed write keeps version 1 on disk and reports unsaved state;
+the next launch can retry. Unsupported future versions remain read-only.
 
 When both the primary and backup profiles are absent, import each legacy
 `settings.txt`, `history.txt`, and `usage.txt` from the SwashMoji directory. For a

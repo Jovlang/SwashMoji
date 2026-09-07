@@ -13,7 +13,7 @@ namespace {
 constexpr size_t kMaxFileBytes = 4 * 1024 * 1024;
 constexpr size_t kMaxRecordBytes = 16384;
 constexpr size_t kMaxRecords = 50000;
-constexpr unsigned int kVersion = 1;
+constexpr unsigned int kVersion = 2;
 
 bool Number(const std::string& text, unsigned int& result) {
     if (text.empty()) return false;
@@ -161,6 +161,11 @@ std::string EncodeProfile(const Profile& profile) {
     };
     for (const auto& glyph : profile.history) records.push_back("recent\t" + Escape(glyph));
     for (const auto& usage : profile.usage) records.push_back("usage\t" + Escape(usage.first) + "\t" + std::to_string(usage.second));
+    for (const auto& entry : profile.aliases) {
+        const auto& alias = entry.second;
+        records.push_back("alias\t" + Escape(alias.phrase) + "\t" +
+            (alias.target.kind == ResultKind::Emoji ? "emoji" : "combination") + "\t" + Escape(alias.target.value));
+    }
     std::string bytes = "SwashMoji\t" + std::to_string(kVersion) + "\n";
     for (const auto& record : records) bytes += record + '\n';
     // A record count and mandatory final newline detect interrupted/truncated files.
@@ -179,7 +184,8 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
     const auto header = Fields(headerLine);
     unsigned int version{};
     if (header.size() != 2 || header[0] != "SwashMoji" || !Number(header[1], version)) return result;
-    if (version != kVersion) { result.format = ProfileFormat::Unsupported; return result; }
+    result.version = version;
+    if (version < 1 || version > kVersion) { result.format = ProfileFormat::Unsupported; return result; }
     if (firstLine == std::string::npos || bytes.back() != '\n') return result;
     size_t position = firstLine + 1;
     size_t recordCount = 0;
@@ -213,6 +219,14 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
         } else if (valid && fields[0] == "usage") {
             valid = fields.size() == 3 && Unescape(fields[1], glyph) && !glyph.empty() && Number(fields[2], number) && number;
             if (valid) result.profile.usage[glyph] = number;
+        } else if (valid && fields[0] == "alias" && version >= 2) {
+            std::wstring phrase, value;
+            valid = fields.size() == 4 && Unescape(fields[1], phrase) && !phrase.empty() &&
+                phrase.size() <= kMaxAliasLength && Unescape(fields[3], value) && !value.empty() &&
+                (fields[2] == "emoji" || fields[2] == "combination") && result.profile.aliases.size() < kMaxAliases;
+            const auto key = NormalizePhrase(phrase);
+            valid = valid && !key.empty() && !result.profile.aliases.count(key);
+            if (valid) result.profile.aliases[key] = {phrase, {fields[2] == "emoji" ? ResultKind::Emoji : ResultKind::Combination, value}};
         } else valid = false;
         if (!valid) ++result.skippedRecords;
     }
@@ -235,7 +249,13 @@ ProfileLoad ProfileStorage::Load() {
     }
     if (primary.format == ProfileFormat::Valid) {
         result.profile = primary.profile;
-        if (primary.skippedRecords) result.diagnostic = L"Some invalid profile records were skipped.";
+        if (primary.version < kVersion) {
+            std::wstring error;
+            result.migrated = Save(result.profile, error);
+            result.unsaved = !result.migrated;
+            result.diagnostic = error;
+        }
+        if (primary.skippedRecords) result.diagnostic += L" Some invalid profile records were skipped.";
         return result;
     }
 
@@ -280,7 +300,7 @@ bool ProfileStorage::Save(const Profile& profile, std::wstring& diagnostic) {
     if (readOnly_) { diagnostic = L"Profile is read-only. Changes remain in memory."; return false; }
     const auto bytes = EncodeProfile(profile);
     const auto validation = DecodeProfile(bytes);
-    if (validation.format != ProfileFormat::Valid || validation.skippedRecords) {
+    if (validation.format != ProfileFormat::Valid || validation.skippedRecords || profile.aliases.size() > kMaxAliases) {
         diagnostic = L"Profile contains invalid or excessive data. Changes remain in memory.";
         return false;
     }

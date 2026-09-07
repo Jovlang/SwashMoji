@@ -12,6 +12,8 @@ struct Emoji {
     std::vector<std::wstring> nameWords, keywordWords;
     std::vector<std::wstring> normalizedNameWords, normalizedKeywordWords;
     EmojiFamilyId family;
+    std::wstring nbName, nbKeywords, lowerNbName, lowerNbKeywords;
+    std::vector<std::wstring> nbNameWords, nbKeywordWords, intents;
 };
 
 int SkinToneIndex(const std::wstring& glyph);
@@ -21,8 +23,10 @@ std::wstring SkinToneFamilyKey(const std::wstring& glyph);
 class Catalog {
 public:
     bool Load(std::istream& input);
+    bool LoadIntents(std::istream& input);
     const std::vector<Emoji>& Entries() const { return entries_; }
     const Emoji* Find(const std::wstring& glyph) const;
+    const Emoji* FindFamily(const EmojiFamilyId& family) const;
     const Emoji* PreferredVariant(const Emoji& emoji, int tone) const;
 private:
     std::vector<Emoji> entries_;
