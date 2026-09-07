@@ -1,0 +1,167 @@
+#include <windows.h>
+#include "test_support.h"
+#include "storage.h"
+#include "text.h"
+#include <fstream>
+#include <iterator>
+
+using namespace SwashMoji;
+namespace fs = std::filesystem;
+
+struct TestDirectory {
+    fs::path parent = fs::current_path();
+    fs::path path = parent / (L"storage-tests-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(GetTickCount64()));
+    TestDirectory() { CHECK(fs::create_directory(path)); }
+    ~TestDirectory() {
+        // This fixture creates and removes only its own direct child of the test cwd.
+        if (path.parent_path() == parent && path.filename().wstring().find(L"storage-tests-") == 0) {
+            std::error_code error;
+            fs::remove_all(path, error);
+        }
+    }
+};
+
+void Write(const fs::path& path, const std::string& bytes) {
+    fs::create_directories(path.parent_path());
+    std::ofstream file(path, std::ios::binary);
+    file << bytes;
+    CHECK(file.good());
+}
+std::string Read(const fs::path& path) {
+    std::ifstream file(path, std::ios::binary);
+    CHECK(file.good());
+    return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+}
+
+void Codec() {
+    Profile profile;
+    profile.settings = {true, true, 3, 5};
+    Remember(profile, L"👍🏽");
+    Remember(profile, L"🚀\t\\\n\r✨");
+    const auto bytes = EncodeProfile(profile);
+    auto decoded = DecodeProfile(bytes);
+    CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 0);
+    CHECK(decoded.profile.history == profile.history);
+    CHECK(decoded.profile.usage == profile.usage);
+    CHECK(decoded.profile.settings.positionAboveTextField);
+    CHECK(decoded.profile.settings.sortByUsage);
+    CHECK(decoded.profile.settings.emojiRows == 3 && decoded.profile.settings.skinTone == 5);
+    CHECK(EncodeProfile(decoded.profile) == bytes);
+    for (size_t size = 0; size < bytes.size(); ++size) CHECK(DecodeProfile(bytes.substr(0, size)).format != ProfileFormat::Valid);
+    CHECK(DecodeProfile("SwashMoji\t2\nend\t0\n").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t2").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("\xEF\xBB\xBF" "SwashMoji\t1\r\nsetting\temoji_rows\t2\r\nend\t1\r\n").profile.settings.emojiRows == 2);
+    decoded = DecodeProfile("SwashMoji\t1\nusage\trocket\t4294967296\nrecent\tbad\\q\nsetting\temoji_rows\t99\nusage\tgood\t2\nend\t4\n");
+    CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 3);
+    CHECK(decoded.profile.settings.emojiRows == 1 && decoded.profile.usage.at(L"good") == 2);
+    CHECK(DecodeProfile("SwashMoji\t1\nend\t0\ntrailing\n").format == ProfileFormat::Invalid);
+    CHECK(DecodeProfile(std::string(4 * 1024 * 1024 + 1, 'x')).format == ProfileFormat::Invalid);
+}
+
+void Migration(const fs::path& root) {
+    const auto directory = root / L"migration";
+    const auto fallback = root / L"WinMoji";
+    const std::string settings = "position_above_text_field=1\r\nsort_by_usage=1\r\nemoji_rows=3\r\nskin_tone=4\r\n";
+    Write(directory / L"settings.txt", settings);
+    Write(fallback / L"history.txt", "👍🏽\r\n🚀\r\n");
+    Write(fallback / L"usage.txt", "👍🏽\t9\r\n🚀\t3\r\nbad\t-1\r\n");
+    ProfileStorage store(directory, fallback);
+    auto loaded = store.Load();
+    CHECK(loaded.migrated && !loaded.unsaved && !store.ReadOnly());
+    CHECK(loaded.profile.settings.skinTone == 4 && loaded.profile.settings.emojiRows == 3);
+    CHECK(loaded.profile.history == (std::vector<std::wstring>{L"👍🏽", L"🚀"}));
+    CHECK(UsageCount(loaded.profile, L"👍🏽") == 9);
+    CHECK(!loaded.diagnostic.empty());
+    CHECK(Read(directory / L"settings.txt") == settings);
+    CHECK(fs::exists(fallback / L"history.txt"));
+    CHECK(!fs::exists(directory / L"history.txt"));
+    auto again = store.Load();
+    CHECK(!again.migrated && again.profile.usage == loaded.profile.usage);
+    Remember(again.profile, L"🚀");
+    std::wstring diagnostic;
+    CHECK(store.Save(again.profile, diagnostic));
+    CHECK(UsageCount(store.Load().profile, L"🚀") == 4);
+    CHECK(Read(directory / L"settings.txt") == settings);
+}
+
+void Recovery(const fs::path& root) {
+    const auto directory = root / L"recovery";
+    ProfileStorage store(directory);
+    auto loaded = store.Load();
+    CHECK(loaded.migrated);
+    Remember(loaded.profile, L"🚀");
+    std::wstring diagnostic;
+    CHECK(store.Save(loaded.profile, diagnostic));
+    const auto first = Read(directory / L"profile.tsv");
+    Remember(loaded.profile, L"🚀");
+    CHECK(store.Save(loaded.profile, diagnostic));
+    CHECK(Read(directory / L"profile.tsv.bak") == first);
+    Write(directory / L"profile.tsv.tmp.interrupted", "SwashMoji\t1\nusage\t");
+    CHECK(UsageCount(store.Load().profile, L"🚀") == 2);
+    Write(directory / L"profile.tsv", "SwashMoji\t1\nusage\t");
+    auto recovered = store.Load();
+    CHECK(recovered.recovered && !recovered.unsaved);
+    CHECK(UsageCount(recovered.profile, L"🚀") == 1);
+    CHECK(Read(directory / L"profile.tsv") == first);
+    CHECK(Read(directory / L"profile.tsv.bak") == first);
+    fs::remove(directory / L"profile.tsv");
+    CHECK(store.Load().recovered);
+}
+
+void ProtectFutureAndCorrupt(const fs::path& root) {
+    const auto directory = root / L"future";
+    Write(directory / L"profile.tsv", "SwashMoji\t99\nfuture-data\n");
+    Write(directory / L"profile.tsv.bak", EncodeProfile(Profile{}));
+    ProfileStorage store(directory);
+    CHECK(!store.Load().diagnostic.empty() && store.ReadOnly());
+    std::wstring diagnostic;
+    CHECK(!store.Save(Profile{}, diagnostic));
+    CHECK(Read(directory / L"profile.tsv") == "SwashMoji\t99\nfuture-data\n");
+    const auto broken = root / L"broken";
+    Write(broken / L"profile.tsv", "corrupt");
+    ProfileStorage corrupt(broken);
+    CHECK(!corrupt.Load().diagnostic.empty() && corrupt.ReadOnly());
+    CHECK(!corrupt.Save(Profile{}, diagnostic));
+    CHECK(Read(broken / L"profile.tsv") == "corrupt");
+    const auto futureBackup = root / L"future-backup";
+    Write(futureBackup / L"profile.tsv.bak", "SwashMoji\t99");
+    ProfileStorage backupStore(futureBackup);
+    CHECK(!backupStore.Load().diagnostic.empty() && backupStore.ReadOnly());
+    CHECK(!backupStore.Save(Profile{}, diagnostic));
+    CHECK(!fs::exists(futureBackup / L"profile.tsv"));
+}
+
+void FailedWrites(const fs::path& root) {
+    const auto directory = root / L"locked";
+    ProfileStorage store(directory);
+    auto loaded = store.Load();
+    const auto previous = Read(directory / L"profile.tsv");
+    const HANDLE lock = CreateFileW((directory / L"profile.tsv").c_str(), GENERIC_READ,
+                                    FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+    CHECK(lock != INVALID_HANDLE_VALUE);
+    Remember(loaded.profile, L"🚀");
+    std::wstring diagnostic;
+    const bool saved = store.Save(loaded.profile, diagnostic);
+    CloseHandle(lock);
+    CHECK(!saved && !diagnostic.empty());
+    CHECK(UsageCount(loaded.profile, L"🚀") == 1); // in-memory state survives
+    CHECK(Read(directory / L"profile.tsv") == previous);
+    CHECK(store.Save(loaded.profile, diagnostic));
+    CHECK(UsageCount(store.Load().profile, L"🚀") == 1);
+    for (const auto& entry : fs::directory_iterator(directory)) CHECK(entry.path().filename().wstring().find(L".tmp.") == std::wstring::npos);
+
+    const auto blocked = root / L"blocked";
+    Write(blocked, "not a directory");
+    ProfileStorage failed(blocked);
+    CHECK(!failed.Save(loaded.profile, diagnostic));
+    CHECK(Read(blocked) == "not a directory");
+}
+
+int main() {
+    try {
+        TestDirectory directory;
+        Codec(); Migration(directory.path); Recovery(directory.path);
+        ProtectFutureAndCorrupt(directory.path); FailedWrites(directory.path);
+        std::cout << "Profile codec, migration, recovery and write-failure checks passed.\n";
+    } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
+}

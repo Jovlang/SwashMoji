@@ -10,6 +10,10 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - `Enter` setter valgt emoji direkte inn i det aktive programmet uten å endre utklippstavlen.
 - `Ctrl+Enter` setter inn valgt emoji og lar SwashMoji forbli åpen.
 - `Shift+Enter` kopierer valgt emoji til utklippstavlen og lukker vinduet.
+- Ved innsettingsfeil beholdes søket og markeringen. **Copy instead** (`Alt+C`)
+  kopierer valget; delvis innsetting prøves aldri automatisk på nytt.
+- Ved kopieringsfeil forblir velgeren åpen. Meldingen sier fra hvis utklippstavlen
+  allerede ble tømt før feilen oppstod.
 - `Esc` lukker vinduet.
 - `F1` viser en komplett oversikt over funksjoner og hurtigtaster.
 - `Tab` bytter til neste installerte fargefont eller monokrome emoji-font.
@@ -30,6 +34,29 @@ Bygg med den native Visual Studio 2022-verktøykjeden:
 
 Skriptet finner Visual Studio Build Tools automatisk. Ingen installasjon av SwashMoji
 er nødvendig; kjør `build\SwashMoji.exe`.
+
+Bygg og kjør automatiske tester med `.\build.cmd test`.
+Hvis programfilen i `build` allerede kjører, bruk en separat
+byggemappe: `.\build.cmd test build-m1`. Testene bruker egne midlertidige mapper
+i byggemappen og berører ikke din lokale brukshistorikk.
+
+Den separate testen `.\build-m1\SwashMojiNativeInputTests.exe` åpner et midlertidig
+tekstfelt i en egen prosess og kontrollerer faktisk Unicode-innsetting. Den krever
+et interaktivt skrivebord, endrer ikke utklippstavlen og lagrer resultatet i
+`build-m1\native-input-result.txt`. Slipp modifikatortastene før testen kjøres.
+
+Innstillinger og brukshistorikk lagres nå samlet i
+`%LOCALAPPDATA%\SwashMoji\profile.tsv`. Ved første oppstart importeres eksisterende
+`settings.txt`, `history.txt` og `usage.txt` automatisk; originalfilene beholdes.
+Manglende eldre filer kan importeres fra `%LOCALAPPDATA%\WinMoji`.
+Programmet lagrer gjennom en midlertidig fil og beholder forrige komplette profil
+som `profile.tsv.bak`. Hvis profilen er ufullstendig, forsøkes gjenoppretting fra
+sikkerhetskopien. Lagringsfeil vises i statuslinjen og i systemstatusikonets tekst;
+valgene beholdes i minnet. Ukjente profilversjoner overskrives ikke.
+
+Katalog, søk, personalisering og lagring ligger i det delte C++-biblioteket
+`SwashMojiCore`. Se `docs/profile-format.md` for filformat og migreringsregler,
+og `docs/insertion.md` for innsetting, feilhåndtering og testdekning.
 
 Søkenavn og nøkkelord er basert på [Unicode CLDR 48.2](https://cldr.unicode.org/),
 lisensiert under [Unicode License v3](https://www.unicode.org/license.txt). Katalogen kan

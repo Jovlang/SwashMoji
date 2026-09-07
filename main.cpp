@@ -11,19 +11,19 @@
 #include <dwmapi.h>
 #include <uiautomation.h>
 
-#include "ranking.h"
+#include "search.h"
+#include "storage.h"
+#include "insertion_win32.h"
 
 #include <algorithm>
 #include <cstring>
-#include <cwctype>
 #include <fstream>
 #include <iterator>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace {
+using namespace SwashMoji;
 
 constexpr wchar_t kClassName[] = L"SwashMojiWindow";
 constexpr wchar_t kHelpClassName[] = L"SwashMojiHelpWindow";
@@ -41,6 +41,9 @@ constexpr int kHelpHeight = 840;
 constexpr int kEditId = 100;
 constexpr int kListId = 101;
 constexpr int kStatusId = 102;
+constexpr int kRecoveryId = 103;
+constexpr int kCopyInsteadId = 104;
+constexpr int kRecoveryHeight = 68;
 constexpr int kExitId = 200;
 constexpr int kPositionAboveTextFieldId = 201;
 constexpr int kSortRecentId = 202;
@@ -50,23 +53,13 @@ constexpr int kAppIconId = 101;
 constexpr UINT kTrayMessage = WM_APP + 1;
 constexpr UINT kShowPickerMessage = WM_APP + 2;
 constexpr UINT_PTR kStatusTimerId = 1;
-constexpr UINT_PTR kRestorePickerFocusTimerId = 2;
-constexpr size_t kMaxHistory = 40;
+constexpr UINT_PTR kReturnTimerBase = 16;
+
 constexpr COLORREF kBackground = RGB(24, 24, 24);
 constexpr COLORREF kInputBackground = RGB(35, 35, 35);
 constexpr COLORREF kText = RGB(235, 235, 235);
 constexpr COLORREF kMutedText = RGB(155, 155, 155);
 constexpr COLORREF kSelected = RGB(38, 79, 120);
-
-struct Emoji {
-    std::wstring glyph;
-    std::wstring name;
-    std::wstring keywords;
-    std::wstring lowerName;
-    std::wstring lowerKeywords;
-    std::vector<std::wstring> nameWords;
-    std::vector<std::wstring> keywordWords;
-};
 
 struct EmojiFont {
     std::wstring name;
@@ -78,12 +71,26 @@ HWND g_edit{};
 HWND g_list{};
 HWND g_status{};
 HWND g_helpWindow{};
-HWND g_targetWindow{};
-bool g_positionAboveTextField{};
-bool g_sortByUsage{};
+HWND g_recoveryLabel{};
+HWND g_copyInstead{};
+std::wstring g_recoveryMessage;
+Win32InputPlatform g_inputPlatform;
+InputTarget g_inputTarget;
+FocusReturn g_focusReturn;
+UINT_PTR g_returnTimer{};
+DWORD g_returnArmedAt{};
+HWINEVENTHOOK g_foregroundHook{};
+PickerSession g_session;
+Catalog g_catalog;
+Profile g_profile;
+ProfileStorage g_storage;
+bool g_profileUnsaved{};
+std::wstring g_storageDiagnostic;
+bool& g_positionAboveTextField = g_profile.settings.positionAboveTextField;
+bool& g_sortByUsage = g_profile.settings.sortByUsage;
 bool g_statusVisible{true};
-int g_emojiRows{kMinEmojiRows};
-int g_skinToneIndex{};
+int& g_emojiRows = g_profile.settings.emojiRows;
+int& g_skinToneIndex = g_profile.settings.skinTone;
 WNDPROC g_editProc{};
 WNDPROC g_listProc{};
 HBRUSH g_backgroundBrush{};
@@ -104,513 +111,61 @@ IDWriteFactory3* g_dwriteFactory{};
 IUIAutomation* g_uiAutomation{};
 bool g_comInitialized{};
 IDWriteTextFormat* g_emojiFormat{};
-std::vector<const Emoji*> g_visible;
-std::vector<const Emoji*> g_displayVisible;
-std::vector<std::wstring> g_history;
-std::unordered_map<std::wstring, unsigned int> g_usageCounts;
-std::vector<Emoji> g_emojis;
+std::vector<SearchResult> g_visible;
+std::vector<SearchResult> g_displayVisible;
+void UpdateStatusLine();
+void UpdateSortIndicator();
+int PickerHeight();
+void LayoutChildren(HWND window);
 
-int SkinToneIndex(const std::wstring& glyph) {
-    for (size_t index = 0; index + 1 < glyph.size(); ++index) {
-        if (glyph[index] == 0xD83C && glyph[index + 1] >= 0xDFFB && glyph[index + 1] <= 0xDFFF) {
-            return glyph[index + 1] - 0xDFFB + 1;
-        }
-    }
-    return 0;
-}
-
-bool UsesOnlySkinTone(const std::wstring& glyph, int tone) {
-    bool found{};
-    for (size_t index = 0; index + 1 < glyph.size(); ++index) {
-        if (glyph[index] != 0xD83C || glyph[index + 1] < 0xDFFB || glyph[index + 1] > 0xDFFF) continue;
-        found = true;
-        if (glyph[index + 1] - 0xDFFB + 1 != tone) return false;
-        ++index;
-    }
-    return found;
-}
-
-std::wstring WithoutSkinTone(const std::wstring& glyph) {
-    std::wstring result;
-    result.reserve(glyph.size());
-    for (size_t index = 0; index < glyph.size(); ++index) {
-        if (index + 1 < glyph.size() && glyph[index] == 0xD83C &&
-            glyph[index + 1] >= 0xDFFB && glyph[index + 1] <= 0xDFFF) {
-            ++index;
-            continue;
-        }
-        result.push_back(glyph[index]);
-    }
-    return result;
-}
-
-std::wstring SkinToneFamilyKey(const std::wstring& glyph) {
-    std::wstring key = WithoutSkinTone(glyph);
-    key.erase(std::remove(key.begin(), key.end(), static_cast<wchar_t>(0xFE0F)), key.end());
-    return key;
-}
-
-std::wstring Lower(std::wstring text) {
-    std::transform(text.begin(), text.end(), text.begin(), [](wchar_t c) {
-        return static_cast<wchar_t>(std::towlower(c));
-    });
-    return text;
-}
-
-std::vector<std::wstring> SplitWords(const std::wstring& text) {
-    std::vector<std::wstring> words;
-    size_t start = 0;
-    while (start < text.size()) {
-        while (start < text.size() && !std::iswalnum(text[start])) ++start;
-        if (start == text.size()) break;
-        size_t end = start;
-        while (end < text.size() && std::iswalnum(text[end])) ++end;
-        words.push_back(text.substr(start, end - start));
-        start = end;
-    }
-    return words;
-}
-
-bool StartsWith(const std::wstring& word, const std::wstring& prefix) {
-    return word.size() >= prefix.size() && word.compare(0, prefix.size(), prefix) == 0;
-}
-
-std::wstring NormalizeSearchWord(const std::wstring& word) {
-    static const std::unordered_map<std::wstring, std::wstring> forms{
-        {L"smiles", L"smile"}, {L"smiled", L"smile"}, {L"smiling", L"smile"},
-        {L"grins", L"grin"}, {L"grinned", L"grin"}, {L"grinning", L"grin"},
-        {L"laughs", L"laugh"}, {L"laughed", L"laugh"}, {L"laughing", L"laugh"},
-        {L"cries", L"cry"}, {L"cried", L"cry"}, {L"crying", L"cry"},
-        {L"rolls", L"roll"}, {L"rolled", L"roll"}, {L"rolling", L"roll"},
-        {L"blushes", L"blush"}, {L"blushed", L"blush"}, {L"blushing", L"blush"}
-    };
-    const auto known = forms.find(word);
-    if (known != forms.end()) return known->second;
-    if (word.size() > 3 && word.back() == L's' && word.compare(word.size() - 2, 2, L"ss") != 0) {
-        return word.substr(0, word.size() - 1);
-    }
-    return word;
-}
-
-struct TokenMatch {
-    int tier{};
-    int detail{};
-    bool fromName{};
-};
-
-struct MatchScore {
-    int tier{};
-    int detail{};
-};
-
-TokenMatch ScoreToken(const Emoji& emoji, const std::wstring& token) {
-    for (const auto& word : emoji.nameWords) if (word == token) return {5, 100, true};
-    const std::wstring normalizedToken = NormalizeSearchWord(token);
-    for (const auto& word : emoji.nameWords) {
-        if (NormalizeSearchWord(word) == normalizedToken) return {5, 90, true};
-    }
-    for (const auto& word : emoji.keywordWords) if (word == token) return {4, 100, false};
-    for (const auto& word : emoji.keywordWords) {
-        if (NormalizeSearchWord(word) == normalizedToken) return {4, 90, false};
-    }
-    for (const auto& word : emoji.nameWords) if (StartsWith(word, token)) return {3, 80, true};
-    for (const auto& word : emoji.keywordWords) if (StartsWith(word, token)) return {2, 70, false};
-    if (emoji.lowerName.find(token) != std::wstring::npos) return {2, 60, true};
-    if (emoji.lowerKeywords.find(token) != std::wstring::npos) return {1, 50, false};
-    return {};
-}
-
-std::wstring JoinWords(const std::vector<std::wstring>& words) {
-    std::wstring result;
-    for (const auto& word : words) {
-        if (!result.empty()) result += L' ';
-        result += word;
-    }
-    return result;
-}
-
-MatchScore LexicalScore(const Emoji& emoji, const std::vector<std::wstring>& queryWords) {
-    if (queryWords.empty()) return {};
-    const std::wstring phrase = JoinWords(queryWords);
-    if (emoji.lowerName == phrase) return {7, 1000};
-    if (StartsWith(emoji.lowerName, phrase)) return {6, 800};
-
-    int weakestTier = 5;
-    int detail = 0;
-    int nameMatches = 0;
-    for (const auto& token : queryWords) {
-        const TokenMatch match = ScoreToken(emoji, token);
-        if (!match.tier) return {};
-        weakestTier = std::min(weakestTier, match.tier);
-        detail += match.detail;
-        if (match.fromName) ++nameMatches;
-    }
-    const int extraNameWords = std::max(0, static_cast<int>(emoji.nameWords.size()) - nameMatches);
-    return {weakestTier, detail - std::min(40, extraNameWords * 4)};
-}
-
-size_t EditDistanceAtMost(const std::wstring& left, const std::wstring& right, size_t limit) {
-    const size_t lengthDifference = left.size() > right.size()
-        ? left.size() - right.size() : right.size() - left.size();
-    if (lengthDifference > limit) return limit + 1;
-    if (left.size() == right.size()) {
-        size_t firstDifference = 0;
-        while (firstDifference < left.size() && left[firstDifference] == right[firstDifference]) {
-            ++firstDifference;
-        }
-        if (firstDifference + 1 < left.size() &&
-            left[firstDifference] == right[firstDifference + 1] &&
-            left[firstDifference + 1] == right[firstDifference] &&
-            left.compare(firstDifference + 2, std::wstring::npos,
-                         right, firstDifference + 2, std::wstring::npos) == 0) {
-            return 1;
-        }
-    }
-
-    std::vector<size_t> previous(right.size() + 1);
-    std::vector<size_t> current(right.size() + 1);
-    for (size_t column = 0; column <= right.size(); ++column) previous[column] = column;
-    for (size_t row = 1; row <= left.size(); ++row) {
-        current[0] = row;
-        size_t rowMinimum = current[0];
-        for (size_t column = 1; column <= right.size(); ++column) {
-            const size_t substitution = previous[column - 1] + (left[row - 1] == right[column - 1] ? 0 : 1);
-            current[column] = std::min({previous[column] + 1, current[column - 1] + 1, substitution});
-            rowMinimum = std::min(rowMinimum, current[column]);
-        }
-        if (rowMinimum > limit) return limit + 1;
-        previous.swap(current);
-    }
-    return previous[right.size()];
-}
-
-int FuzzyScore(const Emoji& emoji, const std::vector<std::wstring>& queryWords) {
-    if (queryWords.empty()) return -1;
-    int score = 0;
-    for (const auto& token : queryWords) {
-        if (token.size() < 4) return -1;
-        const size_t limit = token.size() >= 8 ? 2 : 1;
-        size_t best = limit + 1;
-        for (const auto& word : emoji.nameWords) best = std::min(best, EditDistanceAtMost(token, word, limit));
-        for (const auto& word : emoji.keywordWords) best = std::min(best, EditDistanceAtMost(token, word, limit));
-        if (best > limit) return -1;
-        score += 50 - static_cast<int>(best * 15);
-    }
-    return score;
-}
-
-std::wstring EmojiCatalogPath() {
+std::filesystem::path EmojiCatalogPath() {
     wchar_t path[MAX_PATH]{};
     GetModuleFileNameW(nullptr, path, static_cast<DWORD>(std::size(path)));
-    std::wstring executable(path);
-    const size_t slash = executable.find_last_of(L"\\/");
-    return (slash == std::wstring::npos ? L"" : executable.substr(0, slash + 1)) + L"emojis.txt";
-}
-
-std::wstring Utf8ToWide(const std::string& value) {
-    if (value.empty()) return L"";
-    const int length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(),
-                                           static_cast<int>(value.size()), nullptr, 0);
-    if (!length) return L"";
-    std::wstring result(length, L'\0');
-    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(), static_cast<int>(value.size()),
-                        result.data(), length);
-    return result;
-}
-
-std::string WideToUtf8(const std::wstring& value) {
-    if (value.empty()) return "";
-    const int length = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, value.data(),
-                                           static_cast<int>(value.size()), nullptr, 0, nullptr, nullptr);
-    if (!length) return "";
-    std::string result(length, '\0');
-    WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, value.data(), static_cast<int>(value.size()),
-                        result.data(), length, nullptr, nullptr);
-    return result;
+    return std::filesystem::path(path).parent_path() / L"emojis.txt";
 }
 
 bool LoadEmojis() {
-    const std::wstring path = EmojiCatalogPath();
-    std::ifstream file(path.c_str(), std::ios::binary);
-    std::string line;
-    while (std::getline(file, line)) {
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        std::string glyphUtf8;
-        std::string nameUtf8;
-        std::string keywordsUtf8;
-        const size_t firstTab = line.find('\t');
-        if (firstTab != std::string::npos) {
-            const size_t secondTab = line.find('\t', firstTab + 1);
-            glyphUtf8 = line.substr(0, firstTab);
-            nameUtf8 = line.substr(firstTab + 1, secondTab - firstTab - 1);
-            if (secondTab != std::string::npos) keywordsUtf8 = line.substr(secondTab + 1);
-        } else {
-            const size_t split = line.find(' ');
-            if (split == std::string::npos) continue;
-            glyphUtf8 = line.substr(0, split);
-            nameUtf8 = line.substr(split + 1);
-        }
-        const std::wstring glyph = Utf8ToWide(glyphUtf8);
-        const std::wstring name = Utf8ToWide(nameUtf8);
-        std::wstring keywords = Utf8ToWide(keywordsUtf8);
-        if (keywords.empty()) keywords = name;
-        if (!glyph.empty() && !name.empty()) {
-            const std::wstring lowerName = Lower(name);
-            const std::wstring lowerKeywords = Lower(keywords);
-            g_emojis.push_back({glyph, name, keywords, lowerName, lowerKeywords,
-                                SplitWords(lowerName), SplitWords(lowerKeywords)});
-        }
-    }
-    // Some CLDR families contain only toned variants (for example, waving hand).
-    // Add an in-memory untoned entry so they can be presented once and changed
-    // with Alt+I like families that already have a default glyph in the catalog.
-    std::unordered_set<std::wstring> untonedFamilies;
-    for (const auto& emoji : g_emojis) {
-        if (!SkinToneIndex(emoji.glyph)) untonedFamilies.insert(SkinToneFamilyKey(emoji.glyph));
-    }
-    const size_t catalogSize = g_emojis.size();
-    for (size_t index = 0; index < catalogSize; ++index) {
-        const Emoji& emoji = g_emojis[index];
-        if (!SkinToneIndex(emoji.glyph)) continue;
-        if (!UsesOnlySkinTone(emoji.glyph, SkinToneIndex(emoji.glyph))) continue;
-        const std::wstring base = WithoutSkinTone(emoji.glyph);
-        if (!untonedFamilies.insert(SkinToneFamilyKey(emoji.glyph)).second) continue;
-        Emoji synthetic = emoji;
-        synthetic.glyph = base;
-        g_emojis.push_back(std::move(synthetic));
-    }
-    return !g_emojis.empty();
+    std::ifstream file(EmojiCatalogPath(), std::ios::binary);
+    return g_catalog.Load(file);
 }
 
-std::wstring DataPath(const wchar_t* fileName) {
+void LoadProfile() {
     wchar_t path[MAX_PATH]{};
-    if (FAILED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, path))) return fileName;
-    const std::wstring appData(path);
-    const std::wstring folder = appData + L"\\SwashMoji";
-    CreateDirectoryW(folder.c_str(), nullptr);
-    const std::wstring target = folder + L"\\" + fileName;
-    if (GetFileAttributesW(target.c_str()) == INVALID_FILE_ATTRIBUTES) {
-        static const wchar_t* legacyFolders[]{L"WinMoji"};
-        for (const wchar_t* legacyFolder : legacyFolders) {
-            const std::wstring legacy = appData + L"\\" + legacyFolder + L"\\" + fileName;
-            if (CopyFileW(legacy.c_str(), target.c_str(), TRUE)) break;
-        }
+    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, path))) {
+        g_storage = ProfileStorage(std::filesystem::path(path) / L"SwashMoji",
+                                   std::filesystem::path(path) / L"WinMoji");
+    } else {
+        g_storage = ProfileStorage(std::filesystem::current_path());
     }
-    return target;
+    auto loaded = g_storage.Load();
+    g_profile = std::move(loaded.profile);
+    g_profileUnsaved = loaded.unsaved || g_storage.ReadOnly();
+    g_storageDiagnostic = std::move(loaded.diagnostic);
 }
 
-std::wstring HistoryPath() {
-    return DataPath(L"history.txt");
+void SaveProfile() {
+    g_profileUnsaved = !g_storage.Save(g_profile, g_storageDiagnostic);
+    UpdateStatusLine();
+    if (g_tray.hWnd) UpdateSortIndicator();
 }
 
-std::wstring SettingsPath() {
-    return DataPath(L"settings.txt");
-}
-
-void LoadSettings() {
-    std::ifstream file(SettingsPath().c_str(), std::ios::binary);
-    std::string line;
-    while (std::getline(file, line)) {
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        if (line == "position_above_text_field=1") g_positionAboveTextField = true;
-        if (line == "sort_by_usage=1") g_sortByUsage = true;
-        if (line == "emoji_rows=2") g_emojiRows = 2;
-        if (line == "emoji_rows=3") g_emojiRows = 3;
-        if (line == "skin_tone=1") g_skinToneIndex = 1;
-        if (line == "skin_tone=2") g_skinToneIndex = 2;
-        if (line == "skin_tone=3") g_skinToneIndex = 3;
-        if (line == "skin_tone=4") g_skinToneIndex = 4;
-        if (line == "skin_tone=5") g_skinToneIndex = 5;
-    }
-}
-
-void SaveSettings() {
-    std::ofstream file(SettingsPath().c_str(), std::ios::binary | std::ios::trunc);
-    file << "position_above_text_field=" << (g_positionAboveTextField ? '1' : '0') << '\n';
-    file << "sort_by_usage=" << (g_sortByUsage ? '1' : '0') << '\n';
-    file << "emoji_rows=" << g_emojiRows << '\n';
-    file << "skin_tone=" << g_skinToneIndex << '\n';
-}
-
-std::wstring UsagePath() {
-    return DataPath(L"usage.txt");
-}
-
-void LoadUsage() {
-    std::ifstream file(UsagePath().c_str(), std::ios::binary);
-    std::string line;
-    while (std::getline(file, line)) {
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        const size_t tab = line.find('\t');
-        if (tab == std::string::npos) continue;
-        const std::wstring glyph = Utf8ToWide(line.substr(0, tab));
-        try {
-            const unsigned long count = std::stoul(line.substr(tab + 1));
-            if (!glyph.empty() && count) g_usageCounts[glyph] = static_cast<unsigned int>(count);
-        } catch (...) {
-        }
-    }
-    for (const auto& recent : g_history) {
-        if (!g_usageCounts.count(recent)) g_usageCounts[recent] = 1;
-    }
-}
-
-void SaveUsage() {
-    std::ofstream file(UsagePath().c_str(), std::ios::binary | std::ios::trunc);
-    for (const auto& emoji : g_emojis) {
-        const auto found = g_usageCounts.find(emoji.glyph);
-        if (found != g_usageCounts.end() && found->second) {
-            file << WideToUtf8(emoji.glyph) << '\t' << found->second << '\n';
-        }
-    }
-}
-
-void LoadHistory() {
-    const std::wstring path = HistoryPath();
-    std::ifstream file(path.c_str(), std::ios::binary);
-    std::string line;
-    while (std::getline(file, line) && g_history.size() < kMaxHistory) {
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        const std::wstring emoji = Utf8ToWide(line);
-        if (!emoji.empty()) g_history.push_back(emoji);
-    }
-}
-
-void SaveHistory() {
-    const std::wstring path = HistoryPath();
-    std::ofstream file(path.c_str(), std::ios::binary | std::ios::trunc);
-    for (const auto& item : g_history) file << WideToUtf8(item) << '\n';
-}
+void SaveSettings() { SaveProfile(); }
 
 void Remember(const wchar_t* glyph) {
-    std::wstring value(glyph);
-    g_history.erase(std::remove(g_history.begin(), g_history.end(), value), g_history.end());
-    g_history.insert(g_history.begin(), value);
-    if (g_history.size() > kMaxHistory) g_history.resize(kMaxHistory);
-    SaveHistory();
-    ++g_usageCounts[value];
-    SaveUsage();
-}
-
-int HistoryBoost(const std::wstring& glyph) {
-    const auto found = std::find(g_history.begin(), g_history.end(), glyph);
-    if (found == g_history.end()) return 0;
-    const int position = static_cast<int>(std::distance(g_history.begin(), found));
-    return std::max(1, 20 - position);
-}
-
-unsigned int UsageCount(const std::wstring& glyph) {
-    const auto found = g_usageCounts.find(glyph);
-    return found == g_usageCounts.end() ? 0 : found->second;
-}
-
-int PopularityPrior(const std::wstring& glyph) {
-    static const wchar_t* popular[]{
-        L"😊", L"🙂", L"😂", L"❤️", L"😍", L"🥰", L"😄", L"😁",
-        L"😃", L"😀", L"😉", L"😆", L"😎", L"🤣", L"😭", L"😘"
-    };
-    for (size_t index = 0; index < std::size(popular); ++index) {
-        if (glyph == popular[index]) return static_cast<int>(std::size(popular) - index);
-    }
-    return 0;
-}
-
-const Emoji* PreferredSkinToneVariant(const Emoji* emoji) {
-    if (!emoji || !g_skinToneIndex) return emoji;
-    const std::wstring family = SkinToneFamilyKey(emoji->glyph);
-    for (const auto& candidate : g_emojis) {
-        if (UsesOnlySkinTone(candidate.glyph, g_skinToneIndex) &&
-            SkinToneFamilyKey(candidate.glyph) == family) {
-            return &candidate;
-        }
-    }
-    return emoji;
+    SwashMoji::Remember(g_profile, glyph);
+    SaveProfile();
 }
 
 void RefreshList() {
     wchar_t input[256]{};
     GetWindowTextW(g_edit, input, static_cast<int>(std::size(input)));
-    const std::wstring query = Lower(input);
-    const auto queryWords = SplitWords(query);
+    g_session.query = input;
     SendMessageW(g_list, LB_RESETCONTENT, 0, 0);
-    g_visible.clear();
+    g_visible = Search(g_catalog, g_profile, g_session.query);
     g_displayVisible.clear();
-    std::unordered_set<std::wstring> added;
-
-    // Empty searches lead with either strict recency or lifetime usage, according
-    // to the user's Alt+T preference.
-    if (queryWords.empty()) {
-        if (g_sortByUsage) {
-            std::vector<const Emoji*> used;
-            for (const auto& emoji : g_emojis) {
-                if (UsageCount(emoji.glyph)) used.push_back(&emoji);
-            }
-            std::stable_sort(used.begin(), used.end(), [](const Emoji* left, const Emoji* right) {
-                const unsigned int leftUsage = UsageCount(left->glyph);
-                const unsigned int rightUsage = UsageCount(right->glyph);
-                return SwashMojiRanking::ComparePreference(true,
-                                                           leftUsage, HistoryBoost(left->glyph),
-                                                           rightUsage, HistoryBoost(right->glyph)) > 0;
-            });
-            for (const Emoji* emoji : used) {
-                if (added.insert(emoji->glyph).second) g_visible.push_back(emoji);
-            }
-        } else {
-            for (const auto& recent : g_history) {
-                for (const auto& emoji : g_emojis) {
-                    if (recent == emoji.glyph && added.insert(recent).second) {
-                        g_visible.push_back(&emoji);
-                        break;
-                    }
-                }
-            }
-        }
-        for (const auto& emoji : g_emojis) {
-            if (added.insert(emoji.glyph).second) g_visible.push_back(&emoji);
-        }
-    } else {
-        struct SearchResult {
-            const Emoji* emoji;
-            MatchScore match;
-            unsigned int usage;
-            int recency;
-            int popularity;
-        };
-        std::vector<SearchResult> results;
-        const auto addResult = [&results](const Emoji& emoji, MatchScore match) {
-            results.push_back({&emoji, match, UsageCount(emoji.glyph),
-                               HistoryBoost(emoji.glyph), PopularityPrior(emoji.glyph)});
-        };
-        for (const auto& emoji : g_emojis) {
-            const MatchScore match = LexicalScore(emoji, queryWords);
-            if (match.tier) addResult(emoji, match);
-        }
-
-        // Typo tolerance is deliberately a fallback so it never pollutes good exact results.
-        if (results.empty()) {
-            for (const auto& emoji : g_emojis) {
-                const int score = FuzzyScore(emoji, queryWords);
-                if (score >= 0) addResult(emoji, {1, score});
-            }
-        }
-        std::stable_sort(results.begin(), results.end(), [](const SearchResult& left, const SearchResult& right) {
-            if (left.match.tier != right.match.tier) return left.match.tier > right.match.tier;
-            const int preference = SwashMojiRanking::ComparePreference(
-                g_sortByUsage, left.usage, left.recency, right.usage, right.recency);
-            if (preference) return preference > 0;
-            if (left.match.detail != right.match.detail) return left.match.detail > right.match.detail;
-            return left.popularity > right.popularity;
-        });
-        for (const auto& result : results) {
-            if (added.insert(result.emoji->glyph).second) g_visible.push_back(result.emoji);
-        }
-    }
-    // Tone variants are selected through Alt+I, not exposed as separate results.
-    // Mixed-tone-only sequences are omitted because one global tone cannot
-    // represent both independent modifiers.
-    g_visible.erase(std::remove_if(g_visible.begin(), g_visible.end(), [](const Emoji* emoji) {
-        return SkinToneIndex(emoji->glyph) != 0;
-    }), g_visible.end());
+    g_session.rankingSnapshot.clear();
+    for (const auto& result : g_visible) g_session.rankingSnapshot.push_back(result.id);
+    g_session.selected = g_visible.empty() ? ResultId{} : g_visible.front().id;
     // A multi-column Win32 listbox fills each column top-to-bottom. Reorder the
     // listbox items so it still reads left-to-right: 1–10 on the first row, then
     // 11–20 on the next row.
@@ -622,85 +177,124 @@ void RefreshList() {
             const size_t index = page * g_emojiRows * kEmojiColumns +
                                  static_cast<size_t>(row) * kEmojiColumns + columnInPage;
             if (index < g_visible.size()) {
-                g_displayVisible.push_back(PreferredSkinToneVariant(g_visible[index]));
+                g_displayVisible.push_back(g_visible[index]);
             }
         }
     }
-    for (const Emoji* emoji : g_displayVisible) {
-        SendMessageW(g_list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(emoji->glyph.c_str()));
+    for (const auto& result : g_displayVisible) {
+        SendMessageW(g_list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(result.payload.c_str()));
     }
     if (!g_displayVisible.empty()) SendMessageW(g_list, LB_SETCURSEL, 0, 0);
 }
 
-void CopySelection() {
-    const int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
-    if (selected < 0 || selected >= static_cast<int>(g_displayVisible.size())) return;
-    const std::wstring value = g_displayVisible[selected]->glyph;
-    if (!OpenClipboard(g_window)) return;
-    EmptyClipboard();
-    const size_t bytes = (value.size() + 1) * sizeof(wchar_t);
-    if (HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, bytes)) {
-        auto* output = static_cast<wchar_t*>(GlobalLock(memory));
-        if (output) {
-            memcpy(output, value.c_str(), bytes);
-            GlobalUnlock(memory);
-            if (SetClipboardData(CF_UNICODETEXT, memory)) { // Clipboard owns memory after success.
-                memory = nullptr;
-                Remember(value.c_str());
-            }
-        }
-        if (memory) GlobalFree(memory);
-    }
-    CloseClipboard();
+void CancelPendingReturn() {
+    ++g_session.insertionAttempt;
+    g_focusReturn.Cancel();
+    if (g_returnTimer) KillTimer(g_window, g_returnTimer);
+    g_returnTimer = 0;
+}
+
+void DismissPicker() {
+    CancelPendingReturn();
     ShowWindow(g_window, SW_HIDE);
 }
 
-void InsertSelection(bool keepOpen = false, bool controlHeld = false) {
+void SetRecoveryMessage(const std::wstring& message) {
+    g_recoveryMessage = message;
+    const bool visible = !message.empty();
+    SetWindowTextW(g_recoveryLabel, message.c_str());
+    ShowWindow(g_recoveryLabel, visible ? SW_SHOW : SW_HIDE);
+    ShowWindow(g_copyInstead, visible ? SW_SHOW : SW_HIDE);
+    RECT bounds{};
+    GetWindowRect(g_window, &bounds);
+    MONITORINFO monitor{sizeof(monitor)};
+    GetMonitorInfoW(MonitorFromWindow(g_window, MONITOR_DEFAULTTONEAREST), &monitor);
+    const int y = std::max(static_cast<int>(monitor.rcWork.top),
+                          std::min(static_cast<int>(bounds.top), static_cast<int>(monitor.rcWork.bottom) - PickerHeight()));
+    SetWindowPos(g_window, nullptr, bounds.left, y, kPickerWidth, PickerHeight(), SWP_NOZORDER | SWP_NOACTIVATE);
+    LayoutChildren(g_window);
+}
+
+void Recover(const std::wstring& message) {
+    CancelPendingReturn();
+    SetRecoveryMessage(message);
+    // The picker was never hidden before submission. Do not steal focus back if
+    // the user has already moved to another application during the attempt.
+    const auto foreground = g_inputPlatform.Foreground();
+    if (foreground == g_session.originalTarget || foreground == reinterpret_cast<WindowToken>(g_window)) {
+        SetForegroundWindow(g_window);
+        if (GetForegroundWindow() == g_window) SetFocus(g_edit);
+    }
+}
+
+void CopySelection() {
+    CancelPendingReturn();
     const int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     if (selected < 0 || selected >= static_cast<int>(g_displayVisible.size())) return;
-    const std::wstring value = g_displayVisible[selected]->glyph;
-    const HWND target = g_targetWindow;
-    if (!keepOpen) ShowWindow(g_window, SW_HIDE);
-    if (!target || !IsWindow(target) || value.empty()) return;
-
-    SetForegroundWindow(target);
-    std::vector<INPUT> inputs;
-    inputs.reserve(value.size() * 2 + (controlHeld ? 2 : 0));
-    if (controlHeld) {
-        // Ctrl is still held when Ctrl+Enter reaches this handler. Release its logical
-        // state before typing so the target receives Unicode text, not a shortcut.
-        INPUT controlUp{};
-        controlUp.type = INPUT_KEYBOARD;
-        controlUp.ki.wVk = VK_CONTROL;
-        controlUp.ki.dwFlags = KEYEVENTF_KEYUP;
-        inputs.push_back(controlUp);
-    }
-    for (const wchar_t codeUnit : value) {
-        INPUT down{};
-        down.type = INPUT_KEYBOARD;
-        down.ki.wScan = codeUnit;
-        down.ki.dwFlags = KEYEVENTF_UNICODE;
-        inputs.push_back(down);
-        INPUT up = down;
-        up.ki.dwFlags |= KEYEVENTF_KEYUP;
-        inputs.push_back(up);
-    }
-    if (controlHeld) {
-        // Restore Ctrl's logical state so another Enter works while the user keeps
-        // holding the physical key. The eventual physical key-up releases it normally.
-        INPUT controlDown{};
-        controlDown.type = INPUT_KEYBOARD;
-        controlDown.ki.wVk = VK_CONTROL;
-        inputs.push_back(controlDown);
-    }
-    if (SendInput(static_cast<UINT>(inputs.size()), inputs.data(), sizeof(INPUT)) == inputs.size()) {
+    g_session.selected = g_displayVisible[selected].id;
+    const std::wstring value = g_displayVisible[selected].payload;
+    Win32ClipboardPlatform clipboard(g_window);
+    const auto outcome = CopyText(clipboard, value);
+    if (outcome.status == CopyStatus::Copied) {
+        SetRecoveryMessage(L"");
         Remember(value.c_str());
+        DismissPicker();
+        return;
     }
-    if (keepOpen) {
-        // Leave the target focused long enough for its input queue to consume the
-        // injected text before returning keyboard focus to the still-visible picker.
-        SetTimer(g_window, kRestorePickerFocusTimerId, 75, nullptr);
+    if (!outcome.clipboardClosed && !outcome.textPublished) {
+        Recover(outcome.clipboardChanged
+            ? L"Copy failed after clearing the clipboard.\nThe clipboard also could not be closed."
+            : L"Copy failed; the clipboard was not replaced.\nThe clipboard also could not be closed.");
+        return;
     }
+    switch (outcome.status) {
+    case CopyStatus::Busy: Recover(L"Clipboard is busy. Nothing was copied.\nTry Copy instead again."); break;
+    case CopyStatus::PublishFailed: Recover(L"Copy failed after clearing the clipboard.\nYour selection is still available."); break;
+    case CopyStatus::CloseFailed: Recover(L"Text was copied, but the clipboard did not close.\nYour selection is still available."); break;
+    default: Recover(L"Could not copy. The clipboard was not replaced.\nYour selection is still available."); break;
+    }
+}
+
+void InsertSelection(bool keepOpen = false) {
+    CancelPendingReturn();
+    const int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
+    if (selected < 0 || selected >= static_cast<int>(g_displayVisible.size())) return;
+    g_session.selected = g_displayVisible[selected].id;
+    const std::wstring value = g_displayVisible[selected].payload;
+    const auto outcome = InsertText(g_inputPlatform, g_inputTarget, value);
+    if (outcome.status != InsertionStatus::FullySubmitted) {
+        switch (outcome.status) {
+        case InsertionStatus::NoTarget: Recover(L"The original app is no longer available.\nCopy instead, then paste where you want."); break;
+        case InsertionStatus::FocusFailed: Recover(L"Could not focus the original app.\nCopy instead, or reopen from the text field."); break;
+        case InsertionStatus::ReleaseModifiers: Recover(L"Release Alt and Windows keys before inserting.\nYour selection is still available."); break;
+        case InsertionStatus::PartiallySubmitted:
+            Recover(outcome.cleanupComplete
+                ? L"Input may be incomplete. Check the destination.\nRelease Ctrl/Shift before continuing."
+                : L"Input may be incomplete; key cleanup also failed.\nCheck the destination and release modifier keys.");
+            break;
+        default: Recover(L"Could not submit the emoji to the original app.\nCopy instead, then paste where you want."); break;
+        }
+        return;
+    }
+    SetRecoveryMessage(L"");
+    if (keepOpen && g_foregroundHook) {
+        g_returnArmedAt = GetTickCount();
+        g_focusReturn.Arm(g_session.insertionAttempt, g_inputTarget.window);
+        // IDs are never reused in this process, including after cancellation.
+        g_returnTimer = static_cast<UINT_PTR>(g_session.insertionAttempt) + kReturnTimerBase;
+        if (!SetTimer(g_window, g_returnTimer, 75, nullptr)) {
+            g_focusReturn.Cancel();
+            g_returnTimer = 0;
+        }
+    }
+    if (!keepOpen) DismissPicker();
+    Remember(value.c_str());
+}
+
+void CALLBACK ForegroundChanged(HWINEVENTHOOK, DWORD, HWND window, LONG, LONG, DWORD, DWORD eventTime) {
+    if (!g_focusReturn.Pending() || static_cast<LONG>(eventTime - g_returnArmedAt) < 0) return;
+    g_focusReturn.ForegroundChanged(reinterpret_cast<WindowToken>(window));
+    if (!g_focusReturn.Pending()) CancelPendingReturn();
 }
 
 bool TryGetAutomationTextFieldAnchor(RECT& anchor) {
@@ -739,12 +333,19 @@ bool TryGetTextFieldAnchor(HWND active, RECT& anchor) {
 
 int PickerHeight() {
     const int listHeight = g_emojiRows * kResultSize;
-    return kPickerHeight + listHeight - kResultSize - (g_statusVisible ? 0 : kStatusHeight + 5);
+    return kPickerHeight + listHeight - kResultSize - (g_statusVisible ? 0 : kStatusHeight + 5)
+        + (g_recoveryMessage.empty() ? 0 : kRecoveryHeight);
 }
 
 void CenterOnActiveMonitor() {
+    CancelPendingReturn();
     HWND active = GetForegroundWindow();
-    if (active && active != g_window) g_targetWindow = GetAncestor(active, GA_ROOT);
+    const auto target = CaptureExternalTarget(active);
+    if (target.window) {
+        g_inputTarget = target;
+        g_session.originalTarget = target.window;
+        SetRecoveryMessage(L"");
+    }
     RECT anchor{};
     const bool hasAnchor = g_positionAboveTextField && TryGetTextFieldAnchor(active, anchor);
     HMONITOR monitor = hasAnchor
@@ -776,6 +377,10 @@ void CenterOnActiveMonitor() {
 
 void UpdateStatusLine() {
     if (!g_status || g_emojiFonts.empty()) return;
+    if (!g_storageDiagnostic.empty()) {
+        SetWindowTextW(g_status, g_storageDiagnostic.c_str());
+        return;
+    }
     const EmojiFont& font = g_emojiFonts[g_emojiFontIndex];
     const std::wstring label = font.name + (font.color ? L" · Color" : L" · Monochrome");
     const std::wstring text = label + L"    Tab: font    Alt+I: skin tone    Alt+1-3: rows    F1: help";
@@ -972,9 +577,10 @@ void UpdateSortIndicator() {
                              ? L"Search — most used first (Alt+T)"
                              : L"Search — most recent first (Alt+T)";
     SendMessageW(g_edit, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(cue));
-    lstrcpynW(g_tray.szTip,
-              g_sortByUsage ? L"SwashMoji — most used — Alt+E" : L"SwashMoji — most recent — Alt+E",
-              static_cast<int>(std::size(g_tray.szTip)));
+    std::wstring tip = g_sortByUsage ? L"SwashMoji — most used — Alt+E" : L"SwashMoji — most recent — Alt+E";
+    if (g_profileUnsaved) tip += L" — Changes not saved";
+    else if (!g_storageDiagnostic.empty()) tip += L" — " + g_storageDiagnostic;
+    lstrcpynW(g_tray.szTip, tip.c_str(), static_cast<int>(std::size(g_tray.szTip)));
     Shell_NotifyIconW(NIM_MODIFY, &g_tray);
 }
 
@@ -997,10 +603,8 @@ void ConfirmAndClearUsageHistory() {
         MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
     if (result != IDYES) return;
 
-    g_history.clear();
-    g_usageCounts.clear();
-    SaveHistory();
-    SaveUsage();
+    ClearHistory(g_profile);
+    SaveProfile();
     RefreshList();
 }
 
@@ -1077,11 +681,13 @@ LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         leftY += 48;
         DrawHelpRow(dc, 28, leftY, 315, 46, L"Enter", L"Insert into the active text field.");
         leftY += 48;
-        DrawHelpRow(dc, 28, leftY, 315, 54, L"Shift+Enter", L"Copy to the clipboard instead.");
+        DrawHelpRow(dc, 28, leftY, 315, 54, L"Shift+Enter", L"Copy; stay open if copying fails.");
         leftY += 56;
         DrawHelpRow(dc, 28, leftY, 315, 54, L"Ctrl+Enter", L"Insert and keep SwashMoji open.");
         leftY += 56;
         DrawHelpRow(dc, 28, leftY, 315, 42, L"Esc", L"Close the picker.");
+        leftY += 44;
+        DrawHelpRow(dc, 28, leftY, 315, 72, L"Alt+C", L"After an insertion error: Copy instead. Check the destination if input was partial.");
 
         constexpr int rightX = 374;
         DrawHelpText(dc, L"CUSTOMIZE", RECT{rightX, 112, 690, 136},
@@ -1135,6 +741,7 @@ LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
 }
 
 void ShowHelp() {
+    CancelPendingReturn();
     if (g_helpWindow) {
         ShowWindow(g_helpWindow, SW_SHOWNORMAL);
         SetForegroundWindow(g_helpWindow);
@@ -1163,6 +770,9 @@ void ShowHelp() {
 }
 
 void ShowTrayMenu() {
+    CancelPendingReturn();
+    const auto target = CaptureExternalTarget(GetForegroundWindow());
+    if (target.window) { g_inputTarget = target; g_session.originalTarget = target.window; }
     HMENU menu = CreatePopupMenu();
     const UINT positionFlags = MF_STRING | (g_positionAboveTextField ? MF_CHECKED : MF_UNCHECKED);
     AppendMenuW(menu, positionFlags, kPositionAboveTextFieldId, L"Try positioning above active text field");
@@ -1206,6 +816,9 @@ void LayoutChildren(HWND window) {
     MoveWindow(g_list, margin, listY, area.right - margin * 2, listHeight, TRUE);
     MoveWindow(g_status, margin, listY + listHeight + 5, area.right - margin * 2,
                kStatusHeight, TRUE);
+    const int recoveryY = listY + listHeight + 8 + (g_statusVisible ? kStatusHeight + 5 : 0);
+    MoveWindow(g_recoveryLabel, margin, recoveryY, area.right - margin * 2 - 132, kRecoveryHeight - 12, TRUE);
+    MoveWindow(g_copyInstead, area.right - margin - 126, recoveryY + 8, 126, 30, TRUE);
 }
 
 void MoveSelection(int direction) {
@@ -1214,6 +827,7 @@ void MoveSelection(int direction) {
     if (selected == LB_ERR) selected = 0;
     selected = std::clamp(selected + direction, 0, static_cast<int>(g_displayVisible.size()) - 1);
     SendMessageW(g_list, LB_SETCURSEL, selected, 0);
+    g_session.selected = g_displayVisible[selected].id;
 }
 
 LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -1229,12 +843,13 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
             return 0;
         }
         if (wParam == VK_ESCAPE) {
-            ShowWindow(g_window, SW_HIDE);
+            DismissPicker();
             return 0;
         }
         if (wParam == VK_RETURN) {
+            if (!g_recoveryMessage.empty() && (lParam & (1u << 30))) return 0;
             if (GetKeyState(VK_SHIFT) & 0x8000) CopySelection();
-            else if (GetKeyState(VK_CONTROL) & 0x8000) InsertSelection(true, true);
+            else if (GetKeyState(VK_CONTROL) & 0x8000) InsertSelection(true);
             else InsertSelection();
             return 0;
         }
@@ -1273,6 +888,12 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
                                    WS_CHILD | WS_VISIBLE | SS_LEFT | SS_CENTERIMAGE,
                                    0, 0, 0, 0, window,
                                    reinterpret_cast<HMENU>(static_cast<INT_PTR>(kStatusId)), nullptr, nullptr);
+        g_recoveryLabel = CreateWindowExW(0, L"STATIC", L"", WS_CHILD | SS_LEFT,
+            0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kRecoveryId)), nullptr, nullptr);
+        g_copyInstead = CreateWindowExW(0, L"BUTTON", L"&Copy instead", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+            0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kCopyInsteadId)), nullptr, nullptr);
+        SendMessageW(g_recoveryLabel, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
+        SendMessageW(g_copyInstead, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
         SendMessageW(g_edit, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
         SendMessageW(g_edit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(8, 8));
         SendMessageW(g_list, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
@@ -1309,10 +930,10 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         SetBkMode(item->hDC, TRANSPARENT);
         SetTextColor(item->hDC, kText);
         const HFONT previousFont = static_cast<HFONT>(SelectObject(item->hDC, g_uiFont));
-        const Emoji& emoji = *g_displayVisible[item->itemID];
+        const auto& result = g_displayVisible[item->itemID];
         RECT glyph = item->rcItem;
         InflateRect(&glyph, -3, -3);
-        DrawColorEmoji(item->hDC, glyph, emoji.glyph);
+        DrawColorEmoji(item->hDC, glyph, result.payload);
         if (item->itemState & ODS_FOCUS) DrawFocusRect(item->hDC, &item->rcItem);
         SelectObject(item->hDC, previousFont);
         return TRUE;
@@ -1330,6 +951,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         SetBkColor(reinterpret_cast<HDC>(wParam), kBackground);
         return reinterpret_cast<LRESULT>(g_backgroundBrush);
     case WM_COMMAND:
+        if (LOWORD(wParam) == kCopyInsteadId && HIWORD(wParam) == BN_CLICKED) CopySelection();
         if (LOWORD(wParam) == kEditId && HIWORD(wParam) == EN_CHANGE) RefreshList();
         return 0;
     case WM_KEYDOWN:
@@ -1338,10 +960,11 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
             CycleSkinTone();
             return 0;
         }
-        if (wParam == VK_ESCAPE) { ShowWindow(window, SW_HIDE); return 0; }
+        if (wParam == VK_ESCAPE) { DismissPicker(); return 0; }
         if (wParam == VK_RETURN) {
+            if (!g_recoveryMessage.empty() && (lParam & (1u << 30))) return 0;
             if (GetKeyState(VK_SHIFT) & 0x8000) CopySelection();
-            else if (GetKeyState(VK_CONTROL) & 0x8000) InsertSelection(true, true);
+            else if (GetKeyState(VK_CONTROL) & 0x8000) InsertSelection(true);
             else InsertSelection();
             return 0;
         }
@@ -1358,10 +981,14 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
             UpdateStatusLine();
             return 0;
         }
-        if (wParam == kRestorePickerFocusTimerId) {
-            KillTimer(window, kRestorePickerFocusTimerId);
-            SetForegroundWindow(g_window);
-            SetFocus(g_edit);
+        if (g_returnTimer && wParam == g_returnTimer) {
+            KillTimer(window, g_returnTimer);
+            g_returnTimer = 0;
+            if (g_focusReturn.Take(g_session.insertionAttempt, g_inputPlatform.Foreground(),
+                                  IsWindowVisible(window) != FALSE, g_inputPlatform.ValidTarget(g_inputTarget))) {
+                SetForegroundWindow(g_window);
+                if (GetForegroundWindow() == g_window) SetFocus(g_edit);
+            }
             return 0;
         }
         break;
@@ -1383,9 +1010,11 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         }
         return 0;
     case WM_SYSCOMMAND:
-        if ((wParam & 0xFFF0) == SC_CLOSE) { ShowWindow(window, SW_HIDE); return 0; }
+        if ((wParam & 0xFFF0) == SC_CLOSE) { DismissPicker(); return 0; }
         break;
     case WM_DESTROY:
+        CancelPendingReturn();
+        if (g_foregroundHook) { UnhookWinEvent(g_foregroundHook); g_foregroundHook = nullptr; }
         UnregisterHotKey(window, kHotkeyId);
         Shell_NotifyIconW(NIM_DELETE, &g_tray);
         PostQuitMessage(0);
@@ -1407,9 +1036,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
         MessageBoxW(nullptr, L"Kunne ikke lese emojis.txt ved siden av SwashMoji.exe.", L"SwashMoji", MB_ICONERROR);
         return 1;
     }
-    LoadHistory();
-    LoadUsage();
-    LoadSettings();
+    LoadProfile();
     const HRESULT comResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     g_comInitialized = SUCCEEDED(comResult);
     CoCreateInstance(CLSID_CUIAutomation, nullptr, CLSCTX_INPROC_SERVER,
@@ -1462,6 +1089,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
                                WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
                                kPickerWidth, PickerHeight(), nullptr, nullptr, instance, nullptr);
     if (!g_window) return 1;
+    g_foregroundHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
+        nullptr, ForegroundChanged, 0, 0, WINEVENT_OUTOFCONTEXT);
     SendMessageW(g_window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(g_appIcon));
     SendMessageW(g_window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(g_appIcon));
     if (!RegisterHotKey(g_window, kHotkeyId, MOD_ALT | MOD_NOREPEAT, 'E')) {
@@ -1477,6 +1106,18 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
                                 (message.message == WM_SYSKEYDOWN &&
                                  (message.lParam & (1u << 29)));
         const bool firstKeyPress = !(message.lParam & (1u << 30));
+        const bool pickerKey = (message.message == WM_KEYDOWN || message.message == WM_SYSKEYDOWN) &&
+            (message.hwnd == g_window || IsChild(g_window, message.hwnd));
+        if (pickerKey && message.hwnd == g_copyInstead && message.wParam == VK_ESCAPE) {
+            DismissPicker();
+            continue;
+        }
+        if (pickerKey && !g_recoveryMessage.empty() && firstKeyPress &&
+            ((altPressed && message.wParam == 'C') ||
+             (message.hwnd == g_copyInstead && message.wParam == VK_RETURN))) {
+            CopySelection();
+            continue;
+        }
         if ((message.message == WM_KEYDOWN || message.message == WM_SYSKEYDOWN) &&
             firstKeyPress && message.wParam == VK_F1) {
             ShowHelp();
