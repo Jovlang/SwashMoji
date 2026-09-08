@@ -5,6 +5,56 @@
 #undef wWinMain
 #include "test_support.h"
 
+struct CombinationInput : InputPlatform {
+    bool valid{true}; size_t accepted{SIZE_MAX}; WindowToken foreground{};
+    std::vector<std::vector<KeyEvent>> batches;
+    bool ValidTarget(const InputTarget&) override { return valid; }
+    WindowToken Foreground() override { return foreground; }
+    void Activate(WindowToken window) override { foreground = window; }
+    std::vector<std::uint16_t> HeldModifiers() override { return {}; }
+    size_t Send(const std::vector<KeyEvent>& events) override { batches.push_back(events); return std::min(accepted, events.size()); }
+};
+struct CombinationClipboard : ClipboardPlatform {
+    bool success{true}; std::wstring payload;
+    bool Prepare(const std::wstring& value) override { payload = value; return success; }
+    bool Open() override { return true; } bool Empty() override { return true; }
+    bool Publish() override { return true; } bool Close() override { return true; } void Release() override {}
+};
+void CombinationInsertion() {
+    // Save only to an isolated directory, never resolve the real local profile.
+    const auto path = std::filesystem::current_path() / (L"combination-picker-test-" + std::to_wstring(GetCurrentProcessId()));
+    g_storage = ProfileStorage(path);
+    g_profile = {}; g_inputTarget = {42, 1, 1};
+    Combination c; c.name = L"launch";
+    for (const auto* glyph : {L"🚀", L"✨", L"👩🏽‍💻", L"❤️"}) {
+        const auto* emoji = g_catalog.Find(glyph); CHECK(emoji); c.entries.push_back({emoji->family.value, emoji->glyph});
+    }
+    std::wstring error; CHECK(SaveCombination(g_profile, g_catalog, c, error));
+    const ResultId id{ResultKind::Combination, c.id};
+    BeginPickerSession(); SetWindowTextW(g_edit, L"launch");
+    CHECK(g_displayVisible[0].id == id && g_displayVisible[0].payload == c.payload);
+    const auto before = EncodeProfile(g_profile);
+    CombinationInput partial; partial.accepted = 1;
+    InsertSelection(true, &partial);
+    CHECK(EncodeProfile(g_profile) == before && g_session.query == L"launch" && g_session.selected == id);
+    CHECK(g_displayVisible[0].payload == c.payload && partial.batches.size() == 2);
+    for (const auto& event : partial.batches[1]) CHECK(event.up);
+    CombinationClipboard failed; failed.success = false; CopySelection(&failed);
+    CHECK(failed.payload == c.payload && EncodeProfile(g_profile) == before);
+    CombinationInput full; InsertSelection(true, &full);
+    CHECK(full.batches.size() == 1);
+    std::wstring submitted;
+    for (const auto& event : full.batches[0]) if (event.unicode && !event.up) submitted += static_cast<wchar_t>(event.code);
+    CHECK(submitted == c.payload && UsageCount(g_profile, id) == 1 && QueryCount(g_profile, L"launch", id) == 1);
+    CHECK(g_profile.usage.size() == 1 && g_session.selected == id);
+    CombinationClipboard copied; CopySelection(&copied);
+    CHECK(copied.payload == c.payload && UsageCount(g_profile, id) == 2 && g_profile.usage.size() == 1);
+    CHECK(g_storage.Load(&g_catalog).profile.combinations.at(c.id).payload == c.payload);
+    // Remove only this test's explicitly named direct child.
+    CHECK(path.parent_path() == std::filesystem::current_path());
+    std::filesystem::remove_all(path);
+}
+
 int main() {
     try {
         CHECK(LoadEmojis());
@@ -132,6 +182,7 @@ int main() {
         SendMessageW(g_edit, WM_KEYDOWN, VK_RIGHT, 0);
         CHECK(SendMessageW(g_list, LB_GETCURSEL, 0, 0) == g_emojiRows);
         CHECK(g_profile.history.empty());
+        CombinationInsertion();
         DestroyWindow(g_window);
         std::cout << "PASS: launch and typed-query arrows, all row counts, modified text editing and cleared search\n";
     } catch (const std::exception& error) {

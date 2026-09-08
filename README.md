@@ -8,6 +8,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - `Ctrl+Backspace` sletter forrige ord eller markert tekst i søkefeltet og tekstfeltene i **My vocabulary**. `Ctrl+Z` kan angre slettingen.
 - Høyreklikk et treff og velg **Add alias**, eller bruk `Alt+A`. Søket fylles inn som forslag til din egen frase. Uten treff kan du velge **Teach this phrase** og finne ønsket emoji.
 - **My vocabulary** i systemstatusmenyen lar deg opprette, endre og slette aliaser. **Save alias** lagrer; **Close** forkaster utkastet. Lagrede aliaser beholdes når brukshistorikken slettes.
+- **New combination / edit...** i **My vocabulary** lagrer sekvenser av 2–8 emojier med eget navn, for eksempel `launch` → 🚀✨. Velg hudtone per emoji og rekkefølge før **Save**. Lagrede sekvenser påvirkes ikke av global hudtone. Se [kombinasjoner og teststatus](docs/combinations.md).
 - `Alt+P` eller **Pin favorite** i treffmenyen fester valgt emoji som favoritt. Opptil ti favoritter vises først uten søketekst; **My vocabulary** lar deg flytte dem opp/ned eller fjerne dem.
 - Velgeren lærer hvilke treff du velger for hele søket. Læring kan slås av med **Learn from searches** i systemstatusmenyen. Nye valg påvirker rangeringen neste gang velgeren åpnes, slik at gjentatt innsetting ikke flytter treffene.
 - Hudtonevariantene deler brukshistorikk. Bytte av hudtone, font og antall rader beholder markeringen.
@@ -33,7 +34,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - `Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
 - Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
 - Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.
-- **Clear learned history** sletter nylige valg, brukstellere og lærte søk etter bekreftelse. Aliaser, favoritter og utseende beholdes.
+- **Clear learned history** sletter nylige valg, brukstellere og lærte søk etter bekreftelse. Aliaser, kombinasjoner, favoritter og utseende beholdes.
 - Ikonet i systemstatusfeltet åpner velgeren ved venstreklikk og har `Exit` ved høyreklikk.
 - Emoji-katalogen og uttrykkene leses fra UTF-8-filene `emojis.txt` og `intent_phrases.tsv` ved siden av programfilen. Begge må følge med når programmet flyttes.
 

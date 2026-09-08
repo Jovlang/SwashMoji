@@ -17,3 +17,14 @@ This build is pending desktop acceptance; see [verification limits](selection.md
 
 Aliases, favorites, query learning, Ctrl+Backspace and existing profile format are
 preserved. No migration is introduced in M4.
+
+## M5: saved combinations
+
+My vocabulary now supports named sequences of 2–8 explicit catalog variants,
+ordered editing, rename and cascading deletion. Search, aliases, favorites,
+learning and insertion share stable combination IDs. Profile version 4 preserves
+exact Unicode payloads independently of global tone and catalog changes. The
+picker retains its compact layout; Details shows the full sequence.
+
+See [M5 behavior and verification](combinations.md). Interactive keyboard,
+populated-picker/Details, screen-reader and target-app acceptance remains open.

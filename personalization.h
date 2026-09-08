@@ -36,11 +36,25 @@ struct RankingPreferences {
     std::vector<QueryChoice> queryChoices;
 };
 
+constexpr size_t kMaxCombinations = 200;
+struct CombinationEntry { std::wstring family, payload; };
+struct Combination {
+    std::wstring id, name, payload;
+    std::vector<CombinationEntry> entries;
+};
+
 struct Profile : RankingPreferences {
     Settings settings;
+    std::map<std::wstring, Combination> combinations;
     std::map<std::wstring, Alias> aliases;
     std::vector<ResultId> pins;
 };
+
+bool ResolveResult(const Catalog& catalog, const Profile& profile, const ResultId& id, SearchResult& result);
+bool ValidCombination(const Combination& combination);
+// Empty id creates a new persistent identity; edits retain the identity.
+bool SaveCombination(Profile& profile, const Catalog& catalog, Combination& draft, std::wstring& error);
+bool DeleteCombination(Profile& profile, const std::wstring& id);
 
 void Remember(Profile& profile, const ResultId& target);
 // Legacy import/test convenience. Live selections use their catalog-backed ID.

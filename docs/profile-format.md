@@ -1,12 +1,12 @@
-# Local profile format (M0–M3)
+# Local profile format (M0–M5)
 
 The runtime uses `%LOCALAPPDATA%\SwashMoji\profile.tsv`. All profile tests pass an
 isolated directory explicitly; they never resolve or change the user's profile.
 
-## Version 3
+## Version 4
 
 Files are UTF-8 with LF line endings. The reader also accepts a UTF-8 BOM and CRLF.
-The header is `SwashMoji<TAB>3`. Following lines contain typed records:
+The header is `SwashMoji<TAB>4`. Following lines contain typed records:
 
 | Record | Fields after the record type |
 | --- | --- |
@@ -15,7 +15,8 @@ The header is `SwashMoji<TAB>3`. Following lines contain typed records:
 | `usage` | target kind, stable target ID, nonzero unsigned 32-bit count |
 | `query` | normalized complete query, target kind, stable target ID, nonzero unsigned 32-bit count; most recently chosen pair first |
 | `pin` | target kind, stable target ID; display order |
-| `alias` | display phrase, target kind (`emoji` or reserved `combination`), stable target ID |
+| `alias` | display phrase, target kind (`emoji` or `combination`), stable target ID |
+| `combination` | generated ID, display name/trigger, exact payload, followed by 2–8 pairs of family ID and exact component payload |
 | `end` | number of preceding records, excluding the header |
 
 The final `end` record and its terminating newline are mandatory. They detect
@@ -34,7 +35,7 @@ Settings are `position_above_text_field` and `sort_by_usage` (0–1), `emoji_row
 status-line visibility remain session-only, as before M0.
 
 History and usage now store family IDs; tone variants share counts and recency.
-Target kinds are `emoji` or reserved `combination`. Up to ten unique pins retain
+Target kinds are `emoji` or `combination`. Up to ten unique pins retain
 their explicit order. Up to 1,000 unique `(query, target)` records retain their
 most-recently-chosen order for LRU eviction. Queries have at most 256 UTF-16 code
 units after normalization; punctuation-only queries are not learned. Reading or
@@ -47,15 +48,26 @@ The normalized phrase is the unique lookup key; the original phrase is kept for
 display. Duplicate normalized records are skipped (first valid record wins).
 Missing catalog targets are retained so they can be repaired/deleted in My
 vocabulary; they do not produce search results. New targets must be existing
-emoji-family IDs. Combination IDs are reserved for M5.
+emoji-family IDs or existing saved combination IDs.
 
 Introduce a new profile version when adding persistent record types so an older
 executable cannot silently discard new data. Unknown versions are read-only.
 The shared `ResultId` already distinguishes emoji-family IDs from combination IDs;
 neither pointer values nor catalog indices are persisted.
 
+Combinations are bounded to 200 records, names to 96 UTF-16 code units, and
+sequences to 2–8 entries. Each entry has a catalog family reference (up to 96 units)
+and exact Unicode payload (up to 64 units); the complete payload is at most 512
+units and must equal the concatenation of its entries. Invalid Unicode and
+mismatched payloads are rejected. Missing catalog metadata does not invalidate an
+authored sequence. The generated GUID persists through rename and sequence edits.
+Normalized combination names and aliases share one unique namespace; first valid
+record wins on conflicting decoded records. Deletion removes the combination,
+its aliases, pins, history, usage and query counts in one atomic profile save.
+
 ## Migration and persistence
 
+Version 3 profiles migrate without changing their typed targets or settings.
 Versions 1 and 2 use exact-glyph `recent` and `usage` records; version 2 also has
 aliases. On load, the catalog resolves known glyphs to stable families, adds their
 usage counts with saturation, and keeps each family's newest history position.
@@ -64,7 +76,7 @@ The mapping is idempotent and also handles catalogs that later recognize an ID.
 Aliases and settings are preserved. The runtime passes its loaded catalog to
 `ProfileStorage::Load`; codec-only consumers may omit that catalog.
 
-Migration atomically writes version 3 and backs up the previous complete file.
+Migration atomically writes version 4 and backs up the previous complete file.
 A failed write leaves the previous format on disk, retains the migrated values
 in memory, and reports unsaved state. Retrying does not double counts. Unsupported
 future versions remain read-only.

@@ -1,7 +1,7 @@
 # SwashMoji: implementation plan for all five improvements
 
 Status updated 2026-09-08: M0–M3 implemented. M4 implementation is present with
-desktop acceptance still open; M5 and M6 remain planned. See
+desktop acceptance still open; M5 is implemented with interactive acceptance still open; M6 remains planned. See
 [M4 verification and remaining checks](docs/selection.md). Nine CTest suites pass.
 The native harness passes its new Details/grid/DPI checks but its final external
 insertion fails foreground verification. Computer Use was stopped with physical
@@ -74,7 +74,7 @@ The five product steps are covered below; implementation starts with shared foun
 | M2 | Implemented | Step 1: bilingual intent search and personal aliases | M0 | Search acceptance corpus and alias workflows pass |
 | M3 | Implemented; visual follow-up noted above | Step 2: query learning, stable favorites, tone-family history | M2 | Deterministic ranking, migration, and session stability pass |
 | M4 | Implemented; acceptance incomplete | Step 3 plus remaining step 4: selection UI, variants, DPI, accessibility | M1, M3 | Keyboard, pointer, screen-reader, and monitor matrix pass |
-| M5 | Planned | Step 5: saved combinations | M4 | Create, edit, search, pin, insert, and copy sequences end to end |
+| M5 | Implemented; interactive acceptance open | Step 5: saved combinations | M4 | Create, edit, search, pin, insert, and copy sequences end to end |
 | M6 | Planned | Integrated release verification and documentation | M1–M5 | All automated checks and documented manual acceptance pass |
 
 Each milestone should be a reviewable change or a small series of changes. Keep the application buildable throughout. These are dependency boundaries, not calendar estimates; target-app compatibility and accessibility are the largest uncertainty.
@@ -142,7 +142,7 @@ Acceptance: a checked-in corpus covers bilingual names, phrases, case, Norwegian
 ## Step 2 / M3: query learning and stable favorites
 
 Implemented. The following policy is the current behavior; saved combinations
-remain reserved for M5. Query records store most-recently-chosen pairs first,
+are implemented in profile version 4 (M5). Query records store most-recently-chosen pairs first,
 with a maximum normalized query length of 256 UTF-16 code units. Reading/searching
 does not refresh LRU order. Disabling learning stops both collecting and applying
 query counts while retaining them for re-enabling. Recency/usage continues to work.
@@ -240,6 +240,11 @@ Results display a compact sequence preview and its name; Details shows the compl
 Deleting a combination removes its dependent pins, aliases, and learned counts in the same profile transaction and explains affected aliases before deletion. Cancel makes no changes. Catalog updates must not alter a saved payload; missing component metadata falls back to the stored sequence and label.
 
 Acceptance: `launch` → 🚀✨ and `please` → 🥺🙏 can be created, found, renamed, pinned, inserted, copied, and deleted. Ordering, tone variants, joiners, variation selectors, and surrogate pairs survive save/reload. A failed insertion preserves the entire combination and never automatically sends a second copy.
+
+M5 implementation and verification: see [combinations.md](docs/combinations.md).
+Core, native control and injected picker tests are implemented. The editor was
+visually inspected, but the user stopped Computer Use before the interactive
+walkthrough and populated picker/Details review. M5 desktop acceptance remains open.
 
 ## M6: integrated validation and release
 

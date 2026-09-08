@@ -14,7 +14,7 @@ namespace {
 constexpr size_t kMaxFileBytes = 4 * 1024 * 1024;
 constexpr size_t kMaxRecordBytes = 16384;
 constexpr size_t kMaxRecords = 50000;
-constexpr unsigned int kVersion = 3;
+constexpr unsigned int kVersion = 4;
 
 bool Number(const std::string& text, unsigned int& result) {
     if (text.empty()) return false;
@@ -175,6 +175,12 @@ std::string EncodeProfile(const Profile& profile) {
         records.push_back("alias\t" + Escape(alias.phrase) + "\t" +
             (alias.target.kind == ResultKind::Emoji ? "emoji" : "combination") + "\t" + Escape(alias.target.value));
     }
+    for (const auto& item : profile.combinations) {
+        const auto& c = item.second;
+        std::string record = "combination\t" + Escape(c.id) + "\t" + Escape(c.name) + "\t" + Escape(c.payload);
+        for (const auto& entry : c.entries) record += "\t" + Escape(entry.family) + "\t" + Escape(entry.payload);
+        records.push_back(record);
+    }
     std::string bytes = "SwashMoji\t" + std::to_string(kVersion) + "\n";
     for (const auto& record : records) bytes += record + '\n';
     // A record count and mandatory final newline detect interrupted/truncated files.
@@ -260,7 +266,22 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
                 (fields[2] == "emoji" || fields[2] == "combination") && result.profile.aliases.size() < kMaxAliases;
             const auto key = NormalizePhrase(phrase);
             valid = valid && !key.empty() && !result.profile.aliases.count(key);
+            for (const auto& item : result.profile.combinations) if (NormalizePhrase(item.second.name) == key) valid = false;
             if (valid) result.profile.aliases[key] = {phrase, {fields[2] == "emoji" ? ResultKind::Emoji : ResultKind::Combination, value}};
+        } else if (fields[0] == "combination" && version >= 4) {
+            Combination c;
+            valid = fields.size() >= 8 && fields.size() <= 20 && fields.size() % 2 == 0;
+            if (valid) valid = Unescape(fields[1], c.id) && Unescape(fields[2], c.name) && Unescape(fields[3], c.payload);
+            for (size_t i = 4; valid && i < fields.size(); i += 2) {
+                CombinationEntry entry;
+                valid = Unescape(fields[i], entry.family) && Unescape(fields[i + 1], entry.payload);
+                c.entries.push_back(entry);
+            }
+            valid = valid && ValidCombination(c) && result.profile.combinations.size() < kMaxCombinations && !result.profile.combinations.count(c.id);
+            const auto key = NormalizePhrase(c.name);
+            valid = valid && !result.profile.aliases.count(key);
+            for (const auto& item : result.profile.combinations) if (NormalizePhrase(item.second.name) == key) valid = false;
+            if (valid) result.profile.combinations[c.id] = c;
         } else valid = false;
         if (!valid) ++result.skippedRecords;
     }

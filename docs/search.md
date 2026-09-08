@@ -29,6 +29,10 @@ remain available in the running session. See [profile-format.md](profile-format.
 The modal editor preserves the original insertion target, query and selected ID;
 opening shortcuts and tray callbacks cannot reset the picker while it is open.
 
+Saved combinations use their normalized names as personal triggers and can also
+be alias targets. Their authored payload is independent of global tone. See
+[combinations](combinations.md) for editing, limits and verification.
+
 ## Catalog provenance and regeneration
 
 `emojis.txt` has five tab-separated UTF-8 columns: glyph, English name, English

@@ -59,8 +59,8 @@ void Codec() {
     CHECK(EncodeProfile(decoded.profile) == bytes);
     for (size_t size = 0; size < bytes.size(); ++size) CHECK(DecodeProfile(bytes.substr(0, size)).format != ProfileFormat::Valid);
     CHECK(decoded.profile.aliases.at(L"på vei").target.value == L"🚶");
-    CHECK(DecodeProfile("SwashMoji\t4\nend\t0\n").format == ProfileFormat::Unsupported);
-    CHECK(DecodeProfile("SwashMoji\t4").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t5\nend\t0\n").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t5").format == ProfileFormat::Unsupported);
     CHECK(DecodeProfile("\xEF\xBB\xBF" "SwashMoji\t1\r\nsetting\temoji_rows\t2\r\nend\t1\r\n").profile.settings.emojiRows == 2);
     decoded = DecodeProfile("SwashMoji\t1\nusage\trocket\t4294967296\nrecent\tbad\\q\nsetting\temoji_rows\t99\nusage\tgood\t2\nend\t4\n");
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 3);
@@ -94,7 +94,7 @@ void FamilyMigration(const fs::path& root) {
     CHECK(UsageCount(loaded.profile, L"👍") == 15);
     CHECK(loaded.profile.aliases.at(L"launch").target.value == L"🚀");
     CHECK(Read(directory / L"profile.tsv.bak") == v2);
-    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 3);
+    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 4);
     loaded = store.Load(&catalog);
     CHECK(!loaded.migrated && UsageCount(loaded.profile, L"👍") == 15);
     RecordChoice(loaded.profile, {ResultKind::Emoji, L"👍"}, L"good");
@@ -126,7 +126,7 @@ void Migration(const fs::path& root) {
     CHECK(upgraded.profile.settings.skinTone == 3 && UsageCount(upgraded.profile, L"👍🏽") == 8);
     CHECK(upgraded.profile.history == (std::vector<ResultId>{{ResultKind::Emoji, L"👍🏽"}}));
     CHECK(Read(v1Directory / L"profile.tsv.bak") == v1);
-    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 3);
+    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 4);
     CHECK(!oldStore.Load().migrated);
     const auto directory = root / L"migration";
     const auto fallback = root / L"WinMoji";

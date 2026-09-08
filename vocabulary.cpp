@@ -1,6 +1,7 @@
 #include "vocabulary.h"
 #include "vocabulary_ids.h"
 #include "edit_controls.h"
+#include "picker.h"
 #include <algorithm>
 
 namespace SwashMoji {
@@ -24,6 +25,8 @@ std::wstring Text(HWND dialog, int id) {
     return value;
 }
 
+void EditCombinations(HWND dialog, Editor& editor);
+
 void Status(HWND dialog, const wchar_t* message) { SetDlgItemTextW(dialog, IDC_VOCABULARY_STATUS, message); }
 
 void PinButtons(HWND dialog, const Editor& editor) {
@@ -39,8 +42,9 @@ void RefreshPins(HWND dialog, Editor& editor, const ResultId& selected = {}) {
     size_t selection = 0;
     for (size_t i = 0; i < editor.profile.pins.size(); ++i) {
         const auto& id = editor.profile.pins[i];
-        const auto* emoji = id.kind == ResultKind::Emoji ? editor.catalog.FindFamily({id.value}) : nullptr;
-        const auto label = std::to_wstring(i + 1) + L". " + (emoji ? emoji->glyph + L" " + emoji->name : L"Unavailable: " + id.value);
+        SearchResult result;
+        const bool valid = ResolveResult(editor.catalog, editor.profile, id, result);
+        const auto label = std::to_wstring(i + 1) + L". " + (valid ? result.payload + L" " + result.label : L"Unavailable: " + id.value);
         SendDlgItemMessageW(dialog, IDC_PINS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
         if (id == selected) selection = i;
     }
@@ -61,16 +65,18 @@ void RefreshAliases(HWND dialog, Editor& editor) {
 }
 
 void Preview(HWND dialog, Editor& editor) {
-    const auto* emoji = editor.target.kind == ResultKind::Emoji ? editor.catalog.FindFamily({editor.target.value}) : nullptr;
-    const auto label = emoji ? emoji->glyph + L"  " + emoji->name :
+    SearchResult result;
+    const bool valid = ResolveResult(editor.catalog, editor.profile, editor.target, result);
+    const auto label = valid ? result.payload + L"  " + result.label :
         (editor.target.value.empty() ? L"Choose an emoji above." : L"Unavailable target. Choose a replacement emoji.");
     SetDlgItemTextW(dialog, IDC_TARGET_PREVIEW, label.c_str());
-    EnableWindow(GetDlgItem(dialog, IDC_PIN_TARGET), emoji != nullptr);
+    EnableWindow(GetDlgItem(dialog, IDC_PIN_TARGET), valid);
     SetDlgItemTextW(dialog, IDC_PIN_TARGET, IsPinned(editor.profile, editor.target) ? L"Unpin &favorite" : L"Pin &favorite");
 }
 
 void FindTargets(HWND dialog, Editor& editor) {
     Profile neutral;
+    neutral.combinations = editor.profile.combinations;
     editor.results = Search(editor.catalog, neutral, Text(dialog, IDC_TARGET_QUERY));
     // Keep the native list responsive; a more specific query exposes the rest.
     if (editor.results.size() > 200) editor.results.resize(200);
@@ -106,7 +112,9 @@ void LoadDraft(HWND dialog, Editor& editor, const std::wstring& phrase, const Re
     editor.target = target;
     SetDlgItemTextW(dialog, IDC_PHRASE, phrase.c_str());
     const auto* emoji = target.kind == ResultKind::Emoji ? editor.catalog.FindFamily({target.value}) : nullptr;
-    SetDlgItemTextW(dialog, IDC_TARGET_QUERY, emoji ? emoji->glyph.c_str() : L"");
+    const auto combination = target.kind == ResultKind::Combination ? editor.profile.combinations.find(target.value) : editor.profile.combinations.end();
+    SetDlgItemTextW(dialog, IDC_TARGET_QUERY, emoji ? emoji->glyph.c_str() :
+        combination != editor.profile.combinations.end() ? combination->second.name.c_str() : L"");
     FindTargets(dialog, editor);
     RefreshAliases(dialog, editor);
     editor.loading = false;
@@ -132,7 +140,10 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
     const int id = LOWORD(wParam), notification = HIWORD(wParam);
     if (id == IDCANCEL) { EndDialog(dialog, IDCANCEL); return TRUE; }
     if (editor->loading) return FALSE;
-    if (id == IDC_PINS && notification == LBN_SELCHANGE) {
+    if (id == IDC_COMBINATIONS) {
+        EditCombinations(dialog, *editor);
+        RefreshAliases(dialog, *editor); RefreshPins(dialog, *editor); FindTargets(dialog, *editor);
+    } else if (id == IDC_PINS && notification == LBN_SELCHANGE) {
         PinButtons(dialog, *editor);
     } else if (id == IDC_PIN_TARGET) {
         if (IsPinned(editor->profile, editor->target)) Unpin(editor->profile, editor->target);
@@ -183,7 +194,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
             editor->original = NormalizePhrase(phrase);
             RefreshAliases(dialog, *editor);
             Status(dialog, editor->persist() ? L"Alias saved." : L"Changes not saved to disk. Try Save alias again before closing.");
-        } else if (result == AliasResult::InvalidPhrase) Status(dialog, L"Enter a phrase containing letters or numbers (up to 96 characters).");
+        } else if (result == AliasResult::InvalidPhrase) Status(dialog, L"Enter a unique phrase (up to 96 characters), distinct from combination names.");
         else if (result == AliasResult::InvalidTarget) Status(dialog, L"Choose an emoji to save this alias.");
         else if (result == AliasResult::LimitReached) Status(dialog, L"Your vocabulary has 500 aliases. Delete one to add another.");
         else Status(dialog, L"The original alias no longer exists. Choose New to save it again.");
@@ -197,6 +208,174 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
     } else return FALSE;
     return TRUE;
 }
+
+struct CombinationEditor {
+    Editor& parent;
+    Combination draft;
+    std::vector<std::wstring> keys;
+    std::vector<SearchResult> results;
+    std::vector<const Emoji*> variants;
+    bool loading{};
+};
+void ComboStatus(HWND dialog, const std::wstring& text) { SetDlgItemTextW(dialog, IDC_COMBO_STATUS, text.c_str()); }
+void Sequence(HWND dialog, const Catalog& catalog, const Combination& c, int selection = 0) {
+    SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_RESETCONTENT, 0, 0);
+    std::wstring payload;
+    for (size_t i = 0; i < c.entries.size(); ++i) {
+        const auto& entry = c.entries[i];
+        const auto* emoji = catalog.Find(entry.payload);
+        const auto label = std::to_wstring(i + 1) + L". " + entry.payload + (emoji ? L"  " + emoji->name : L"");
+        SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+        payload += entry.payload;
+    }
+    SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETCURSEL, selection, 0);
+    SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETHORIZONTALEXTENT, 1000, 0);
+    SetDlgItemTextW(dialog, IDC_COMBO_PREVIEW, payload.c_str());
+}
+void ComboButtons(HWND dialog, const CombinationEditor& e) {
+    const auto selected = SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_GETCURSEL, 0, 0);
+    EnableWindow(GetDlgItem(dialog, IDC_COMBO_REMOVE), selected >= 0);
+    EnableWindow(GetDlgItem(dialog, IDC_COMBO_LEFT), selected > 0);
+    EnableWindow(GetDlgItem(dialog, IDC_COMBO_RIGHT), selected >= 0 && static_cast<size_t>(selected + 1) < e.draft.entries.size());
+    EnableWindow(GetDlgItem(dialog, IDC_COMBO_ADD), !e.variants.empty() && e.draft.entries.size() < 8);
+    EnableWindow(GetDlgItem(dialog, IDC_COMBO_DELETE), !e.draft.id.empty());
+}
+void ComboSaved(HWND dialog, CombinationEditor& e) {
+    SendDlgItemMessageW(dialog, IDC_COMBO_SAVED, LB_RESETCONTENT, 0, 0); e.keys.clear();
+    for (const auto& item : e.parent.profile.combinations) {
+        const auto index = SendDlgItemMessageW(dialog, IDC_COMBO_SAVED, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item.second.name.c_str()));
+        e.keys.push_back(item.first);
+        if (item.first == e.draft.id) SendDlgItemMessageW(dialog, IDC_COMBO_SAVED, LB_SETCURSEL, index, 0);
+    }
+    ComboButtons(dialog, e);
+}
+void ComboVariants(HWND dialog, CombinationEditor& e) {
+    SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_RESETCONTENT, 0, 0); e.variants.clear();
+    const auto selected = SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_GETCURSEL, 0, 0);
+    if (selected >= 0 && static_cast<size_t>(selected) < e.results.size()) {
+        e.variants = CatalogVariants(e.parent.catalog, e.results[selected].id);
+        int choice = 0;
+        for (size_t i = 0; i < e.variants.size(); ++i) {
+            const auto label = e.variants[i]->glyph + L"  " + e.variants[i]->name;
+            SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+            if (e.variants[i]->glyph == e.results[selected].payload) choice = static_cast<int>(i);
+        }
+        SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_SETCURSEL, choice, 0);
+        SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_SETDROPPEDWIDTH, 600, 0);
+    }
+    ComboButtons(dialog, e);
+}
+void ComboSearch(HWND dialog, CombinationEditor& e) {
+    e.results = Search(e.parent.catalog, Profile{}, Text(dialog, IDC_COMBO_QUERY));
+    if (e.results.size() > 200) e.results.resize(200);
+    SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_RESETCONTENT, 0, 0);
+    for (const auto& result : e.results) {
+        const auto label = result.payload + L"  " + result.label;
+        SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+    }
+    SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_SETHORIZONTALEXTENT, 1000, 0);
+    SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_SETCURSEL, 0, 0);
+    ComboVariants(dialog, e);
+}
+INT_PTR CALLBACK ConfirmCombinationDelete(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == WM_INITDIALOG) {
+        SetDlgItemTextW(dialog, IDC_COMBO_PREVIEW, reinterpret_cast<const wchar_t*>(lParam));
+        SetFocus(GetDlgItem(dialog, IDCANCEL)); return FALSE;
+    }
+    if (message == WM_COMMAND && (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)) {
+        EndDialog(dialog, LOWORD(wParam)); return TRUE;
+    }
+    if (message == WM_CLOSE) { EndDialog(dialog, IDCANCEL); return TRUE; }
+    return FALSE;
+}
+INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    auto* e = reinterpret_cast<CombinationEditor*>(GetWindowLongPtrW(dialog, DWLP_USER));
+    if (message == WM_INITDIALOG) {
+        e = reinterpret_cast<CombinationEditor*>(lParam); SetWindowLongPtrW(dialog, DWLP_USER, lParam);
+        SendDlgItemMessageW(dialog, IDC_COMBO_NAME, EM_SETLIMITTEXT, kMaxAliasLength, 0);
+        SendDlgItemMessageW(dialog, IDC_COMBO_QUERY, EM_SETLIMITTEXT, 255, 0);
+        EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_NAME)); EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_QUERY));
+        ComboSaved(dialog, *e); ComboSearch(dialog, *e);
+        ComboStatus(dialog, L"Choose emoji and variants, then Add. Close discards the unfinished draft.");
+        SetFocus(GetDlgItem(dialog, IDC_COMBO_NAME)); return FALSE;
+    }
+    if (!e) return FALSE;
+    if (message == WM_CLOSE) { EndDialog(dialog, IDCANCEL); return TRUE; }
+    if (message != WM_COMMAND) return FALSE;
+    const int id = LOWORD(wParam), notification = HIWORD(wParam);
+    if (id == IDCANCEL) { EndDialog(dialog, IDCANCEL); return TRUE; }
+    if (e->loading) return FALSE;
+    if (id == IDC_COMBO_QUERY && notification == EN_CHANGE) ComboSearch(dialog, *e);
+    else if (id == IDC_COMBO_RESULTS && notification == LBN_SELCHANGE) ComboVariants(dialog, *e);
+    else if (id == IDC_COMBO_ENTRIES && notification == LBN_SELCHANGE) ComboButtons(dialog, *e);
+    else if (id == IDC_COMBO_NEW || (id == IDC_COMBO_SAVED && notification == LBN_SELCHANGE)) {
+        Combination draft;
+        if (id == IDC_COMBO_SAVED) {
+            const auto index = SendDlgItemMessageW(dialog, id, LB_GETCURSEL, 0, 0);
+            if (index < 0 || static_cast<size_t>(index) >= e->keys.size()) return TRUE;
+            draft = e->parent.profile.combinations.at(e->keys[index]);
+        }
+        e->draft = draft; e->loading = true;
+        SetDlgItemTextW(dialog, IDC_COMBO_NAME, draft.name.c_str());
+        e->loading = false;
+        Sequence(dialog, e->parent.catalog, draft); ComboSaved(dialog, *e);
+        ComboStatus(dialog, L"Changes apply on Save. Close discards this draft.");
+        if (id == IDC_COMBO_NEW) SetFocus(GetDlgItem(dialog, IDC_COMBO_NAME));
+    } else if (id == IDC_COMBO_ADD) {
+        const auto index = SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_GETCURSEL, 0, 0);
+        if (index < 0 || static_cast<size_t>(index) >= e->variants.size() || e->draft.entries.size() >= 8) return TRUE;
+        const auto* emoji = e->variants[index];
+        e->draft.entries.push_back({emoji->family.value, emoji->glyph});
+        Sequence(dialog, e->parent.catalog, e->draft, static_cast<int>(e->draft.entries.size() - 1)); ComboButtons(dialog, *e);
+    } else if (id == IDC_COMBO_REMOVE || id == IDC_COMBO_LEFT || id == IDC_COMBO_RIGHT) {
+        auto index = static_cast<int>(SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_GETCURSEL, 0, 0));
+        if (index < 0 || static_cast<size_t>(index) >= e->draft.entries.size()) return TRUE;
+        if (id == IDC_COMBO_REMOVE) { e->draft.entries.erase(e->draft.entries.begin() + index); index = std::min(index, static_cast<int>(e->draft.entries.size()) - 1); }
+        else {
+            const int next = index + (id == IDC_COMBO_LEFT ? -1 : 1);
+            if (next < 0 || static_cast<size_t>(next) >= e->draft.entries.size()) return TRUE;
+            std::swap(e->draft.entries[index], e->draft.entries[next]); index = next;
+        }
+        Sequence(dialog, e->parent.catalog, e->draft, index); ComboButtons(dialog, *e);
+    } else if (id == IDOK) {
+        e->draft.name = Text(dialog, IDC_COMBO_NAME);
+        std::wstring error;
+        if (!SaveCombination(e->parent.profile, e->parent.catalog, e->draft, error)) { ComboStatus(dialog, error); return TRUE; }
+        ComboSaved(dialog, *e);
+        ComboStatus(dialog, e->parent.persist() ? L"Combination saved." : L"Not saved to disk. Changes remain in this session; try Save again.");
+    } else if (id == IDC_COMBO_DELETE && !e->draft.id.empty()) {
+        std::wstring text;
+        for (const auto& item : e->parent.profile.aliases) if (item.second.target == ResultId{ResultKind::Combination, e->draft.id})
+            text += item.second.phrase + L"\r\n";
+        if (text.empty()) text = L"No dependent aliases.";
+        if (DialogBoxParamW(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE)),
+            MAKEINTRESOURCEW(IDD_COMBO_DELETE), dialog, ConfirmCombinationDelete, reinterpret_cast<LPARAM>(text.c_str())) != IDOK) return TRUE;
+        DeleteCombination(e->parent.profile, e->draft.id); e->draft = {};
+        SetDlgItemTextW(dialog, IDC_COMBO_NAME, L""); Sequence(dialog, e->parent.catalog, e->draft); ComboSaved(dialog, *e);
+        ComboStatus(dialog, e->parent.persist() ? L"Combination deleted." : L"Deletion not saved to disk. Changes remain in this session.");
+    } else return FALSE;
+    return TRUE;
+}
+void EditCombinations(HWND dialog, Editor& editor) {
+    CombinationEditor state{editor};
+    DialogBoxParamW(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE)), MAKEINTRESOURCEW(IDD_COMBINATIONS),
+        dialog, CombinationProc, reinterpret_cast<LPARAM>(&state));
+}
+struct CombinationDetails { const Catalog& catalog; const Combination& combination; };
+INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == WM_INITDIALOG) {
+        const auto& state = *reinterpret_cast<CombinationDetails*>(lParam);
+        SetDlgItemTextW(dialog, IDC_COMBO_NAME, state.combination.name.c_str());
+        Sequence(dialog, state.catalog, state.combination);
+        return TRUE;
+    }
+    if (message == WM_CLOSE || (message == WM_COMMAND && LOWORD(wParam) == IDCANCEL)) { EndDialog(dialog, IDCANCEL); return TRUE; }
+    return FALSE;
+}
+}
+void ShowCombinationDetails(HWND owner, HINSTANCE instance, const Catalog& catalog, const Combination& combination) {
+    CombinationDetails state{catalog, combination};
+    DialogBoxParamW(instance, MAKEINTRESOURCEW(IDD_COMBO_DETAILS), owner, CombinationDetailsProc, reinterpret_cast<LPARAM>(&state));
 }
 
 bool ShowVocabulary(HWND owner, HINSTANCE instance, const Catalog& catalog, Profile& profile,

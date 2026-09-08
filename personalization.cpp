@@ -1,3 +1,4 @@
+#include <objbase.h>
 #include "personalization.h"
 #include "catalog.h"
 #include "text.h"
@@ -83,7 +84,7 @@ bool IsPinned(const Profile& profile, const ResultId& target) {
 }
 
 PinResult Pin(Profile& profile, const Catalog& catalog, const ResultId& target) {
-    if (target.kind != ResultKind::Emoji || !catalog.FindFamily({target.value})) return PinResult::InvalidTarget;
+    if (!((target.kind == ResultKind::Emoji && catalog.FindFamily({target.value})) || (target.kind == ResultKind::Combination && profile.combinations.count(target.value)))) return PinResult::InvalidTarget;
     if (IsPinned(profile, target)) return PinResult::AlreadyPinned;
     if (profile.pins.size() >= kMaxPins) return PinResult::LimitReached;
     profile.pins.push_back(target);
@@ -111,7 +112,9 @@ AliasResult SetAlias(Profile& profile, const Catalog& catalog, const std::wstrin
     const auto key = NormalizePhrase(phrase);
     const auto oldKey = NormalizePhrase(original);
     if (key.empty() || phrase.size() > kMaxAliasLength || phrase.find(L'\0') != std::wstring::npos || WideToUtf8(phrase).empty()) return AliasResult::InvalidPhrase;
-    if (target.kind != ResultKind::Emoji || !catalog.FindFamily({target.value})) return AliasResult::InvalidTarget;
+    if (!((target.kind == ResultKind::Emoji && catalog.FindFamily({target.value})) || (target.kind == ResultKind::Combination && profile.combinations.count(target.value)))) return AliasResult::InvalidTarget;
+    for (const auto& item : profile.combinations)
+        if (NormalizePhrase(item.second.name) == key) return AliasResult::InvalidPhrase;
     if (!original.empty() && !profile.aliases.count(oldKey)) return AliasResult::MissingOriginal;
     if (key != oldKey && profile.aliases.count(key) && !replace) return AliasResult::Duplicate;
     if (original.empty() && !profile.aliases.count(key) && profile.aliases.size() >= kMaxAliases) return AliasResult::LimitReached;
@@ -121,4 +124,68 @@ AliasResult SetAlias(Profile& profile, const Catalog& catalog, const std::wstrin
 }
 
 bool DeleteAlias(Profile& profile, const std::wstring& phrase) { return profile.aliases.erase(NormalizePhrase(phrase)) != 0; }
+}
+
+namespace SwashMoji {
+bool ResolveResult(const Catalog& catalog, const Profile& profile, const ResultId& id, SearchResult& result) {
+    if (id.kind == ResultKind::Combination) {
+        const auto found = profile.combinations.find(id.value);
+        if (found == profile.combinations.end()) return false;
+        result = {id, found->second.name, found->second.payload}; return true;
+    }
+    const auto* emoji = catalog.FindFamily({id.value});
+    if (!emoji) return false;
+    result = {id, emoji->name, emoji->glyph}; return true;
+}
+bool ValidCombination(const Combination& c) {
+    if (c.id.empty() || c.id.size() > 96 || c.name.size() > kMaxAliasLength || NormalizePhrase(c.name).empty() ||
+        c.entries.size() < 2 || c.entries.size() > 8 || c.payload.size() > 512) return false;
+    const auto valid = [](const std::wstring& s) { return !s.empty() && s.find(L'\0') == std::wstring::npos && !WideToUtf8(s).empty(); };
+    if (!valid(c.id) || !valid(c.name) || !valid(c.payload)) return false;
+    std::wstring payload;
+    for (const auto& entry : c.entries) {
+        if (!valid(entry.payload) || !valid(entry.family) || entry.family.size() > 96 || entry.payload.size() > 64) return false;
+        payload += entry.payload;
+    }
+    return payload == c.payload;
+}
+bool SaveCombination(Profile& profile, const Catalog& catalog, Combination& draft, std::wstring& error) {
+    auto saved = draft;
+    const bool creating = saved.id.empty();
+    if (creating) {
+        if (profile.combinations.size() >= kMaxCombinations) { error = L"Limit of 200 combinations reached."; return false; }
+        GUID guid{}; wchar_t id[40]{};
+        if (FAILED(CoCreateGuid(&guid)) || !StringFromGUID2(guid, id, 40)) { error = L"Could not create an identity. Try again."; return false; }
+        saved.id = id;
+    } else if (!profile.combinations.count(saved.id)) { error = L"This combination no longer exists."; return false; }
+    saved.payload.clear();
+    for (const auto& entry : saved.entries) {
+        const auto* emoji = catalog.Find(entry.payload);
+        bool retained = false;
+        if (!creating) for (const auto& old : profile.combinations.at(saved.id).entries)
+            if (old.family == entry.family && old.payload == entry.payload) retained = true;
+        if ((!emoji || emoji->family.value != entry.family) && !retained) { error = L"Choose entries from the emoji catalog."; return false; }
+        saved.payload += entry.payload;
+    }
+    if (!ValidCombination(saved)) { error = L"Enter a name (1–96 characters) and 2–8 emoji."; return false; }
+    const auto key = NormalizePhrase(saved.name);
+    if (profile.aliases.count(key)) { error = L"This name is already a personal alias."; return false; }
+    for (const auto& item : profile.combinations) if (item.first != saved.id && NormalizePhrase(item.second.name) == key) {
+        error = L"This combination name is already used."; return false;
+    }
+    profile.combinations[saved.id] = saved; draft = saved; error.clear(); return true;
+}
+bool DeleteCombination(Profile& profile, const std::wstring& id) {
+    if (!profile.combinations.erase(id)) return false;
+    const ResultId target{ResultKind::Combination, id};
+    Unpin(profile, target);
+    profile.history.erase(std::remove(profile.history.begin(), profile.history.end(), target), profile.history.end());
+    profile.usage.erase(target);
+    profile.queryChoices.erase(std::remove_if(profile.queryChoices.begin(), profile.queryChoices.end(),
+        [&](const QueryChoice& c) { return c.target == target; }), profile.queryChoices.end());
+    for (auto it = profile.aliases.begin(); it != profile.aliases.end(); ) {
+        if (it->second.target == target) it = profile.aliases.erase(it); else ++it;
+    }
+    return true;
+}
 }

@@ -1,3 +1,4 @@
+#include <set>
 #include "search.h"
 #include "ranking.h"
 #include <algorithm>
@@ -154,35 +155,34 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
     }
     const auto words = SplitWords(normalized);
     if (words.empty() && !glyph.empty()) return {};
-    std::map<std::wstring, unsigned int> queryCounts;
-    if (profile.settings.learnQueries && !words.empty()) {
-        const auto phrase = JoinWords(words);
-        for (const auto& choice : preferences.queryChoices)
-            if (choice.query == phrase && choice.target.kind == ResultKind::Emoji) queryCounts[choice.target.value] = choice.count;
-    }
-    const auto learned = [&queryCounts](const Emoji& emoji) {
-        const auto found = queryCounts.find(emoji.family.value);
-        return found == queryCounts.end() ? 0u : found->second;
+    std::vector<SearchResult> candidates;
+    const auto addEmoji = [&](const Emoji& emoji, MatchScore match, const std::wstring& why, bool exact = false) {
+        const auto* variant = exact ? &emoji : catalog.PreferredVariant(emoji, profile.settings.skinTone);
+        candidates.push_back({{ResultKind::Emoji, emoji.family.value}, variant->name, variant->glyph, match, why});
     };
-    struct Candidate { const Emoji* emoji; MatchScore match; std::wstring explanation; bool exactVariant{}; };
-    std::vector<Candidate> candidates;
-    if (words.empty()) {
-        for (const auto& emoji : catalog.Entries()) if (!SkinToneIndex(emoji.glyph)) candidates.push_back({&emoji, {}});
-        std::stable_sort(candidates.begin(), candidates.end(), [&](const Candidate& left, const Candidate& right) {
-            const auto& a = left.emoji->family.value;
-            const auto& b = right.emoji->family.value;
-            const int preference = SwashMojiRanking::ComparePreference(profile.settings.sortByUsage,
-                UsageCount(preferences, a), HistoryBoost(preferences, a), UsageCount(preferences, b), HistoryBoost(preferences, b));
-            if (preference) return preference > 0;
-            const int popularity = PopularityPrior(left.emoji->glyph) - PopularityPrior(right.emoji->glyph);
-            return popularity ? popularity > 0 : a < b;
-        });
-        std::vector<Candidate> pinned;
-        for (const auto& id : profile.pins) {
-            if (id.kind != ResultKind::Emoji) continue;
-            if (const auto* emoji = catalog.FindFamily({id.value})) pinned.push_back({emoji, {}, L"Favorite"});
+    const auto addPersonal = [&](bool fuzzy) {
+        for (const auto& item : profile.combinations) {
+            const auto& c = item.second;
+            const auto match = words.empty() ? MatchScore{} : PhraseMatch(NormalizePhrase(c.name), words, true, fuzzy);
+            if (words.empty() || match.tier) candidates.push_back({{ResultKind::Combination, c.id}, c.name, c.payload, match, L"Saved combination"});
         }
-        candidates.insert(candidates.begin(), pinned.begin(), pinned.end());
+        if (words.empty()) return;
+        for (const auto& entry : profile.aliases) {
+            const auto match = PhraseMatch(entry.first, words, true, fuzzy);
+            SearchResult result;
+            if (match.tier && ResolveResult(catalog, profile, entry.second.target, result)) {
+                if (result.id.kind == ResultKind::Emoji) {
+                    const auto* variant = catalog.PreferredVariant(*catalog.FindFamily({result.id.value}), profile.settings.skinTone);
+                    result.payload = variant->glyph; result.label = variant->name;
+                }
+                result.match = match; result.explanation = L"Alias: " + entry.second.phrase;
+                candidates.push_back(result);
+            }
+        }
+    };
+    if (words.empty()) {
+        for (const auto& emoji : catalog.Entries()) if (!SkinToneIndex(emoji.glyph)) addEmoji(emoji, {}, L"");
+        addPersonal(false);
     } else {
         for (const auto& emoji : catalog.Entries()) {
             auto match = LexicalScore(emoji, words);
@@ -193,14 +193,9 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
                 const auto intent = PhraseMatch(phrase, words, false);
                 if (Better(intent, match)) { match = intent; explanation = L"Intent: " + phrase; }
             }
-            if (match.tier) candidates.push_back({&emoji, match, explanation, toned});
+            if (match.tier) addEmoji(emoji, match, explanation, toned);
         }
-        for (const auto& entry : profile.aliases) {
-            if (entry.second.target.kind != ResultKind::Emoji) continue;
-            const auto* emoji = catalog.FindFamily({entry.second.target.value});
-            const auto match = PhraseMatch(entry.first, words, true);
-            if (emoji && match.tier) candidates.push_back({emoji, match, L"Alias: " + entry.second.phrase});
-        }
+        addPersonal(false);
         if (candidates.empty()) {
             for (const auto& emoji : catalog.Entries()) {
                 if (SkinToneIndex(emoji.glyph)) continue;
@@ -209,39 +204,52 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
                     const auto match = PhraseMatch(phrase, words, false, true);
                     if (match.tier) score = std::max(score, match.detail);
                 }
-                if (score >= 0) candidates.push_back({&emoji, {1, score}, L"Similar spelling"});
+                if (score >= 0) addEmoji(emoji, {1, score}, L"Similar spelling");
             }
-            for (const auto& entry : profile.aliases) {
-                if (entry.second.target.kind != ResultKind::Emoji) continue;
-                const auto* emoji = catalog.FindFamily({entry.second.target.value});
-                const auto match = PhraseMatch(entry.first, words, true, true);
-                if (emoji && match.tier) candidates.push_back({emoji, {1, match.detail}, L"Similar alias: " + entry.second.phrase});
-            }
+            addPersonal(true);
         }
-        std::stable_sort(candidates.begin(), candidates.end(), [&](const Candidate& left, const Candidate& right) {
-            if (left.match.tier != right.match.tier) return left.match.tier > right.match.tier;
-            const auto leftCount = learned(*left.emoji), rightCount = learned(*right.emoji);
-            if (leftCount != rightCount) return leftCount > rightCount;
-            const int preference = SwashMojiRanking::ComparePreference(profile.settings.sortByUsage,
-                UsageCount(preferences, left.emoji->family.value), HistoryBoost(preferences, left.emoji->family.value),
-                UsageCount(preferences, right.emoji->family.value), HistoryBoost(preferences, right.emoji->family.value));
-            if (preference) return preference > 0;
-            if (left.match.detail != right.match.detail) return left.match.detail > right.match.detail;
-            const auto leftPrior = PopularityPrior(left.emoji->glyph), rightPrior = PopularityPrior(right.emoji->glyph);
-            if (leftPrior != rightPrior) return leftPrior > rightPrior;
-            if (left.emoji->family.value != right.emoji->family.value) return left.emoji->family.value < right.emoji->family.value;
-            return left.emoji->glyph < right.emoji->glyph;
-        });
     }
-    std::unordered_set<std::wstring> added;
+    const auto phrase = JoinWords(words);
+    std::map<ResultId, unsigned> queryCounts;
+    if (profile.settings.learnQueries && !words.empty())
+        for (const auto& choice : preferences.queryChoices) if (choice.query == phrase) queryCounts[choice.target] = choice.count;
+    const auto learned = [&](const ResultId& id) {
+        const auto found = queryCounts.find(id); return found == queryCounts.end() ? 0u : found->second;
+    };
+    const auto prior = [&](const SearchResult& result) {
+        const auto* emoji = result.id.kind == ResultKind::Emoji ? catalog.FindFamily({result.id.value}) : nullptr;
+        return emoji ? PopularityPrior(emoji->glyph) : 0;
+    };
+    std::stable_sort(candidates.begin(), candidates.end(), [&](const SearchResult& a, const SearchResult& b) {
+        if (a.match.tier != b.match.tier) return a.match.tier > b.match.tier;
+        if (profile.settings.learnQueries && !words.empty()) {
+            const auto ac = learned(a.id), bc = learned(b.id);
+            if (ac != bc) return ac > bc;
+        }
+        const int preference = SwashMojiRanking::ComparePreference(profile.settings.sortByUsage,
+            UsageCount(preferences, a.id), HistoryBoost(preferences, a.id), UsageCount(preferences, b.id), HistoryBoost(preferences, b.id));
+        if (preference) return preference > 0;
+        if (a.match.detail != b.match.detail) return a.match.detail > b.match.detail;
+        if (prior(a) != prior(b)) return prior(a) > prior(b);
+        if (!(a.id == b.id)) return a.id < b.id;
+        return a.payload < b.payload;
+    });
+    if (words.empty()) {
+        std::vector<SearchResult> pinned;
+        for (const auto& id : profile.pins) {
+            SearchResult result;
+            if (!ResolveResult(catalog, profile, id, result)) continue;
+            if (id.kind == ResultKind::Emoji) {
+                const auto* variant = catalog.PreferredVariant(*catalog.FindFamily({id.value}), profile.settings.skinTone);
+                result.payload = variant->glyph; result.label = variant->name;
+            }
+            result.explanation = L"Favorite"; pinned.push_back(result);
+        }
+        candidates.insert(candidates.begin(), pinned.begin(), pinned.end());
+    }
+    std::set<ResultId> added;
     std::vector<SearchResult> results;
-    for (const auto& candidate : candidates) {
-        const auto& emoji = *candidate.emoji;
-        if ((SkinToneIndex(emoji.glyph) && !candidate.exactVariant) || !added.insert(emoji.family.value).second) continue;
-        const auto* variant = candidate.exactVariant ? &emoji : catalog.PreferredVariant(emoji, profile.settings.skinTone);
-        results.push_back({{ResultKind::Emoji, emoji.family.value}, variant->name,
-                           variant->glyph, candidate.match, candidate.explanation});
-    }
+    for (const auto& candidate : candidates) if (added.insert(candidate.id).second) results.push_back(candidate);
     return results;
 }
 

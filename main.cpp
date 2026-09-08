@@ -731,6 +731,7 @@ const wchar_t* HelpText() {
         L"Arrows in results: Move spatially. Page Up/Down: Previous/next page. Home/End: First/last result.\r\n"
         L"Ctrl+Backspace: Delete the previous word or selection. Ctrl+Z: Undo.\r\n"
         L"Esc: Close Details, vocabulary or help first; otherwise dismiss and return to the original app.\r\n\r\n"
+        L"My vocabulary: Create named combinations of 2–8 emoji, with explicit variants and insertion order. Global tone does not change a saved combination.\r\n"
         L"Details (Alt+D or right-click): Larger preview and valid catalog variants. Use once applies to the next successful insertion or copy; Cancel discards the draft. Your global tone stays unchanged.\r\n"
         L"Hover briefly over a result for a preview without changing keyboard selection.\r\n\r\n"
         L"Alt+F: Cycle emoji fonts (formerly Tab).\r\nAlt+I: Cycle global skin tone.\r\n"
@@ -954,12 +955,12 @@ void UpdateDpi(UINT dpi) {
     CloseHover();
 }
 
-void DrawLargePreview(HDC dc, RECT area, const std::wstring& payload, UINT dpi) {
+void DrawLargePreview(HDC dc, RECT area, const std::wstring& payload, UINT dpi, int fontSize = 56, COLORREF color = CLR_INVALID) {
     const auto oldFont = g_emojiFont;
     auto* oldFormat = g_emojiFormat;
     g_emojiFormat = nullptr;
     const wchar_t* name = g_emojiFonts.empty() ? L"Segoe UI Emoji" : g_emojiFonts[g_emojiFontIndex].name.c_str();
-    const int size = MulDiv(56, dpi, 96);
+    const int size = MulDiv(fontSize, dpi, 96);
     g_emojiFont = CreateFontW(-size, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
         OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, name);
     if (g_dwriteFactory) {
@@ -972,7 +973,7 @@ void DrawLargePreview(HDC dc, RECT area, const std::wstring& payload, UINT dpi) 
     }
     SetBkMode(dc, TRANSPARENT);
     SetTextColor(dc, Foreground());
-    DrawColorEmoji(dc, area, payload, GetSysColor(COLOR_WINDOWTEXT));
+    DrawColorEmoji(dc, area, payload, color == CLR_INVALID ? GetSysColor(COLOR_WINDOWTEXT) : color);
     if (g_emojiFormat) g_emojiFormat->Release();
     DeleteObject(g_emojiFont);
     g_emojiFont = oldFont; g_emojiFormat = oldFormat;
@@ -1032,6 +1033,16 @@ void OpenDetails() {
     const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
     if (index < 0 || static_cast<size_t>(index) >= g_displayVisible.size()) return;
     const auto result = g_displayVisible[index];
+    if (result.id.kind == ResultKind::Combination) {
+        const auto found = g_profile.combinations.find(result.id.value);
+        if (found == g_profile.combinations.end()) return;
+        CloseHover(); CancelPendingReturn();
+        HWND focus = GetFocus(); g_detailsOpen = true;
+        ShowCombinationDetails(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), g_catalog, found->second);
+        g_detailsOpen = false;
+        if (IsWindowVisible(g_window)) SetFocus(IsWindow(focus) ? focus : g_list);
+        return;
+    }
     DetailsState state{CatalogVariants(g_catalog, result.id)};
     if (state.variants.empty()) return;
     const auto payload = result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload;
@@ -1062,7 +1073,9 @@ LRESULT CALLBACK HoverProc(HWND window, UINT message, WPARAM wParam, LPARAM lPar
             const auto& result = g_displayVisible[g_hoverIndex];
             const auto payload = result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload;
             RECT glyph = area; glyph.bottom = Px(80);
-            DrawLargePreview(dc, glyph, payload, g_dpi);
+            const auto combo = result.id.kind == ResultKind::Combination ? g_profile.combinations.find(result.id.value) : g_profile.combinations.end();
+            const int size = combo == g_profile.combinations.end() ? 56 : std::min<int>(56, (glyph.right - glyph.left) * 96 / static_cast<int>(g_dpi * combo->second.entries.size()));
+            DrawLargePreview(dc, glyph, payload, g_dpi, size);
             RECT label{Px(10), Px(82), area.right - Px(10), area.bottom - Px(8)};
             const auto* exact = g_catalog.Find(payload);
             auto old = SelectObject(dc, g_statusFont);
@@ -1303,8 +1316,25 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         const auto& result = g_displayVisible[item->itemID];
         RECT glyph = item->rcItem;
         InflateRect(&glyph, -3, -3);
-        DrawColorEmoji(item->hDC, glyph, result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload,
-            selected && HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : Foreground());
+        const auto combination = result.id.kind == ResultKind::Combination ? g_profile.combinations.find(result.id.value) : g_profile.combinations.end();
+        if (combination != g_profile.combinations.end()) {
+            const auto& entries = combination->second.entries;
+            for (size_t n = 0; n < std::min(size_t{2}, entries.size()); ++n) {
+                RECT part = glyph;
+                const auto middle = (glyph.left + glyph.right) / 2;
+                if (n == 0) part.right = middle; else part.left = middle;
+                if (entries.size() > 2) part.bottom -= Px(8);
+                DrawLargePreview(item->hDC, part, entries[n].payload, g_dpi, 20,
+                    selected && HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : Foreground());
+            }
+            if (entries.size() > 2) {
+                RECT more = glyph; more.top = more.bottom - Px(15);
+                DrawTextW(item->hDC, L"…", -1, &more, DT_CENTER | DT_SINGLELINE);
+            }
+        } else {
+            DrawColorEmoji(item->hDC, glyph, result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload,
+                selected && HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : Foreground());
+        }
         if (selected && !HighContrast()) {
             RECT outline = item->rcItem;
             InflateRect(&outline, -Px(1), -Px(1));
