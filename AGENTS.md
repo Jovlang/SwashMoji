@@ -16,8 +16,9 @@ Read `README.md` for user behavior and commands. Consult the relevant document i
 - `vocabulary.cpp/.h`, `vocabulary.rc`, `vocabulary_ids.h`: vocabulary editor UI.
 - `catalog.cpp/.h`, `text.cpp/.h`, `search.cpp/.h`, `ranking.h`: catalog loading,
   Unicode normalization, bilingual matching and ranking.
+- `picker.cpp/.h`: testable picker-session state, grid navigation and selection.
 - `models.h`, `personalization.cpp/.h`, `storage.cpp/.h`: profile data, learning,
-  favorites, persistence and migration.
+  favorites, saved combinations, persistence and migration.
 - `insertion.cpp/.h`: testable insertion and clipboard logic;
   `insertion_win32.cpp/.h`: Windows adapters.
 - `edit_controls.cpp/.h`: shared native text-edit behavior.
@@ -59,9 +60,10 @@ cannot discover it. CTest includes generator tests only when Python is found.
 `SwashMojiNativeInputTests.exe` and `SwashMojiPickerVocabularyTests.exe` are separate
 from CTest: they require an interactive desktop, change focus and submit real
 input. Run them when relevant with modifier keys released, using their isolated
-profiles. `SwashMojiVocabularyPreview.exe` supports visual and keyboard checks.
-See `docs/insertion.md` and `docs/search.md` for details. Do not terminate a user's
-running picker merely to unlock a build; use another build directory.
+profiles. `SwashMojiPickerPreview.exe` and `SwashMojiVocabularyPreview.exe` support
+visual and keyboard checks. See `docs/insertion.md`, `docs/search.md`, and
+`docs/combinations.md` for details. Do not terminate a user's running picker merely
+to unlock a build; use another build directory.
 
 ## Behavior to preserve
 
@@ -70,13 +72,18 @@ running picker merely to unlock a build; use another build directory.
 - Query learning stays within match classes and uses the complete normalized
   query. Ranking snapshots keep repeated insertions stable within a session.
   Preserve family IDs across skin tones; see `docs/learning.md`.
+- Saved combinations retain their generated IDs across edits and store an exact
+  payload of 2–8 catalog emoji variants. Global tone and catalog updates must not
+  rewrite that payload. Treat insertion, copying, history and learning as one
+  combination result, and cascade deletion through dependent personalization;
+  see `docs/combinations.md`.
 - Only completed insertion or explicit copying records a choice. Direct insertion
   leaves the clipboard untouched. Never automatically retry partial input.
   Failures preserve the query and selection; see `docs/insertion.md`.
 - Preserve profile migration, backup recovery and unsupported-version protection.
   Use isolated directories for tests, never the user's real
   `%LOCALAPPDATA%\SwashMoji` or legacy `%LOCALAPPDATA%\WinMoji` data.
-  History clearing retains aliases, favorites and appearance settings.
+  History clearing retains aliases, combinations, favorites and appearance settings.
   Consult `docs/profile-format.md` before changing the file format.
 
 ## Catalog and documentation
