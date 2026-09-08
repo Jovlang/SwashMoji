@@ -2,3 +2,5 @@
 
 IDI_APP_ICON ICON "assets/app.ico"
 #include "vocabulary.rc"
+#include "details.rc"
+1 24 "app.manifest"

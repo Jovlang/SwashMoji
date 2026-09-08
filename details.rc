@@ -1,0 +1,15 @@
+#include <windows.h>
+#define IDD_DETAILS 400
+IDD_DETAILS DIALOGEX 0, 0, 360, 268
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Details - SwashMoji"
+FONT 10, "Segoe UI"
+BEGIN
+    CONTROL "", 401, "STATIC", SS_OWNERDRAW, 12, 10, 336, 60
+    LTEXT "", 402, 12, 74, 336, 32
+    LTEXT "&Variant for the next insertion or copy", -1, 12, 110, 336, 12
+    LISTBOX 403, 12, 126, 336, 82, LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    LTEXT "Use once keeps your global skin tone unchanged.", -1, 12, 214, 336, 14
+    DEFPUSHBUTTON "&Use once", IDOK, 174, 239, 84, 20
+    PUSHBUTTON "&Cancel", IDCANCEL, 264, 239, 84, 20
+END

@@ -1,6 +1,11 @@
 # SwashMoji: implementation plan for all five improvements
 
-Status updated 2026-09-08: M0–M3 implemented. M4 is next; M5 and M6 remain planned.
+Status updated 2026-09-08: M0–M3 implemented. M4 implementation is present with
+desktop acceptance still open; M5 and M6 remain planned. See
+[M4 verification and remaining checks](docs/selection.md). Nine CTest suites pass.
+The native harness passes its new Details/grid/DPI checks but its final external
+insertion fails foreground verification. Computer Use was stopped with physical
+Escape before completing picker/Details/favorites visual and accessibility review.
 The M3 implementation and Ctrl+Backspace support are committed and pushed in
 [`4dba231`](https://github.com/Jovlang/SwashMoji/commit/4dba2318e3fab21761f93a0b2a93bf1953eaecf1).
 Automated and controlled native checks pass; the final M3 favorites visual review
@@ -68,7 +73,7 @@ The five product steps are covered below; implementation starts with shared foun
 | M1 | Implemented | Step 4: insertion and clipboard recovery | M0 | Failure paths preserve the selection; controlled target tests pass |
 | M2 | Implemented | Step 1: bilingual intent search and personal aliases | M0 | Search acceptance corpus and alias workflows pass |
 | M3 | Implemented; visual follow-up noted above | Step 2: query learning, stable favorites, tone-family history | M2 | Deterministic ranking, migration, and session stability pass |
-| M4 | Next | Step 3 plus remaining step 4: selection UI, variants, DPI, accessibility | M1, M3 | Keyboard, pointer, screen-reader, and monitor matrix pass |
+| M4 | Implemented; acceptance incomplete | Step 3 plus remaining step 4: selection UI, variants, DPI, accessibility | M1, M3 | Keyboard, pointer, screen-reader, and monitor matrix pass |
 | M5 | Planned | Step 5: saved combinations | M4 | Create, edit, search, pin, insert, and copy sequences end to end |
 | M6 | Planned | Integrated release verification and documentation | M1–M5 | All automated checks and documented manual acceptance pass |
 
@@ -163,9 +168,14 @@ Acceptance: repeated `nice` → 👌 choices improve its position within the eli
 
 ## Step 3 / M4: confident selection
 
-Next milestone. Resume the interrupted favorites visual/keyboard review alongside
-the selection UI work. Preserve M3's learning boundaries, family IDs, ordered pins,
-session snapshots, and the delivered Ctrl+Backspace behavior throughout.
+Implementation added: named result footer, deliberate-hover preview, native
+Details with catalog-only one-use variants, logical grid mapping, revised click
+and focus shortcuts, PMv2 manifest and scaled picker/help, native named result
+strings and system high-contrast rendering. Nine CTest suites pass. Resume the
+interrupted visual/keyboard review and native foreground-insertion investigation;
+the screen-reader, monitor and target-app acceptance matrix is not yet complete.
+Preserve M3's learning boundaries, family IDs, ordered pins, session snapshots,
+and the delivered Ctrl+Backspace behavior throughout.
 
 ### Visible behavior
 

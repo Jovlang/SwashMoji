@@ -16,6 +16,8 @@
 #include "insertion_win32.h"
 #include "vocabulary.h"
 #include "edit_controls.h"
+#include "picker.h"
+#include <oleacc.h>
 #include <windowsx.h>
 
 #include <algorithm>
@@ -32,13 +34,13 @@ constexpr wchar_t kClassName[] = L"SwashMojiWindow";
 constexpr wchar_t kHelpClassName[] = L"SwashMojiHelpWindow";
 constexpr UINT kHotkeyId = 1;
 constexpr int kPickerWidth = 500;
-constexpr int kPickerHeight = 136;
+constexpr int kPickerHeight = 176;
 constexpr int kInputHeight = 34;
 constexpr int kResultSize = 48;
 constexpr int kEmojiColumns = 10;
 constexpr int kMinEmojiRows = 1;
 constexpr int kMaxEmojiRows = 3;
-constexpr int kStatusHeight = 18;
+constexpr int kStatusHeight = 42;
 constexpr int kHelpWidth = 720;
 constexpr int kHelpHeight = 840;
 constexpr int kEditId = 100;
@@ -47,6 +49,8 @@ constexpr int kStatusId = 102;
 constexpr int kRecoveryId = 103;
 constexpr int kCopyInsteadId = 104;
 constexpr int kTeachPhraseId = 105;
+constexpr int kDetailsId = 106;
+constexpr UINT_PTR kHoverTimerId = 2;
 constexpr int kVocabularyId = 205;
 constexpr int kPinId = 206;
 constexpr int kLearnQueriesId = 207;
@@ -81,6 +85,26 @@ HWND g_helpWindow{};
 HWND g_recoveryLabel{};
 HWND g_copyInstead{};
 HWND g_teachPhrase{};
+HWND g_detailsButton{}, g_hoverWindow{}, g_searchLabel{};
+bool g_detailsOpen{};
+int g_hoverIndex{-1}, g_pressedIndex{-1};
+POINT g_hoverPoint{};
+UINT g_dpi{96};
+ResultId g_variantTarget;
+std::wstring g_variantPayload;
+int Px(int value) { return MulDiv(value, g_dpi, 96); }
+bool HighContrast() {
+    HIGHCONTRASTW value{sizeof(value)};
+    return SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(value), &value, 0) && (value.dwFlags & HCF_HIGHCONTRASTON);
+}
+COLORREF Background() { return HighContrast() ? GetSysColor(COLOR_WINDOW) : kBackground; }
+COLORREF Foreground() { return HighContrast() ? GetSysColor(COLOR_WINDOWTEXT) : kText; }
+void CloseHover();
+void OpenDetails();
+void UpdateDpi(UINT dpi);
+void ClampWindow(HWND window);
+void SelectionChanged();
+
 bool g_vocabularyOpen{};
 std::wstring g_recoveryMessage;
 Win32InputPlatform g_inputPlatform;
@@ -108,9 +132,6 @@ HBRUSH g_inputBrush{};
 HICON g_appIcon{};
 HFONT g_uiFont{};
 HFONT g_statusFont{};
-HFONT g_helpTitleFont{};
-HFONT g_helpHeadingFont{};
-HFONT g_helpBodyFont{};
 HFONT g_emojiFont{};
 size_t g_emojiFontIndex{};
 std::vector<EmojiFont> g_emojiFonts;
@@ -174,7 +195,9 @@ void RefreshList() {
     const auto oldIndex = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
     const auto previous = oldIndex >= 0 && static_cast<size_t>(oldIndex) < g_displayVisible.size()
         ? g_displayVisible[oldIndex].id : g_session.selected;
+    CloseHover();
     const bool preserveSelection = g_session.query == input;
+    if (!preserveSelection) { g_variantTarget = {}; g_variantPayload.clear(); }
     g_session.query = input;
     SendMessageW(g_list, LB_RESETCONTENT, 0, 0);
     g_visible = Search(g_catalog, g_profile, g_session.query, &g_rankingPreferences);
@@ -183,24 +206,14 @@ void RefreshList() {
     g_session.rankingSnapshot.clear();
     for (const auto& result : g_visible) g_session.rankingSnapshot.push_back(result.id);
     g_session.selected = g_visible.empty() ? ResultId{} : g_visible.front().id;
-    // A multi-column Win32 listbox fills each column top-to-bottom. Reorder the
-    // listbox items so it still reads left-to-right: 1–10 on the first row, then
-    // 11–20 on the next row.
-    const size_t columns = (g_visible.size() + g_emojiRows - 1) / g_emojiRows;
-    for (size_t column = 0; column < columns; ++column) {
-        const size_t page = column / kEmojiColumns;
-        const size_t columnInPage = column % kEmojiColumns;
-        for (int row = 0; row < g_emojiRows; ++row) {
-            const size_t index = page * g_emojiRows * kEmojiColumns +
-                                 static_cast<size_t>(row) * kEmojiColumns + columnInPage;
-            if (index < g_visible.size()) {
-                g_displayVisible.push_back(g_visible[index]);
-            }
-        }
-    }
+    for (const auto index : GridOrder(g_visible.size(), g_emojiRows, kEmojiColumns))
+        g_displayVisible.push_back(g_visible[index]);
     for (const auto& result : g_displayVisible) {
-        SendMessageW(g_list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(result.payload.c_str()));
+        const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
+        const auto label = exact ? exact->name : result.label;
+        SendMessageW(g_list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
+    EnableWindow(g_detailsButton, !g_visible.empty());
     if (!g_displayVisible.empty()) {
         size_t selection = 0;
         if (preserveSelection) for (size_t i = 0; i < g_displayVisible.size(); ++i)
@@ -208,6 +221,7 @@ void RefreshList() {
         SendMessageW(g_list, LB_SETCURSEL, selection, 0);
         g_session.selected = g_displayVisible[selection].id;
     }
+    SelectionChanged();
 }
 
 void ToggleSelectedPin() {
@@ -228,6 +242,7 @@ void ToggleSelectedPin() {
 }
 
 void BeginPickerSession() {
+    g_variantTarget = {}; g_variantPayload.clear();
     g_rankingPreferences = g_profile;
     RefreshList();
 }
@@ -240,7 +255,8 @@ void CancelPendingReturn() {
 }
 
 void OpenVocabulary(bool prefill) {
-    if (g_vocabularyOpen) return;
+    if (g_vocabularyOpen || g_detailsOpen) return;
+    CloseHover();
     CancelPendingReturn();
     const int index = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     const auto selected = index >= 0 && index < static_cast<int>(g_displayVisible.size())
@@ -263,6 +279,8 @@ void OpenVocabulary(bool prefill) {
 }
 
 void DismissPicker() {
+    CloseHover();
+    g_variantTarget = {}; g_variantPayload.clear();
     CancelPendingReturn();
     ShowWindow(g_window, SW_HIDE);
 }
@@ -271,6 +289,7 @@ void SetRecoveryMessage(const std::wstring& message) {
     g_recoveryMessage = message;
     const bool visible = !message.empty();
     SetWindowTextW(g_recoveryLabel, message.c_str());
+    if (visible) NotifyWinEvent(EVENT_SYSTEM_ALERT, g_recoveryLabel, OBJID_CLIENT, CHILDID_SELF);
     ShowWindow(g_recoveryLabel, visible ? SW_SHOW : SW_HIDE);
     ShowWindow(g_copyInstead, visible ? SW_SHOW : SW_HIDE);
     RECT bounds{};
@@ -279,7 +298,7 @@ void SetRecoveryMessage(const std::wstring& message) {
     GetMonitorInfoW(MonitorFromWindow(g_window, MONITOR_DEFAULTTONEAREST), &monitor);
     const int y = std::max(static_cast<int>(monitor.rcWork.top),
                           std::min(static_cast<int>(bounds.top), static_cast<int>(monitor.rcWork.bottom) - PickerHeight()));
-    SetWindowPos(g_window, nullptr, bounds.left, y, kPickerWidth, PickerHeight(), SWP_NOZORDER | SWP_NOACTIVATE);
+    SetWindowPos(g_window, nullptr, bounds.left, y, Px(kPickerWidth), PickerHeight(), SWP_NOZORDER | SWP_NOACTIVATE);
     LayoutChildren(g_window);
 }
 
@@ -300,7 +319,8 @@ void CopySelection(ClipboardPlatform* platformOverride = nullptr) {
     const int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     if (selected < 0 || selected >= static_cast<int>(g_displayVisible.size())) return;
     g_session.selected = g_displayVisible[selected].id;
-    const std::wstring value = g_displayVisible[selected].payload;
+    const std::wstring value = g_displayVisible[selected].id == g_variantTarget && !g_variantPayload.empty()
+        ? g_variantPayload : g_displayVisible[selected].payload;
     Win32ClipboardPlatform clipboard(g_window);
     const auto outcome = CopyText(platformOverride ? *platformOverride : clipboard, value);
     if (outcome.status == CopyStatus::Copied) {
@@ -324,11 +344,13 @@ void CopySelection(ClipboardPlatform* platformOverride = nullptr) {
 }
 
 void InsertSelection(bool keepOpen = false, InputPlatform* platformOverride = nullptr) {
+    CloseHover();
     CancelPendingReturn();
     const int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     if (selected < 0 || selected >= static_cast<int>(g_displayVisible.size())) return;
     g_session.selected = g_displayVisible[selected].id;
-    const std::wstring value = g_displayVisible[selected].payload;
+    const std::wstring value = g_displayVisible[selected].id == g_variantTarget && !g_variantPayload.empty()
+        ? g_variantPayload : g_displayVisible[selected].payload;
     const auto outcome = InsertText(platformOverride ? *platformOverride : g_inputPlatform, g_inputTarget, value);
     if (outcome.status != InsertionStatus::FullySubmitted) {
         switch (outcome.status) {
@@ -344,6 +366,8 @@ void InsertSelection(bool keepOpen = false, InputPlatform* platformOverride = nu
         }
         return;
     }
+    g_variantTarget = {}; g_variantPayload.clear();
+    RefreshList();
     SetRecoveryMessage(L"");
     if (keepOpen && g_foregroundHook) {
         g_returnArmedAt = GetTickCount();
@@ -401,8 +425,8 @@ bool TryGetTextFieldAnchor(HWND active, RECT& anchor) {
 
 int PickerHeight() {
     const int listHeight = g_emojiRows * kResultSize;
-    return kPickerHeight + listHeight - kResultSize - (g_statusVisible ? 0 : kStatusHeight + 5)
-        + (g_recoveryMessage.empty() ? 0 : kRecoveryHeight);
+    return Px(kPickerHeight + listHeight - kResultSize - (g_statusVisible ? 0 : 9)
+        + (g_recoveryMessage.empty() ? 0 : kRecoveryHeight));
 }
 
 void CenterOnActiveMonitor() {
@@ -423,36 +447,43 @@ void CenterOnActiveMonitor() {
     MONITORINFO info{sizeof(info)};
     GetMonitorInfoW(monitor, &info);
     const RECT& area = info.rcWork;
-    int x = area.left + ((area.right - area.left) - kPickerWidth) / 2;
+    // Move onto the destination monitor first so Windows supplies its actual DPI.
+    SetWindowPos(g_window, nullptr, area.left, area.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+    UpdateDpi(GetDpiForWindow(g_window));
+    int x = area.left + ((area.right - area.left) - Px(kPickerWidth)) / 2;
     const int pickerHeight = PickerHeight();
     int y = area.top + ((area.bottom - area.top) - pickerHeight) / 2;
     if (hasAnchor) {
-        x = anchor.left + (anchor.right - anchor.left) / 2 - kPickerWidth / 2;
+        x = anchor.left + (anchor.right - anchor.left) / 2 - Px(kPickerWidth) / 2;
         y = anchor.top - pickerHeight - 8;
         if (y < area.top) y = anchor.bottom + 8;
         const int minX = static_cast<int>(area.left);
         const int minY = static_cast<int>(area.top);
-        const int maxX = std::max(minX, static_cast<int>(area.right) - kPickerWidth);
+        const int maxX = std::max(minX, static_cast<int>(area.right) - Px(kPickerWidth));
         const int maxY = std::max(minY, static_cast<int>(area.bottom) - pickerHeight);
         x = std::clamp(x, minX, maxX);
         y = std::clamp(y, minY, maxY);
     }
-    SetWindowPos(g_window, HWND_TOPMOST, x, y, kPickerWidth, pickerHeight,
+    SetWindowPos(g_window, HWND_TOPMOST, x, y, Px(kPickerWidth), pickerHeight,
                  SWP_NOACTIVATE | SWP_SHOWWINDOW);
+    ClampWindow(g_window);
     SetForegroundWindow(g_window);
     SetFocus(g_edit);
     SendMessageW(g_edit, EM_SETSEL, 0, -1);
 }
 
 void UpdateStatusLine() {
-    if (!g_status || g_emojiFonts.empty()) return;
-    if (!g_storageDiagnostic.empty()) {
-        SetWindowTextW(g_status, g_storageDiagnostic.c_str());
-        return;
+    if (!g_status) return;
+    if (!g_storageDiagnostic.empty()) { SetWindowTextW(g_status, g_storageDiagnostic.c_str()); return; }
+    const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
+    std::wstring label = L"No matches. Teach this phrase with Alt+A.";
+    if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size()) {
+        const auto& result = g_displayVisible[index];
+        const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
+        label = exact ? exact->name : result.label;
+        if (result.id == g_variantTarget && !g_variantPayload.empty()) label += L" (once)";
     }
-    const EmojiFont& font = g_emojiFonts[g_emojiFontIndex];
-    const std::wstring label = font.name + (font.color ? L" · Color" : L" · Monochrome");
-    const std::wstring text = label + L"    Tab: font    Alt+I: skin tone    Alt+1-3: rows    F1: help";
+    const auto text = label + L"\r\nEnter: insert   Ctrl: keep open   Shift+Enter: copy";
     SetWindowTextW(g_status, text.c_str());
 }
 
@@ -471,7 +502,7 @@ void ToggleStatusLine() {
     KillTimer(g_window, kStatusTimerId);
     ShowWindow(g_status, g_statusVisible ? SW_SHOW : SW_HIDE);
     if (g_statusVisible) UpdateStatusLine();
-    SetWindowPos(g_window, nullptr, 0, 0, kPickerWidth, PickerHeight(),
+    SetWindowPos(g_window, nullptr, 0, 0, Px(kPickerWidth), PickerHeight(),
                  SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
@@ -488,7 +519,7 @@ void SetEmojiRows(int rows) {
     MONITORINFO info{sizeof(info)};
     GetMonitorInfoW(monitor, &info);
     const int y = std::max(static_cast<int>(info.rcWork.top), static_cast<int>(bounds.bottom) - height);
-    SetWindowPos(g_window, nullptr, bounds.left, y, kPickerWidth, height,
+    SetWindowPos(g_window, nullptr, bounds.left, y, Px(kPickerWidth), height,
                  SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
@@ -511,7 +542,7 @@ void SelectEmojiFont(size_t index) {
     g_emojiFontIndex = index % g_emojiFonts.size();
     const EmojiFont& font = g_emojiFonts[g_emojiFontIndex];
     if (g_emojiFont) DeleteObject(g_emojiFont);
-    g_emojiFont = CreateFontW(-30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+    g_emojiFont = CreateFontW(-Px(30), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
                               DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                               CLEARTYPE_QUALITY, DEFAULT_PITCH, font.name.c_str());
     if (g_emojiFormat) {
@@ -521,7 +552,7 @@ void SelectEmojiFont(size_t index) {
     if (g_dwriteFactory) {
         g_dwriteFactory->CreateTextFormat(font.name.c_str(), nullptr,
                                           DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-                                          DWRITE_FONT_STRETCH_NORMAL, 30.0f, L"",
+                                          DWRITE_FONT_STRETCH_NORMAL, static_cast<float>(Px(30)), L"",
                                           &g_emojiFormat);
         if (g_emojiFormat) {
             g_emojiFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
@@ -545,6 +576,8 @@ void InitializeColorEmojiDrawing() {
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &g_d2dFactory))) return;
     D2D1_RENDER_TARGET_PROPERTIES properties{};
     properties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    // BindDC bounds and font sizes are physical pixels; keep D2D at 96 DPI.
+    properties.dpiX = properties.dpiY = 96.0f;
     properties.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
     properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
     if (FAILED(g_d2dFactory->CreateDCRenderTarget(&properties, &g_d2dTarget))) return;
@@ -602,7 +635,9 @@ void LoadInstalledColorEmojiFonts() {
     g_emojiFonts.push_back({L"Segoe UI Symbol", false});
 }
 
-void DrawColorEmoji(HDC dc, const RECT& bounds, const std::wstring& glyph) {
+void DrawColorEmoji(HDC dc, const RECT& bounds, const std::wstring& glyph, COLORREF color = CLR_INVALID) {
+    if (color == CLR_INVALID) color = Foreground();
+    SetTextColor(dc, color);
     if (!g_d2dTarget || !g_emojiFormat || FAILED(g_d2dTarget->BindDC(dc, &bounds))) {
         const HFONT previous = static_cast<HFONT>(SelectObject(dc, g_emojiFont));
         DrawTextW(dc, glyph.c_str(), -1, const_cast<RECT*>(&bounds),
@@ -612,13 +647,13 @@ void DrawColorEmoji(HDC dc, const RECT& bounds, const std::wstring& glyph) {
     }
     g_d2dTarget->BeginDraw();
     ID2D1SolidColorBrush* brush{};
-    const D2D1_COLOR_F textColor{0.92f, 0.92f, 0.92f, 1.0f};
+    const D2D1_COLOR_F textColor{GetRValue(color)/255.0f, GetGValue(color)/255.0f, GetBValue(color)/255.0f, 1.0f};
     if (SUCCEEDED(g_d2dTarget->CreateSolidColorBrush(textColor, &brush))) {
         // A DCRenderTarget's coordinate system starts at its current BindDC clip rectangle.
         const D2D1_RECT_F textBounds{0.0f, 0.0f,
                                      static_cast<float>(bounds.right - bounds.left),
                                      static_cast<float>(bounds.bottom - bounds.top)};
-        const auto options = g_emojiFonts[g_emojiFontIndex].color
+        const auto options = !HighContrast() && !g_emojiFonts.empty() && g_emojiFonts[g_emojiFontIndex].color
                                  ? D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
                                  : D2D1_DRAW_TEXT_OPTIONS_NONE;
         g_d2dTarget->DrawTextW(glyph.c_str(), static_cast<UINT32>(glyph.size()), g_emojiFormat,
@@ -678,137 +713,61 @@ void ConfirmAndClearUsageHistory() {
     RefreshList();
 }
 
-void DrawHelpText(HDC dc, const wchar_t* text, RECT area, HFONT font, COLORREF color,
-                  UINT format = DT_LEFT | DT_TOP | DT_WORDBREAK | DT_NOPREFIX) {
-    const HFONT previous = static_cast<HFONT>(SelectObject(dc, font));
-    SetBkMode(dc, TRANSPARENT);
-    SetTextColor(dc, color);
-    DrawTextW(dc, text, -1, &area, format);
-    SelectObject(dc, previous);
+const wchar_t* HelpText() {
+    return L"SwashMoji — keyboard guide\r\n\r\n"
+        L"Alt+E: Open from any app. Search English or Norwegian names, phrases and aliases.\r\n\r\n"
+        L"Click or Enter: Insert and close.\r\nCtrl+click or Ctrl+Enter: Insert and keep open.\r\n"
+        L"Shift+Enter: Copy and close after success.\r\n"
+        L"Tab / Shift+Tab: Move between search, results and actions.\r\n"
+        L"Down in search: Focus results. Left/Right in search: Edit normally.\r\n"
+        L"Arrows in results: Move spatially. Page Up/Down: Previous/next page. Home/End: First/last result.\r\n"
+        L"Ctrl+Backspace: Delete the previous word or selection. Ctrl+Z: Undo.\r\n"
+        L"Esc: Close Details, vocabulary or help first; otherwise dismiss and return to the original app.\r\n\r\n"
+        L"Details (Alt+D): Larger preview and valid catalog variants. Use once applies to the next successful insertion or copy; Cancel discards the draft. Your global tone stays unchanged.\r\n"
+        L"Hover briefly over a result for a preview without changing keyboard selection.\r\n\r\n"
+        L"Alt+F: Cycle emoji fonts (formerly Tab).\r\nAlt+I: Cycle global skin tone.\r\n"
+        L"Alt+1 / 2 / 3: One, two or three rows.\r\nAlt+T: Recent / most-used sorting.\r\n"
+        L"Alt+S: Show/hide selected-result text. F1: This guide.\r\n\r\n"
+        L"Alt+A: Add alias, or teach an unmatched phrase.\r\nAlt+P: Pin/unpin favorite.\r\n"
+        L"My vocabulary in the tray edits aliases and orders up to ten favorites. Save alias saves; Close discards drafts.\r\n\r\n"
+        L"Failures preserve your query and choice. Alt+C: Copy instead. Partial input is never automatically retried; check the destination. Direct insertion leaves the clipboard untouched.\r\n\r\n"
+        L"Learning changes future sessions; repeated insertion keeps results stable. Learn from searches toggles query learning. Clear learned history retains aliases, favorites and appearance.\r\n\r\n"
+        L"Preferences stay locally in %LOCALAPPDATA%\\SwashMoji. No runtime network access.";
 }
 
-void DrawHelpRow(HDC dc, int x, int y, int width, int height,
-                 const wchar_t* key, const wchar_t* description) {
-    constexpr int keyWidth = 94;
-    RECT keyArea{x, y, x + keyWidth, y + 28};
-    HBRUSH keyBrush = CreateSolidBrush(RGB(42, 42, 42));
-    HPEN keyPen = CreatePen(PS_SOLID, 1, RGB(67, 67, 67));
-    const HBRUSH oldBrush = static_cast<HBRUSH>(SelectObject(dc, keyBrush));
-    const HPEN oldPen = static_cast<HPEN>(SelectObject(dc, keyPen));
-    RoundRect(dc, keyArea.left, keyArea.top, keyArea.right, keyArea.bottom, 7, 7);
-    SelectObject(dc, oldPen);
-    SelectObject(dc, oldBrush);
-    DeleteObject(keyPen);
-    DeleteObject(keyBrush);
-
-    DrawHelpText(dc, key, keyArea, g_helpHeadingFont, kText,
-                 DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
-    RECT descriptionArea{x + keyWidth + 14, y + 3, x + width, y + height};
-    DrawHelpText(dc, description, descriptionArea, g_helpBodyFont, kText);
+void LayoutHelp(HWND window) {
+    RECT area{}; GetClientRect(window, &area);
+    const int margin = MulDiv(12, GetDpiForWindow(window), 96);
+    MoveWindow(GetDlgItem(window, 1), margin, margin, std::max(1L, area.right - margin * 2),
+        std::max(1L, area.bottom - margin * 2), TRUE);
 }
-
+void HelpFont(HWND window) {
+    auto old = reinterpret_cast<HFONT>(GetWindowLongPtrW(window, GWLP_USERDATA));
+    auto font = CreateFontW(-MulDiv(16, GetDpiForWindow(window), 96), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+    SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(font));
+    SendDlgItemMessageW(window, 1, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+    if (old) DeleteObject(old);
+}
 LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
-    case WM_CREATE: {
-        BOOL dark = TRUE;
-        DwmSetWindowAttribute(window, 20, &dark, sizeof(dark));
-        SetWindowTheme(window, L"DarkMode_Explorer", nullptr);
-        SendMessageW(window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(g_appIcon));
-        SendMessageW(window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(g_appIcon));
-        return 0;
+    case WM_CREATE:
+        CreateWindowExW(0, L"EDIT", HelpText(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL |
+            ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL, 0, 0, 0, 0, window, reinterpret_cast<HMENU>(1), nullptr, nullptr);
+        HelpFont(window); LayoutHelp(window); return 0;
+    case WM_SIZE: LayoutHelp(window); return 0;
+    case WM_DPICHANGED: {
+        const auto& bounds = *reinterpret_cast<RECT*>(lParam);
+        SetWindowPos(window, nullptr, bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top,
+            SWP_NOZORDER | SWP_NOACTIVATE);
+        HelpFont(window); ClampWindow(window); LayoutHelp(window); return 0;
     }
-    case WM_ERASEBKGND:
-        return 1;
-    case WM_PAINT: {
-        PAINTSTRUCT paint{};
-        HDC dc = BeginPaint(window, &paint);
-        RECT client{};
-        GetClientRect(window, &client);
-        FillRect(dc, &client, g_backgroundBrush);
-
-        DrawHelpText(dc, L"SwashMoji", RECT{28, 22, 350, 58}, g_helpTitleFont, kText,
-                     DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
-        DrawHelpText(dc, L"Keyboard-first emoji picker", RECT{29, 58, 350, 81},
-                     g_helpBodyFont, kMutedText,
-                     DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
-
-        HBRUSH accentBrush = CreateSolidBrush(RGB(75, 151, 222));
-        RECT accent{28, 91, client.right - 28, 93};
-        FillRect(dc, &accent, accentBrush);
-        DeleteObject(accentBrush);
-
-        constexpr COLORREF heading = RGB(112, 184, 246);
-        DrawHelpText(dc, L"ESSENTIALS", RECT{28, 112, 330, 136},
-                     g_helpHeadingFont, heading);
-        int leftY = 143;
-        DrawHelpRow(dc, 28, leftY, 315, 42, L"Alt+E", L"Open from any app.");
-        leftY += 44;
-        DrawHelpRow(dc, 28, leftY, 315, 70, L"Type", L"Search in English or Norwegian: names, intent phrases, and your own aliases. Close spelling is a fallback.");
-        leftY += 72;
-        DrawHelpRow(dc, 28, leftY, 315, 46, L"Arrow keys", L"Move through matching emoji.");
-        leftY += 48;
-        DrawHelpRow(dc, 28, leftY, 315, 46, L"Click", L"Insert and return to SwashMoji.");
-        leftY += 48;
-        DrawHelpRow(dc, 28, leftY, 315, 46, L"Enter", L"Insert into the active text field.");
-        leftY += 48;
-        DrawHelpRow(dc, 28, leftY, 315, 54, L"Shift+Enter", L"Copy; stay open if copying fails.");
-        leftY += 56;
-        DrawHelpRow(dc, 28, leftY, 315, 54, L"Ctrl+Enter", L"Insert and keep SwashMoji open.");
-        leftY += 56;
-        DrawHelpRow(dc, 28, leftY, 315, 42, L"Esc", L"Close the picker.");
-        leftY += 44;
-        DrawHelpRow(dc, 28, leftY, 315, 72, L"Alt+C", L"After an insertion error: Copy instead. Check the destination if input was partial.");
-        leftY += 74;
-        DrawHelpRow(dc, 28, leftY, 315, 66, L"Alt+A", L"Add an alias for your selection, or teach a phrase with no matches.");
-        leftY += 68;
-        DrawHelpRow(dc, 28, leftY, 315, 46, L"Alt+P", L"Pin or unpin the selected favorite.");
-
-        constexpr int rightX = 374;
-        DrawHelpText(dc, L"CUSTOMIZE", RECT{rightX, 112, 690, 136},
-                     g_helpHeadingFont, heading);
-        int rightY = 143;
-        DrawHelpRow(dc, rightX, rightY, 318, 46, L"Tab", L"Cycle color and monochrome fonts.");
-        rightY += 48;
-        DrawHelpRow(dc, rightX, rightY, 318, 46, L"Alt+T", L"Toggle recent / most-used sorting.");
-        rightY += 48;
-        DrawHelpRow(dc, rightX, rightY, 318, 46, L"Alt+S", L"Hide or show the status line.");
-        rightY += 48;
-        DrawHelpRow(dc, rightX, rightY, 318, 46, L"Alt+I", L"Cycle skin tone for all compatible emoji.");
-        rightY += 48;
-        DrawHelpRow(dc, rightX, rightY, 318, 46, L"Alt+1 / 2 / 3", L"Show one, two, or three emoji rows.");
-        rightY += 48;
-        DrawHelpRow(dc, rightX, rightY, 318, 42, L"F1", L"Open this guide.");
-        rightY += 57;
-
-        DrawHelpText(dc, L"RECENTS & TRAY", RECT{rightX, rightY, 690, rightY + 24},
-                     g_helpHeadingFont, heading);
-        rightY += 31;
-        DrawHelpText(dc,
-                     L"Learning improves future searches. Turn it off with Learn from searches in the tray. Recent/most-used order follows your choices.",
-                     RECT{rightX, rightY, 692, rightY + 90}, g_helpBodyFont, kText);
-        rightY += 96;
-        DrawHelpText(dc,
-                     L"My vocabulary manages aliases and reorders favorites. Clear learned history keeps your aliases and favorites. Changes to ranking apply when you reopen.",
-                     RECT{rightX, rightY, 692, rightY + 90}, g_helpBodyFont, kText);
-
-        DrawHelpText(dc, L"All preferences are stored locally in %LOCALAPPDATA%\\SwashMoji",
-                     RECT{28, client.bottom - 37, client.right - 28, client.bottom - 17},
-                     g_statusFont, kMutedText,
-                     DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
-        EndPaint(window, &paint);
-        return 0;
-    }
-    case WM_KEYDOWN:
-        if (wParam == VK_ESCAPE) {
-            DestroyWindow(window);
-            return 0;
-        }
-        break;
-    case WM_CLOSE:
-        DestroyWindow(window);
-        return 0;
+    case WM_SETFOCUS: SetFocus(GetDlgItem(window, 1)); return 0;
+    case WM_CLOSE: DestroyWindow(window); return 0;
     case WM_DESTROY:
+        DeleteObject(reinterpret_cast<HFONT>(GetWindowLongPtrW(window, GWLP_USERDATA)));
         g_helpWindow = nullptr;
+        if (IsWindowVisible(g_window)) { SetForegroundWindow(g_window); SetFocus(g_edit); }
         return 0;
     }
     return DefWindowProcW(window, message, wParam, lParam);
@@ -822,7 +781,7 @@ void ShowHelp() {
         return;
     }
 
-    RECT windowRect{0, 0, kHelpWidth, kHelpHeight};
+    RECT windowRect{0, 0, Px(kHelpWidth), Px(kHelpHeight)};
     AdjustWindowRectEx(&windowRect, WS_CAPTION | WS_SYSMENU, FALSE, WS_EX_TOOLWINDOW);
     const int width = windowRect.right - windowRect.left;
     const int height = windowRect.bottom - windowRect.top;
@@ -838,6 +797,7 @@ void ShowHelp() {
         x, y, width, height, g_window, nullptr,
         reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), nullptr);
     if (!g_helpWindow) return;
+    ClampWindow(g_helpWindow);
     ShowWindow(g_helpWindow, SW_SHOW);
     UpdateWindow(g_helpWindow);
     SetForegroundWindow(g_helpWindow);
@@ -890,32 +850,265 @@ void ShowTrayMenu() {
 }
 
 void LayoutChildren(HWND window) {
-    RECT area{};
-    GetClientRect(window, &area);
-    constexpr int margin = 12;
-    MoveWindow(g_edit, margin, margin, area.right - margin * 2, kInputHeight, TRUE);
-    const int listY = margin + kInputHeight + 8;
-    const int listHeight = g_emojiRows * kResultSize;
+    if (!g_list) return;
+    RECT area{}; GetClientRect(window, &area);
+    const int margin = Px(10);
+    MoveWindow(g_searchLabel, margin, Px(2), area.right - margin * 2, Px(16), TRUE);
+    MoveWindow(g_edit, margin, Px(20), area.right - margin * 2, Px(kInputHeight), TRUE);
+    const int listY = Px(62), listHeight = g_emojiRows * Px(kResultSize);
     MoveWindow(g_list, margin, listY, area.right - margin * 2, listHeight, TRUE);
-    MoveWindow(g_teachPhrase, margin + 24, listY + 5, area.right - margin * 2 - 48, 36, TRUE);
-    MoveWindow(g_status, margin, listY + listHeight + 5, area.right - margin * 2,
-               kStatusHeight, TRUE);
-    const int recoveryY = listY + listHeight + 8 + (g_statusVisible ? kStatusHeight + 5 : 0);
-    MoveWindow(g_recoveryLabel, margin, recoveryY, area.right - margin * 2 - 132, kRecoveryHeight - 12, TRUE);
-    MoveWindow(g_copyInstead, area.right - margin - 126, recoveryY + 8, 126, 30, TRUE);
+    MoveWindow(g_teachPhrase, margin + Px(12), listY + Px(5), area.right - margin * 2 - Px(24), Px(36), TRUE);
+    MoveWindow(g_status, margin, listY + listHeight + Px(5), area.right - margin * 2 - Px(78), Px(kStatusHeight), TRUE);
+    MoveWindow(g_detailsButton, area.right - margin - Px(74), listY + listHeight + Px(8), Px(74), Px(28), TRUE);
+    const int recoveryY = listY + listHeight + Px(8) + (g_statusVisible ? Px(kStatusHeight + 5) : Px(38));
+    MoveWindow(g_recoveryLabel, margin, recoveryY, area.right - margin * 2 - Px(132), Px(kRecoveryHeight - 12), TRUE);
+    MoveWindow(g_copyInstead, area.right - margin - Px(126), recoveryY + Px(8), Px(126), Px(30), TRUE);
 }
 
-void MoveSelection(int direction) {
+void CloseHover() {
+    if (g_window) KillTimer(g_window, kHoverTimerId);
+    g_hoverIndex = -1;
+    if (g_hoverWindow) { DestroyWindow(g_hoverWindow); g_hoverWindow = nullptr; }
+}
+
+void SelectionChanged() {
+    const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
+    if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size()) {
+        g_session.selected = g_displayVisible[index].id;
+        NotifyWinEvent(EVENT_OBJECT_SELECTION, g_list, OBJID_CLIENT, static_cast<LONG>(index + 1));
+    }
+    UpdateStatusLine();
+}
+
+int HitResult(POINT point) {
+    RECT client{};
+    GetClientRect(g_list, &client);
+    if (!PtInRect(&client, point)) return -1;
+    const auto hit = SendMessageW(g_list, LB_ITEMFROMPOINT, 0, MAKELPARAM(point.x, point.y));
+    const int index = LOWORD(hit);
+    RECT item{};
+    if (HIWORD(hit) || index >= static_cast<int>(g_displayVisible.size()) ||
+        SendMessageW(g_list, LB_GETITEMRECT, index, reinterpret_cast<LPARAM>(&item)) == LB_ERR ||
+        !PtInRect(&item, point)) return -1;
+    return index;
+}
+
+void RestoreTargetOnEscape() {
+    DismissPicker();
+    if (g_inputPlatform.ValidTarget(g_inputTarget)) SetForegroundWindow(reinterpret_cast<HWND>(g_inputTarget.window));
+}
+
+void FocusNext(bool reverse) {
+    const HWND order[]{g_edit, g_list, g_detailsButton, g_teachPhrase, g_copyInstead};
+    std::vector<HWND> available;
+    for (auto window : order) if (IsWindowVisible(window) && IsWindowEnabled(window) &&
+        (window != g_list || !g_displayVisible.empty())) available.push_back(window);
+    if (available.empty()) return;
+    auto found = std::find(available.begin(), available.end(), GetFocus());
+    int index = found == available.end() ? (reverse ? 0 : -1) : static_cast<int>(found - available.begin());
+    index = (index + (reverse ? -1 : 1) + static_cast<int>(available.size())) % static_cast<int>(available.size());
+    SetFocus(available[index]);
+}
+
+void ClampWindow(HWND window) {
+    RECT rect{};
+    GetWindowRect(window, &rect);
+    MONITORINFO monitor{sizeof(monitor)};
+    if (!GetMonitorInfoW(MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST), &monitor)) return;
+    const auto& area = monitor.rcWork;
+    const int width = std::min(rect.right - rect.left, area.right - area.left);
+    const int height = std::min(rect.bottom - rect.top, area.bottom - area.top);
+    SetWindowPos(window, nullptr, std::clamp(rect.left, area.left, area.right - width),
+        std::clamp(rect.top, area.top, area.bottom - height), width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
+void UpdateDpi(UINT dpi) {
+    g_dpi = dpi ? dpi : 96;
+    auto oldUi = g_uiFont, oldStatus = g_statusFont;
+    g_uiFont = CreateFontW(-Px(20), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+    g_statusFont = CreateFontW(-Px(13), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+    for (auto control : {g_edit, g_list}) if (control) SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
+    for (auto control : {g_status, g_detailsButton, g_searchLabel, g_teachPhrase, g_copyInstead, g_recoveryLabel})
+        if (control) SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
+    if (oldUi) DeleteObject(oldUi);
+    if (oldStatus && oldStatus != oldUi) DeleteObject(oldStatus);
+    SelectEmojiFont(g_emojiFontIndex);
+    if (g_list) {
+        SendMessageW(g_list, LB_SETITEMHEIGHT, 0, Px(kResultSize));
+        SendMessageW(g_list, LB_SETCOLUMNWIDTH, Px(kResultSize), 0);
+    }
+    CloseHover();
+}
+
+void DrawLargePreview(HDC dc, RECT area, const std::wstring& payload, UINT dpi) {
+    const auto oldFont = g_emojiFont;
+    auto* oldFormat = g_emojiFormat;
+    g_emojiFormat = nullptr;
+    const wchar_t* name = g_emojiFonts.empty() ? L"Segoe UI Emoji" : g_emojiFonts[g_emojiFontIndex].name.c_str();
+    const int size = MulDiv(56, dpi, 96);
+    g_emojiFont = CreateFontW(-size, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, name);
+    if (g_dwriteFactory) {
+        g_dwriteFactory->CreateTextFormat(name, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, static_cast<float>(size), L"", &g_emojiFormat);
+        if (g_emojiFormat) {
+            g_emojiFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+            g_emojiFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+        }
+    }
+    SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc, Foreground());
+    DrawColorEmoji(dc, area, payload, GetSysColor(COLOR_WINDOWTEXT));
+    if (g_emojiFormat) g_emojiFormat->Release();
+    DeleteObject(g_emojiFont);
+    g_emojiFont = oldFont; g_emojiFormat = oldFormat;
+}
+
+struct DetailsState {
+    std::vector<const Emoji*> variants;
+    size_t selected{};
+};
+INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    auto* state = reinterpret_cast<DetailsState*>(GetWindowLongPtrW(dialog, DWLP_USER));
+    if (message == WM_INITDIALOG) {
+        state = reinterpret_cast<DetailsState*>(lParam);
+        SetWindowLongPtrW(dialog, DWLP_USER, lParam);
+        int width = 0;
+        HDC dc = GetDC(dialog);
+        auto font = SelectObject(dc, reinterpret_cast<HFONT>(SendDlgItemMessageW(dialog, 403, WM_GETFONT, 0, 0)));
+        for (const auto* emoji : state->variants) {
+            const auto label = emoji->glyph + L"  " + emoji->name;
+            SendDlgItemMessageW(dialog, 403, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+            SIZE extent{};
+            GetTextExtentPoint32W(dc, label.c_str(), static_cast<int>(label.size()), &extent);
+            width = std::max(width, static_cast<int>(extent.cx));
+        }
+        SelectObject(dc, font); ReleaseDC(dialog, dc);
+        SendDlgItemMessageW(dialog, 403, LB_SETHORIZONTALEXTENT, width + 16, 0);
+        SendDlgItemMessageW(dialog, 403, LB_SETCURSEL, state->selected, 0);
+        SetDlgItemTextW(dialog, 402, state->variants[state->selected]->name.c_str());
+        ClampWindow(dialog);
+        SetFocus(GetDlgItem(dialog, 403));
+        return FALSE;
+    }
+    if (!state) return FALSE;
+    if (message == WM_COMMAND) {
+        if (LOWORD(wParam) == IDCANCEL) { EndDialog(dialog, IDCANCEL); return TRUE; }
+        if (LOWORD(wParam) == IDOK) { EndDialog(dialog, IDOK); return TRUE; }
+        if (LOWORD(wParam) == 403 && HIWORD(wParam) == LBN_SELCHANGE) {
+            const auto selection = SendDlgItemMessageW(dialog, 403, LB_GETCURSEL, 0, 0);
+            if (selection >= 0 && static_cast<size_t>(selection) < state->variants.size()) state->selected = selection;
+            SetDlgItemTextW(dialog, 402, state->variants[state->selected]->name.c_str());
+            InvalidateRect(GetDlgItem(dialog, 401), nullptr, TRUE);
+            return TRUE;
+        }
+    }
+    if (message == WM_DRAWITEM && reinterpret_cast<DRAWITEMSTRUCT*>(lParam)->CtlID == 401) {
+        auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
+        FillRect(item->hDC, &item->rcItem, GetSysColorBrush(COLOR_WINDOW));
+        DrawLargePreview(item->hDC, item->rcItem, state->variants[state->selected]->glyph, GetDpiForWindow(dialog));
+        return TRUE;
+    }
+    // Per-Monitor V2 dialog manager scales controls, fonts and dialog bounds.
+    return FALSE;
+}
+
+void OpenDetails() {
+    if (g_detailsOpen || g_vocabularyOpen) return;
+    const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
+    if (index < 0 || static_cast<size_t>(index) >= g_displayVisible.size()) return;
+    const auto result = g_displayVisible[index];
+    DetailsState state{CatalogVariants(g_catalog, result.id)};
+    if (state.variants.empty()) return;
+    const auto payload = result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload;
+    for (size_t i = 0; i < state.variants.size(); ++i) if (state.variants[i]->glyph == payload) state.selected = i;
+    CloseHover(); CancelPendingReturn();
+    HWND focus = GetFocus();
+    g_detailsOpen = true;
+    const auto answer = DialogBoxParamW(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)),
+        MAKEINTRESOURCEW(400), g_window, DetailsProc, reinterpret_cast<LPARAM>(&state));
+    g_detailsOpen = false;
+    if (answer == IDOK) {
+        g_variantTarget = result.id;
+        g_variantPayload = state.variants[state.selected]->glyph;
+        RefreshList();
+    }
+    if (IsWindowVisible(g_window)) SetFocus(IsWindow(focus) ? focus : g_list);
+}
+
+LRESULT CALLBACK HoverProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == WM_NCHITTEST) return HTTRANSPARENT;
+    if (message == WM_MOUSEACTIVATE) return MA_NOACTIVATE;
+    if (message == WM_PAINT) {
+        PAINTSTRUCT paint{};
+        HDC dc = BeginPaint(window, &paint);
+        RECT area{}; GetClientRect(window, &area);
+        FillRect(dc, &area, GetSysColorBrush(COLOR_INFOBK));
+        if (g_hoverIndex >= 0 && static_cast<size_t>(g_hoverIndex) < g_displayVisible.size()) {
+            const auto& result = g_displayVisible[g_hoverIndex];
+            const auto payload = result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload;
+            RECT glyph = area; glyph.bottom = Px(80);
+            DrawLargePreview(dc, glyph, payload, g_dpi);
+            RECT label{Px(10), Px(82), area.right - Px(10), area.bottom - Px(8)};
+            const auto* exact = g_catalog.Find(payload);
+            auto old = SelectObject(dc, g_statusFont);
+            SetTextColor(dc, GetSysColor(COLOR_INFOTEXT));
+            DrawTextW(dc, exact ? exact->name.c_str() : result.label.c_str(), -1, &label, DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
+            SelectObject(dc, old);
+        }
+        EndPaint(window, &paint); return 0;
+    }
+    return DefWindowProcW(window, message, wParam, lParam);
+}
+
+void ShowHover() {
+    KillTimer(g_window, kHoverTimerId);
+    POINT cursor{}; GetCursorPos(&cursor);
+    POINT local = cursor; ScreenToClient(g_list, &local);
+    if (g_hoverIndex < 0 || HitResult(local) != g_hoverIndex || !IsWindowVisible(g_window) ||
+        g_detailsOpen || g_vocabularyOpen || GetForegroundWindow() != g_window) { CloseHover(); return; }
+    WNDCLASSW cls{}; cls.hInstance = GetModuleHandleW(nullptr); cls.lpszClassName = L"SwashMojiHover";
+    cls.lpfnWndProc = HoverProc; cls.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+    RegisterClassW(&cls);
+    g_hoverWindow = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT,
+        cls.lpszClassName, L"Emoji preview", WS_POPUP | WS_BORDER, cursor.x + Px(14), cursor.y + Px(20),
+        Px(300), Px(150), g_window, nullptr, cls.hInstance, nullptr);
+    ClampWindow(g_hoverWindow);
+    ShowWindow(g_hoverWindow, SW_SHOWNOACTIVATE);
+}
+
+[[maybe_unused]] void MoveSelection(int direction) {
     if (g_displayVisible.empty()) return;
     int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     if (selected == LB_ERR) selected = 0;
-    selected = std::clamp(selected + direction, 0, static_cast<int>(g_displayVisible.size()) - 1);
+    selected = static_cast<int>(GridMove(selected, g_displayVisible.size(), g_emojiRows,
+        direction == -g_emojiRows ? -1 : direction == g_emojiRows ? 1 : 0,
+        direction == -g_emojiRows || direction == g_emojiRows ? 0 : direction));
     SendMessageW(g_list, LB_SETCURSEL, selected, 0);
-    g_session.selected = g_displayVisible[selected].id;
+    SelectionChanged();
 }
 
 LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lParam) {
     const WNDPROC original = control == g_edit ? g_editProc : g_listProc;
+    if (message == WM_GETDLGCODE) return CallWindowProcW(original, control, message, wParam, lParam) | DLGC_WANTARROWS;
+    if (control == g_list && message == WM_MOUSEMOVE) {
+        POINT point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+        const int index = HitResult(point);
+        if (index != g_hoverIndex || abs(point.x - g_hoverPoint.x) > Px(3) || abs(point.y - g_hoverPoint.y) > Px(3)) {
+            CloseHover();
+            g_hoverIndex = index; g_hoverPoint = point;
+            if (index >= 0) SetTimer(g_window, kHoverTimerId, 350, nullptr);
+        }
+        TRACKMOUSEEVENT track{sizeof(track), TME_LEAVE, control, 0}; TrackMouseEvent(&track);
+    }
+    if (control == g_list && (message == WM_MOUSELEAVE || message == WM_MOUSEWHEEL || message == WM_HSCROLL)) CloseHover();
+    if (control == g_list && message == WM_LBUTTONDOWN) {
+        CloseHover();
+        g_pressedIndex = HitResult({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+        if (g_pressedIndex < 0) return 0;
+    }
     if (control == g_list && message == WM_CONTEXTMENU) {
         POINT point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
         if (point.x == -1 && point.y == -1) {
@@ -925,12 +1118,15 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
         } else {
             POINT local = point;
             ScreenToClient(control, &local);
-            const auto item = SendMessageW(control, LB_ITEMFROMPOINT, 0, MAKELPARAM(local.x, local.y));
-            if (HIWORD(item)) return 0;
-            SendMessageW(control, LB_SETCURSEL, LOWORD(item), 0);
+            const int item = HitResult(local);
+            if (item < 0) return 0;
+            SendMessageW(control, LB_SETCURSEL, item, 0);
+            SelectionChanged();
         }
         if (g_displayVisible.empty()) return 0;
+        CloseHover();
         HMENU menu = CreatePopupMenu();
+        AppendMenuW(menu, MF_STRING, kDetailsId, L"Details...");
         AppendMenuW(menu, MF_STRING, kVocabularyId, L"Add alias...\tAlt+A");
         const auto index = SendMessageW(control, LB_GETCURSEL, 0, 0);
         if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size())
@@ -939,22 +1135,30 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
         const auto command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON,
             point.x, point.y, 0, g_window, nullptr);
         DestroyMenu(menu);
+        if (command == kDetailsId) OpenDetails();
         if (command == kVocabularyId) OpenVocabulary(true);
         if (command == kPinId) ToggleSelectedPin();
         return 0;
     }
     if (control == g_list && message == WM_LBUTTONUP) {
         const LRESULT result = CallWindowProcW(original, control, message, wParam, lParam);
-        InsertSelection(true);
+        const int hit = HitResult({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+        if (hit >= 0 && hit == g_pressedIndex) {
+            SendMessageW(control, LB_SETCURSEL, hit, 0);
+            SelectionChanged();
+            InsertSelection((GetKeyState(VK_CONTROL) & 0x8000) != 0);
+        }
+        g_pressedIndex = -1;
         return result;
     }
     if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN) {
+        if (wParam == VK_TAB) { CloseHover(); FocusNext((GetKeyState(VK_SHIFT) & 0x8000) != 0); return 0; }
         if (wParam == 'I' && (GetKeyState(VK_MENU) & 0x8000)) {
             CycleSkinTone();
             return 0;
         }
         if (wParam == VK_ESCAPE) {
-            DismissPicker();
+            RestoreTargetOnEscape();
             return 0;
         }
         if (wParam == VK_RETURN) {
@@ -964,21 +1168,26 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
             else InsertSelection();
             return 0;
         }
-        if (wParam == VK_UP) {
-            MoveSelection(-1);
-            return 0;
+        if (control == g_edit && wParam == VK_DOWN) {
+            CloseHover(); if (!g_displayVisible.empty()) SetFocus(g_list); return 0;
         }
-        if (wParam == VK_DOWN) {
-            MoveSelection(1);
-            return 0;
-        }
-        if (wParam == VK_LEFT) {
-            MoveSelection(-g_emojiRows);
-            return 0;
-        }
-        if (wParam == VK_RIGHT) {
-            MoveSelection(g_emojiRows);
-            return 0;
+        if (control == g_list) {
+            int dx = 0, dy = 0;
+            if (wParam == VK_LEFT) dx = -1;
+            if (wParam == VK_RIGHT) dx = 1;
+            if (wParam == VK_UP) dy = -1;
+            if (wParam == VK_DOWN) dy = 1;
+            if (wParam == VK_PRIOR) dx = -kEmojiColumns;
+            if (wParam == VK_NEXT) dx = kEmojiColumns;
+            if (dx || dy || wParam == VK_HOME || wParam == VK_END) {
+                CloseHover();
+                const auto old = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
+                auto next = GridMove(old < 0 ? 0 : old, g_displayVisible.size(), g_emojiRows, dx, dy);
+                if (wParam == VK_HOME) next = 0;
+                if (wParam == VK_END && !g_displayVisible.empty()) next = g_displayVisible.size() - 1;
+                SendMessageW(g_list, LB_SETCURSEL, next, 0);
+                SelectionChanged(); return 0;
+            }
         }
     }
     return CallWindowProcW(original, control, message, wParam, lParam);
@@ -987,7 +1196,10 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
 LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_CREATE: {
+        g_dpi = GetDpiForWindow(window);
         g_rankingPreferences = g_profile;
+        g_searchLabel = CreateWindowExW(0, L"STATIC", L"&Search emoji", WS_CHILD | WS_VISIBLE,
+            0, 0, 0, 0, window, nullptr, nullptr, nullptr);
         g_edit = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
                                  0, 0, 0, 0, window,
                                  reinterpret_cast<HMENU>(static_cast<INT_PTR>(kEditId)), nullptr, nullptr);
@@ -997,9 +1209,11 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
                                  0, 0, 0, 0, window,
                                  reinterpret_cast<HMENU>(static_cast<INT_PTR>(kListId)), nullptr, nullptr);
         g_status = CreateWindowExW(0, L"STATIC", L"",
-                                   WS_CHILD | WS_VISIBLE | SS_LEFT | SS_CENTERIMAGE,
+                                   WS_CHILD | WS_VISIBLE | SS_LEFT | SS_ENDELLIPSIS | SS_NOPREFIX,
                                    0, 0, 0, 0, window,
                                    reinterpret_cast<HMENU>(static_cast<INT_PTR>(kStatusId)), nullptr, nullptr);
+        g_detailsButton = CreateWindowExW(0, L"BUTTON", L"&Details", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+            0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kDetailsId)), nullptr, nullptr);
         g_recoveryLabel = CreateWindowExW(0, L"STATIC", L"", WS_CHILD | SS_LEFT,
             0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kRecoveryId)), nullptr, nullptr);
         g_copyInstead = CreateWindowExW(0, L"BUTTON", L"&Copy instead", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
@@ -1013,14 +1227,16 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         SendMessageW(g_edit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(8, 8));
         SendMessageW(g_list, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
         SendMessageW(g_status, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
-        SendMessageW(g_list, LB_SETCOLUMNWIDTH, kResultSize, 0);
-        SetWindowTheme(g_edit, L"DarkMode_Explorer", nullptr);
-        SetWindowTheme(g_list, L"DarkMode_Explorer", nullptr);
+        SendMessageW(g_list, LB_SETCOLUMNWIDTH, Px(kResultSize), 0);
+        SetWindowTheme(g_edit, HighContrast() ? L"" : L"DarkMode_Explorer", nullptr);
+        SetWindowTheme(g_list, HighContrast() ? L"" : L"DarkMode_Explorer", nullptr);
         g_editProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(g_edit, GWLP_WNDPROC,
                                                                   reinterpret_cast<LONG_PTR>(InputProc)));
         g_listProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(g_list, GWLP_WNDPROC,
                                                                   reinterpret_cast<LONG_PTR>(InputProc)));
         EnableWordDeletion(g_edit);
+        SetWindowTextW(g_list, L"Matching emoji");
+        SendMessageW(g_detailsButton, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
         LayoutChildren(window);
         RefreshList();
         AddTrayIcon(window);
@@ -1028,11 +1244,35 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         UpdateStatusLine();
         return 0;
     }
+    case WM_DPICHANGED: {
+        UpdateDpi(HIWORD(wParam));
+        const auto& bounds = *reinterpret_cast<RECT*>(lParam);
+        SetWindowPos(window, nullptr, bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top,
+            SWP_NOZORDER | SWP_NOACTIVATE);
+        ClampWindow(window);
+        LayoutChildren(window);
+        return 0;
+    }
+    case WM_SETTINGCHANGE:
+    case WM_SYSCOLORCHANGE:
+        CloseHover();
+        SetWindowTheme(g_edit, HighContrast() ? L"" : L"DarkMode_Explorer", nullptr);
+        SetWindowTheme(g_list, HighContrast() ? L"" : L"DarkMode_Explorer", nullptr);
+        RedrawWindow(window, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
+        return 0;
+    case WM_ERASEBKGND: {
+        RECT area{}; GetClientRect(window, &area);
+        FillRect(reinterpret_cast<HDC>(wParam), &area, HighContrast() ? GetSysColorBrush(COLOR_WINDOW) : g_backgroundBrush);
+        return 1;
+    }
+    case WM_ACTIVATE:
+        if (LOWORD(wParam) == WA_INACTIVE) CloseHover();
+        break;
     case WM_SIZE: LayoutChildren(window); return 0;
     case WM_MEASUREITEM:
         if (reinterpret_cast<MEASUREITEMSTRUCT*>(lParam)->CtlID == kListId) {
-            reinterpret_cast<MEASUREITEMSTRUCT*>(lParam)->itemHeight = kResultSize;
-            reinterpret_cast<MEASUREITEMSTRUCT*>(lParam)->itemWidth = kResultSize;
+            reinterpret_cast<MEASUREITEMSTRUCT*>(lParam)->itemHeight = Px(kResultSize);
+            reinterpret_cast<MEASUREITEMSTRUCT*>(lParam)->itemWidth = Px(kResultSize);
             return TRUE;
         }
         break;
@@ -1040,33 +1280,36 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
         if (item->CtlID != kListId || item->itemID >= g_displayVisible.size()) break;
         const bool selected = (item->itemState & ODS_SELECTED) != 0;
-        HBRUSH fill = CreateSolidBrush(selected ? kSelected : kBackground);
+        HBRUSH fill = CreateSolidBrush(selected ? (HighContrast() ? GetSysColor(COLOR_HIGHLIGHT) : kSelected) : Background());
         FillRect(item->hDC, &item->rcItem, fill);
         DeleteObject(fill);
         SetBkMode(item->hDC, TRANSPARENT);
-        SetTextColor(item->hDC, kText);
+        SetTextColor(item->hDC, Foreground());
         const HFONT previousFont = static_cast<HFONT>(SelectObject(item->hDC, g_uiFont));
         const auto& result = g_displayVisible[item->itemID];
         RECT glyph = item->rcItem;
         InflateRect(&glyph, -3, -3);
-        DrawColorEmoji(item->hDC, glyph, result.payload);
+        DrawColorEmoji(item->hDC, glyph, result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload,
+            selected && HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : Foreground());
         if (item->itemState & ODS_FOCUS) DrawFocusRect(item->hDC, &item->rcItem);
         SelectObject(item->hDC, previousFont);
         return TRUE;
     }
     case WM_CTLCOLOREDIT:
-        SetTextColor(reinterpret_cast<HDC>(wParam), kText);
-        SetBkColor(reinterpret_cast<HDC>(wParam), kInputBackground);
-        return reinterpret_cast<LRESULT>(g_inputBrush);
+        SetTextColor(reinterpret_cast<HDC>(wParam), Foreground());
+        SetBkColor(reinterpret_cast<HDC>(wParam), HighContrast() ? Background() : kInputBackground);
+        return reinterpret_cast<LRESULT>(HighContrast() ? GetSysColorBrush(COLOR_WINDOW) : g_inputBrush);
     case WM_CTLCOLORLISTBOX:
-        SetTextColor(reinterpret_cast<HDC>(wParam), kText);
-        SetBkColor(reinterpret_cast<HDC>(wParam), kBackground);
-        return reinterpret_cast<LRESULT>(g_backgroundBrush);
+        SetTextColor(reinterpret_cast<HDC>(wParam), Foreground());
+        SetBkColor(reinterpret_cast<HDC>(wParam), Background());
+        return reinterpret_cast<LRESULT>(HighContrast() ? GetSysColorBrush(COLOR_WINDOW) : g_backgroundBrush);
     case WM_CTLCOLORSTATIC:
-        SetTextColor(reinterpret_cast<HDC>(wParam), kMutedText);
-        SetBkColor(reinterpret_cast<HDC>(wParam), kBackground);
-        return reinterpret_cast<LRESULT>(g_backgroundBrush);
+        SetTextColor(reinterpret_cast<HDC>(wParam), HighContrast() ? Foreground() : kMutedText);
+        SetBkColor(reinterpret_cast<HDC>(wParam), Background());
+        return reinterpret_cast<LRESULT>(HighContrast() ? GetSysColorBrush(COLOR_WINDOW) : g_backgroundBrush);
     case WM_COMMAND:
+        if (LOWORD(wParam) == kListId && HIWORD(wParam) == LBN_SELCHANGE) SelectionChanged();
+        if (LOWORD(wParam) == kDetailsId && HIWORD(wParam) == BN_CLICKED) OpenDetails();
         if (LOWORD(wParam) == kTeachPhraseId && HIWORD(wParam) == BN_CLICKED) OpenVocabulary(true);
         if (LOWORD(wParam) == kCopyInsteadId && HIWORD(wParam) == BN_CLICKED) CopySelection();
         if (LOWORD(wParam) == kEditId && HIWORD(wParam) == EN_CHANGE) RefreshList();
@@ -1087,13 +1330,14 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         }
         break;
     case WM_HOTKEY:
-        if (g_vocabularyOpen) return 0;
+        if (g_vocabularyOpen || g_detailsOpen) return 0;
         if (wParam == kHotkeyId) {
             SetWindowTextW(g_edit, L"");
             CenterOnActiveMonitor();
         }
         return 0;
     case WM_TIMER:
+        if (wParam == kHoverTimerId) { ShowHover(); return 0; }
         if (wParam == kStatusTimerId) {
             KillTimer(window, kStatusTimerId);
             UpdateStatusLine();
@@ -1111,12 +1355,12 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         }
         break;
     case kShowPickerMessage:
-        if (g_vocabularyOpen) return 0;
+        if (g_vocabularyOpen || g_detailsOpen) return 0;
         SetWindowTextW(g_edit, L"");
         CenterOnActiveMonitor();
         return 0;
     case kTrayMessage:
-        if (g_vocabularyOpen) return 0;
+        if (g_vocabularyOpen || g_detailsOpen) return 0;
         switch (LOWORD(lParam)) {
         case WM_LBUTTONUP:
         case NIN_SELECT:
@@ -1133,6 +1377,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         if ((wParam & 0xFFF0) == SC_CLOSE) { DismissPicker(); return 0; }
         break;
     case WM_DESTROY:
+        CloseHover();
         CancelPendingReturn();
         if (g_foregroundHook) { UnhookWinEvent(g_foregroundHook); g_foregroundHook = nullptr; }
         UnregisterHotKey(window, kHotkeyId);
@@ -1141,6 +1386,75 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         return 0;
     }
     return DefWindowProcW(window, message, wParam, lParam);
+}
+
+bool ProcessAppMessage(const MSG& message) {
+        // Handle app-local Alt shortcuts before dispatch. Depending on focus and
+        // popup state, Windows can address system-key messages to either the
+        // child control or the top-level picker.
+        const bool altPressed = (GetKeyState(VK_MENU) & 0x8000) ||
+                                (message.message == WM_SYSKEYDOWN &&
+                                 (message.lParam & (1u << 29)));
+        const bool firstKeyPress = !(message.lParam & (1u << 30));
+        const bool pickerKey = (message.message == WM_KEYDOWN || message.message == WM_SYSKEYDOWN) &&
+            (message.hwnd == g_window || IsChild(g_window, message.hwnd));
+        if (g_helpWindow && (message.hwnd == g_helpWindow || IsChild(g_helpWindow, message.hwnd)) &&
+            message.message == WM_KEYDOWN && message.wParam == VK_ESCAPE) {
+            DestroyWindow(g_helpWindow); return true;
+        }
+        if (pickerKey && message.wParam == VK_ESCAPE) { RestoreTargetOnEscape(); return true; }
+        if (pickerKey && ((altPressed && firstKeyPress && message.wParam == 'D') ||
+            (message.hwnd == g_detailsButton && message.wParam == VK_RETURN))) { OpenDetails(); return true; }
+        if (pickerKey && altPressed && firstKeyPress && message.wParam == 'A') {
+            OpenVocabulary(true);
+            return true;
+        }
+        if (pickerKey && altPressed && firstKeyPress && message.wParam == 'P') {
+            ToggleSelectedPin();
+            return true;
+        }
+        if (pickerKey && message.hwnd == g_teachPhrase) {
+            if (message.wParam == VK_RETURN) { OpenVocabulary(true); return true; }
+            if (message.wParam == VK_ESCAPE) { DismissPicker(); return true; }
+        }
+        if (pickerKey && message.hwnd == g_copyInstead && message.wParam == VK_ESCAPE) {
+            DismissPicker();
+            return true;
+        }
+        if (pickerKey && !g_recoveryMessage.empty() && firstKeyPress &&
+            ((altPressed && message.wParam == 'C') ||
+             (message.hwnd == g_copyInstead && message.wParam == VK_RETURN))) {
+            CopySelection();
+            return true;
+        }
+        if (pickerKey && firstKeyPress && message.wParam == VK_F1) {
+            ShowHelp();
+            return true;
+        }
+        if (pickerKey && message.wParam == VK_TAB) {
+            CloseHover(); FocusNext((GetKeyState(VK_SHIFT) & 0x8000) != 0);
+            return true;
+        }
+        if (pickerKey && altPressed && firstKeyPress) {
+            if (message.wParam == 'F') { CycleEmojiFont(); return true; }
+            if (message.wParam == 'T') {
+                ToggleSortMode();
+                return true;
+            }
+            if (message.wParam == 'S') {
+                ToggleStatusLine();
+                return true;
+            }
+            if (message.wParam == 'I') {
+                CycleSkinTone();
+                return true;
+            }
+            if (message.wParam >= '1' && message.wParam <= '3') {
+                SetEmojiRows(static_cast<int>(message.wParam - '0'));
+                return true;
+            }
+        }
+    return false;
 }
 
 } // namespace
@@ -1176,18 +1490,6 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
                                DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                                CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
                                L"Segoe UI Variable Text");
-    g_helpTitleFont = CreateFontW(-28, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE,
-                                  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                                  CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
-                                  L"Segoe UI Variable Display");
-    g_helpHeadingFont = CreateFontW(-15, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE,
-                                    DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                                    CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
-                                    L"Segoe UI Variable Text");
-    g_helpBodyFont = CreateFontW(-16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-                                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                                 CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
-                                 L"Segoe UI Variable Text");
     g_backgroundBrush = CreateSolidBrush(kBackground);
     g_inputBrush = CreateSolidBrush(kInputBackground);
     InitializeColorEmojiDrawing();
@@ -1207,8 +1509,9 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
 
     g_window = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_TOPMOST, kClassName, L"SwashMoji",
                                WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
-                               kPickerWidth, PickerHeight(), nullptr, nullptr, instance, nullptr);
+                               Px(kPickerWidth), PickerHeight(), nullptr, nullptr, instance, nullptr);
     if (!g_window) return 1;
+    UpdateDpi(GetDpiForWindow(g_window));
     g_foregroundHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
         nullptr, ForegroundChanged, 0, 0, WINEVENT_OUTOFCONTEXT);
     SendMessageW(g_window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(g_appIcon));
@@ -1219,66 +1522,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
 
     MSG message;
     while (GetMessageW(&message, nullptr, 0, 0)) {
-        // Handle app-local Alt shortcuts before dispatch. Depending on focus and
-        // popup state, Windows can address system-key messages to either the
-        // child control or the top-level picker.
-        const bool altPressed = (GetKeyState(VK_MENU) & 0x8000) ||
-                                (message.message == WM_SYSKEYDOWN &&
-                                 (message.lParam & (1u << 29)));
-        const bool firstKeyPress = !(message.lParam & (1u << 30));
-        const bool pickerKey = (message.message == WM_KEYDOWN || message.message == WM_SYSKEYDOWN) &&
-            (message.hwnd == g_window || IsChild(g_window, message.hwnd));
-        if (pickerKey && altPressed && firstKeyPress && message.wParam == 'A') {
-            OpenVocabulary(true);
-            continue;
-        }
-        if (pickerKey && altPressed && firstKeyPress && message.wParam == 'P') {
-            ToggleSelectedPin();
-            continue;
-        }
-        if (pickerKey && message.hwnd == g_teachPhrase) {
-            if (message.wParam == VK_RETURN) { OpenVocabulary(true); continue; }
-            if (message.wParam == VK_ESCAPE) { DismissPicker(); continue; }
-        }
-        if (pickerKey && message.hwnd == g_copyInstead && message.wParam == VK_ESCAPE) {
-            DismissPicker();
-            continue;
-        }
-        if (pickerKey && !g_recoveryMessage.empty() && firstKeyPress &&
-            ((altPressed && message.wParam == 'C') ||
-             (message.hwnd == g_copyInstead && message.wParam == VK_RETURN))) {
-            CopySelection();
-            continue;
-        }
-        if ((message.message == WM_KEYDOWN || message.message == WM_SYSKEYDOWN) &&
-            firstKeyPress && message.wParam == VK_F1) {
-            ShowHelp();
-            continue;
-        }
-        if ((message.message == WM_KEYDOWN || message.message == WM_SYSKEYDOWN) &&
-            firstKeyPress && message.wParam == VK_TAB) {
-            CycleEmojiFont();
-            continue;
-        }
-        if ((message.message == WM_KEYDOWN || message.message == WM_SYSKEYDOWN) &&
-            altPressed && firstKeyPress) {
-            if (message.wParam == 'T') {
-                ToggleSortMode();
-                continue;
-            }
-            if (message.wParam == 'S') {
-                ToggleStatusLine();
-                continue;
-            }
-            if (message.wParam == 'I') {
-                CycleSkinTone();
-                continue;
-            }
-            if (message.wParam >= '1' && message.wParam <= '3') {
-                SetEmojiRows(static_cast<int>(message.wParam - '0'));
-                continue;
-            }
-        }
+        if (ProcessAppMessage(message)) continue;
         TranslateMessage(&message);
         DispatchMessageW(&message);
     }
@@ -1288,9 +1532,6 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     if (g_d2dTarget) g_d2dTarget->Release();
     if (g_d2dFactory) g_d2dFactory->Release();
     DeleteObject(g_emojiFont);
-    DeleteObject(g_helpBodyFont);
-    DeleteObject(g_helpHeadingFont);
-    DeleteObject(g_helpTitleFont);
     DeleteObject(g_statusFont);
     DeleteObject(g_uiFont);
     DeleteObject(g_inputBrush);

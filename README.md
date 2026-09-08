@@ -12,7 +12,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - Velgeren lærer hvilke treff du velger for hele søket. Læring kan slås av med **Learn from searches** i systemstatusmenyen. Nye valg påvirker rangeringen neste gang velgeren åpnes, slik at gjentatt innsetting ikke flytter treffene.
 - Hudtonevariantene deler brukshistorikk. Bytte av hudtone, font og antall rader beholder markeringen.
 - Treff vises i én til tre emoji-rader; bruk `Alt+1`, `Alt+2` eller `Alt+3` for å velge antall rader, og piltastene for å flytte markeringen.
-- Klikk en emoji for å sette den inn og gå tilbake til SwashMoji.
+- Klikk en emoji for å sette den inn og lukke velgeren. `Ctrl+klikk` lar SwashMoji forbli åpen.
 - `Enter` setter valgt emoji direkte inn i det aktive programmet uten å endre utklippstavlen.
 - `Ctrl+Enter` setter inn valgt emoji og lar SwashMoji forbli åpen.
 - `Shift+Enter` kopierer valgt emoji til utklippstavlen og lukker vinduet.
@@ -22,9 +22,12 @@ En liten, avhengighetsfri Win32 emoji-velger.
   allerede ble tømt før feilen oppstod.
 - `Esc` lukker vinduet.
 - `F1` viser en komplett oversikt over funksjoner og hurtigtaster.
-- `Tab` bytter til neste installerte fargefont eller monokrome emoji-font.
+- `Tab` og `Shift+Tab` flytter fokus mellom søk, treff og tilgjengelige handlinger. Pil ned fra søket flytter fokus til treffene; venstre/høyre i søket flytter tekstmarkøren.
+- `Alt+F` bytter til neste installerte fargefont eller monokrome emoji-font (tidligere `Tab`).
+- **Details** (`Alt+D` eller treffmenyen) viser en større forhåndsvisning og gyldige varianter fra katalogen, også blandede hudtoner. **Use once** velger varianten for neste vellykkede innsetting eller kopiering uten å endre global hudtone. **Cancel** forkaster utkastet.
+- Hold pekeren rolig over et treff i omtrent 350 ms for en forhåndsvisning uten å flytte tastaturmarkeringen.
 - `Alt+I` bytter global hudtone for alle kompatible emojier.
-- En diskré statuslinje viser aktiv font og de viktigste tastene; etter `Tab` vises den nye fonten alene i 0,8 sekunder.
+- Statuslinjen viser navnet på valgt variant og tastene for innsetting/kopiering. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
 - `Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
 - Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
 - Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.
@@ -40,6 +43,11 @@ Bygg med den native Visual Studio 2022-verktøykjeden:
 
 Skriptet finner Visual Studio Build Tools automatisk. Ingen installasjon av SwashMoji
 er nødvendig; kjør `build\SwashMoji.exe`.
+
+M4 har endret klikk- og Tab-oppførselen og lagt til DPI-støtte. Full skrivebords-,
+skjermleser- og skjermtesting gjenstår; se [endringsnotater](docs/release-notes.md)
+og [teststatus for M4](docs/selection.md). Den siste native innsettingstesten fikk
+avslag på fokusbytte til målprogrammet; M4 er ennå ikke ferdig godkjent.
 
 Bygg og kjør automatiske tester med `.\build.cmd test`.
 Hvis programfilen i `build` allerede kjører, bruk en separat

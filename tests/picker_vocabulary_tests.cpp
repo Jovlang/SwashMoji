@@ -210,6 +210,87 @@ void LearningIntegration() {
     SetEmojiRows(1);
     SetRecoveryMessage(L"");
 }
+
+bool acceptDetails{};
+std::wstring chosenVariant;
+void CALLBACK DriveDetails(HWND, UINT, UINT_PTR timer, DWORD) {
+    auto dialog = OwnDialog(L"Details - SwashMoji");
+    if (!dialog) return;
+    KillTimer(nullptr, timer);
+    auto* state = reinterpret_cast<DetailsState*>(GetWindowLongPtrW(dialog, DWLP_USER));
+    for (size_t i = 0; i < state->variants.size(); ++i) {
+        const auto* emoji = state->variants[i];
+        if (SkinToneIndex(emoji->glyph) && !UsesOnlySkinTone(emoji->glyph, SkinToneIndex(emoji->glyph))) {
+            chosenVariant = emoji->glyph;
+            SendDlgItemMessageW(dialog, 403, LB_SETCURSEL, i, 0);
+            Command(dialog, 403, LBN_SELCHANGE);
+            break;
+        }
+    }
+    Command(dialog, acceptDetails ? IDOK : IDCANCEL);
+}
+
+void DetailsChoice(bool accept) {
+    acceptDetails = accept;
+    CHECK(SetTimer(nullptr, 0, 25, DriveDetails));
+    const auto target = g_session.originalTarget;
+    const auto query = g_session.query;
+    const auto selected = g_session.selected;
+    OpenDetails();
+    CHECK(!chosenVariant.empty());
+    CHECK(g_session.originalTarget == target && g_session.query == query && g_session.selected == selected);
+}
+
+void SelectionIntegration() {
+    SetWindowTextW(g_edit, L"handshake");
+    SelectResult({ResultKind::Emoji, L"🤝"});
+    const auto profile = EncodeProfile(g_profile);
+    DetailsChoice(false);
+    CHECK(g_variantPayload.empty() && EncodeProfile(g_profile) == profile);
+    DetailsChoice(true);
+    CHECK(g_variantPayload == chosenVariant && EncodeProfile(g_profile) == profile);
+    const auto variant = chosenVariant;
+    wchar_t label[512]{};
+    SendMessageW(g_list, LB_GETTEXT, SendMessageW(g_list, LB_GETCURSEL, 0, 0), reinterpret_cast<LPARAM>(label));
+    CHECK(std::wstring(label) == g_catalog.Find(variant)->name);
+    StubInput failed; failed.accept = 0;
+    InsertSelection(true, &failed);
+    CHECK(g_variantPayload == variant && EncodeProfile(g_profile) == profile);
+    StubClipboard busy; busy.failure = 2;
+    CopySelection(&busy);
+    CHECK(g_variantPayload == variant);
+    StubInput success;
+    InsertSelection(true, &success);
+    CHECK(g_variantPayload.empty() && g_profile.settings.skinTone == 0);
+    SetRecoveryMessage(L"");
+    SetWindowTextW(g_edit, L"rocket");
+    const auto beforeClick = EncodeProfile(g_profile);
+    SendMessageW(g_list, WM_LBUTTONDOWN, 0, MAKELPARAM(Px(200), Px(20)));
+    SendMessageW(g_list, WM_LBUTTONUP, 0, MAKELPARAM(Px(200), Px(20)));
+    CHECK(EncodeProfile(g_profile) == beforeClick && g_recoveryMessage.empty());
+    SendMessageW(g_edit, EM_SETSEL, 3, 3);
+    SendMessageW(g_edit, WM_KEYDOWN, VK_LEFT, 0);
+    DWORD caret{}; SendMessageW(g_edit, EM_GETSEL, reinterpret_cast<WPARAM>(&caret), 0);
+    CHECK(caret == 2);
+    for (UINT dpi : {96u, 120u, 144u, 192u}) {
+        UpdateDpi(dpi);
+        SetWindowPos(g_window, nullptr, 0, 0, Px(kPickerWidth), PickerHeight(), SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        for (int rows = 1; rows <= 3; ++rows) {
+            SetEmojiRows(rows);
+            SetWindowTextW(g_edit, L"");
+            CHECK(g_displayVisible.size() == g_visible.size());
+            RECT item{}; CHECK(SendMessageW(g_list, LB_GETITEMRECT, 0, reinterpret_cast<LPARAM>(&item)) != LB_ERR);
+            CHECK(item.bottom - item.top == Px(kResultSize));
+            CHECK(HitResult({item.left + 1, item.top + 1}) == 0);
+            SendMessageW(g_list, LB_SETCURSEL, 0, 0);
+            SendMessageW(g_list, WM_KEYDOWN, VK_RIGHT, 0);
+            CHECK(SendMessageW(g_list, LB_GETCURSEL, 0, 0) == rows);
+        }
+    }
+    UpdateDpi(GetDpiForWindow(g_window));
+    SetEmojiRows(1);
+    SetWindowTextW(g_edit, L"rocket");
+}
 }
 
 int wmain(int argc, wchar_t** argv) {
@@ -237,6 +318,31 @@ int wmain(int argc, wchar_t** argv) {
             300, 300, kPickerWidth, PickerHeight(), nullptr, nullptr, type.hInstance, nullptr);
         CHECK(g_window);
 
+        if (argc == 2 && std::wstring(argv[1]) == L"--preview") {
+            CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+            InitializeColorEmojiDrawing(); LoadInstalledColorEmojiFonts();
+            g_emojiFont = nullptr;
+            UpdateDpi(GetDpiForWindow(g_window));
+            WNDCLASSW help{}; help.hInstance = type.hInstance; help.lpszClassName = kHelpClassName;
+            help.lpfnWndProc = HelpWindowProc; help.hCursor = type.hCursor;
+            RegisterClassW(&help);
+            Pin(g_profile, g_catalog, {ResultKind::Emoji, L"🚀"});
+            Pin(g_profile, g_catalog, {ResultKind::Emoji, L"👍"});
+            g_emojiRows = 3;
+            BeginPickerSession();
+            SetWindowPos(g_window, nullptr, 300, 300, Px(kPickerWidth), PickerHeight(), SWP_NOZORDER | SWP_SHOWWINDOW);
+            SetWindowTextW(g_window, L"SwashMoji M4 isolated preview");
+            ShowWindow(g_window, SW_SHOW);
+            ShowWindow(g_window, SW_SHOW); // Honor an initial hidden launcher, then show the requested preview.
+            SetForegroundWindow(g_window); SetFocus(g_edit);
+            MSG message{};
+            while (GetMessageW(&message, nullptr, 0, 0) > 0) {
+                if (ProcessAppMessage(message)) continue;
+                TranslateMessage(&message); DispatchMessageW(&message);
+            }
+            return 0;
+        }
+
         TargetProcess targetProcess;
         wchar_t executable[MAX_PATH]{};
         GetModuleFileNameW(nullptr, executable, MAX_PATH);
@@ -259,6 +365,7 @@ int wmain(int argc, wchar_t** argv) {
         SetWindowTextW(g_edit, L"rocket");
         ExerciseDialog(DialogAction::Favorites);
         LearningIntegration();
+        SelectionIntegration();
         SetWindowTextW(g_edit, L"rocket");
         ExerciseDialog(DialogAction::Create);
         const auto saved = EncodeProfile(g_profile);
@@ -278,6 +385,8 @@ int wmain(int argc, wchar_t** argv) {
 
         const auto clipboard = GetClipboardSequenceNumber();
         CHECK(g_inputPlatform.HeldModifiers().empty());
+        ShowWindow(g_window, SW_SHOW);
+        SetForegroundWindow(g_window);
         // Uses the exact destination captured before all editor visits and learning checks.
         InsertSelection();
         CHECK(g_recoveryMessage.empty());
@@ -288,7 +397,7 @@ int wmain(int argc, wchar_t** argv) {
         PostMessageW(targetProcess.window, WM_CLOSE, 0, 0);
         DestroyWindow(g_window);
     } catch (const std::exception& error) {
-        report(std::string("FAIL: ") + error.what() + (dialogFailure.empty() ? "" : " / " + dialogFailure));
+        report(std::string("FAIL: ") + error.what() + (dialogFailure.empty() ? "" : " / " + dialogFailure) + " / " + WideToUtf8(g_recoveryMessage));
         if (g_window) DestroyWindow(g_window);
         return 1;
     }

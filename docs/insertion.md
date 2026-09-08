@@ -6,10 +6,10 @@ focus-return guard. `insertion_win32.h/.cpp` adapt those operations to Windows.
 
 ## Behavior
 
-Enter inserts and closes after full input submission. Ctrl+Enter and clicking
-insert while leaving the picker open. Shift+Enter explicitly copies and closes
-only after the entire copy operation succeeds. M1 preserves these existing
-shortcuts and the current Tab/font behavior.
+Enter and clicking insert and close after full input submission. Ctrl+Enter and
+Ctrl+click insert while leaving the picker open. Shift+Enter explicitly copies and
+closes only after the entire copy operation succeeds. M4 changes click and Tab
+behavior; see [selection documentation](selection.md). Font cycling uses Alt+F.
 
 An insertion failure keeps the query, selected result, and picker available.
 The recovery area explains the outcome and offers **Copy instead**, also
