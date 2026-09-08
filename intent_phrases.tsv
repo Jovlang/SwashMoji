@@ -1,5 +1,8 @@
 # Curated intent phrases, maintained separately from Unicode CLDR annotations.
 # phrase<TAB>emoji; family variants follow the user's skin tone setting.
+# A phrase may offer several choices; personal aliases remain unique.
+nice	👌
+nice	👍
 awkward	😬
 kleint	😬
 finally	🙌

@@ -7,13 +7,14 @@
 #include <fstream>
 #include <limits>
 #include <sstream>
+#include <set>
 
 namespace SwashMoji {
 namespace {
 constexpr size_t kMaxFileBytes = 4 * 1024 * 1024;
 constexpr size_t kMaxRecordBytes = 16384;
 constexpr size_t kMaxRecords = 50000;
-constexpr unsigned int kVersion = 2;
+constexpr unsigned int kVersion = 3;
 
 bool Number(const std::string& text, unsigned int& result) {
     if (text.empty()) return false;
@@ -91,6 +92,7 @@ bool SetSetting(Settings& settings, const std::string& name, const std::string& 
     else if (name == "sort_by_usage" && number <= 1) settings.sortByUsage = number != 0;
     else if (name == "emoji_rows" && number >= 1 && number <= 3) settings.emojiRows = static_cast<int>(number);
     else if (name == "skin_tone" && number <= 5) settings.skinTone = static_cast<int>(number);
+    else if (name == "learn_queries" && number <= 1) settings.learnQueries = number != 0;
     else return false;
     return true;
 }
@@ -116,13 +118,13 @@ Profile ImportLegacy(const std::filesystem::path& directory, const std::filesyst
             } else if (valid && std::wstring(name) == L"history.txt") {
                 const auto glyph = Utf8ToWide(line);
                 valid = !glyph.empty();
-                if (valid && profile.history.size() < kMaxHistory) profile.history.push_back(glyph);
+                if (valid && profile.history.size() < kMaxHistory) profile.history.push_back({ResultKind::Emoji, glyph});
             } else if (valid) {
                 const auto tab = line.find('\t');
                 unsigned int count{};
                 const auto glyph = Utf8ToWide(line.substr(0, tab));
                 valid = tab != std::string::npos && !glyph.empty() && Number(line.substr(tab + 1), count) && count;
-                if (valid) profile.usage[glyph] = count;
+                if (valid) profile.usage[{ResultKind::Emoji, glyph}] = count;
             }
             if (!valid) ++skipped;
         }
@@ -157,10 +159,17 @@ std::string EncodeProfile(const Profile& profile) {
         "setting\tposition_above_text_field\t" + std::to_string(profile.settings.positionAboveTextField),
         "setting\tsort_by_usage\t" + std::to_string(profile.settings.sortByUsage),
         "setting\temoji_rows\t" + std::to_string(profile.settings.emojiRows),
-        "setting\tskin_tone\t" + std::to_string(profile.settings.skinTone)
+        "setting\tskin_tone\t" + std::to_string(profile.settings.skinTone),
+        "setting\tlearn_queries\t" + std::to_string(profile.settings.learnQueries)
     };
-    for (const auto& glyph : profile.history) records.push_back("recent\t" + Escape(glyph));
-    for (const auto& usage : profile.usage) records.push_back("usage\t" + Escape(usage.first) + "\t" + std::to_string(usage.second));
+    const auto targetFields = [](const ResultId& id) {
+        return std::string(id.kind == ResultKind::Emoji ? "emoji\t" : "combination\t") + Escape(id.value);
+    };
+    for (const auto& id : profile.history) records.push_back("recent\t" + targetFields(id));
+    for (const auto& usage : profile.usage) records.push_back("usage\t" + targetFields(usage.first) + "\t" + std::to_string(usage.second));
+    for (const auto& id : profile.pins) records.push_back("pin\t" + targetFields(id));
+    for (const auto& choice : profile.queryChoices)
+        records.push_back("query\t" + Escape(choice.query) + "\t" + targetFields(choice.target) + "\t" + std::to_string(choice.count));
     for (const auto& entry : profile.aliases) {
         const auto& alias = entry.second;
         records.push_back("alias\t" + Escape(alias.phrase) + "\t" +
@@ -189,6 +198,7 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
     if (firstLine == std::string::npos || bytes.back() != '\n') return result;
     size_t position = firstLine + 1;
     size_t recordCount = 0;
+    std::set<std::pair<std::wstring, ResultId>> queryKeys;
     while (position < bytes.size()) {
         const size_t end = bytes.find('\n', position);
         if (end == std::string::npos) return result;
@@ -211,14 +221,38 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
         if (++recordCount > kMaxRecords) return result;
         bool valid = true;
         std::wstring glyph;
+        const auto readTarget = [&](size_t start, ResultId& id) {
+            if (fields.size() <= start + 1 || (fields[start] != "emoji" && fields[start] != "combination")) return false;
+            id.kind = fields[start] == "emoji" ? ResultKind::Emoji : ResultKind::Combination;
+            return Unescape(fields[start + 1], id.value) && !id.value.empty();
+        };
         if (valid && fields[0] == "setting") {
             valid = fields.size() == 3 && SetSetting(result.profile.settings, fields[1], fields[2]);
         } else if (valid && fields[0] == "recent") {
-            valid = fields.size() == 2 && Unescape(fields[1], glyph) && !glyph.empty() && result.profile.history.size() < kMaxHistory;
-            if (valid) result.profile.history.push_back(glyph);
+            ResultId id;
+            valid = version < 3 ? (fields.size() == 2 && Unescape(fields[1], id.value) && !id.value.empty()) :
+                (fields.size() == 3 && readTarget(1, id));
+            valid = valid && result.profile.history.size() < kMaxHistory &&
+                std::find(result.profile.history.begin(), result.profile.history.end(), id) == result.profile.history.end();
+            if (valid) result.profile.history.push_back(id);
         } else if (valid && fields[0] == "usage") {
-            valid = fields.size() == 3 && Unescape(fields[1], glyph) && !glyph.empty() && Number(fields[2], number) && number;
-            if (valid) result.profile.usage[glyph] = number;
+            ResultId id;
+            valid = version < 3 ? (fields.size() == 3 && Unescape(fields[1], id.value) && !id.value.empty() && Number(fields[2], number)) :
+                (fields.size() == 4 && readTarget(1, id) && Number(fields[3], number));
+            valid = valid && number && !result.profile.usage.count(id);
+            if (valid) result.profile.usage[id] = number;
+        } else if (valid && fields[0] == "pin" && version >= 3) {
+            ResultId id;
+            valid = fields.size() == 3 && readTarget(1, id) && result.profile.pins.size() < kMaxPins && !IsPinned(result.profile, id);
+            if (valid) result.profile.pins.push_back(id);
+        } else if (valid && fields[0] == "query" && version >= 3) {
+            ResultId id;
+            std::wstring query;
+            valid = fields.size() == 5 && Unescape(fields[1], query) && readTarget(2, id) && Number(fields[4], number) && number;
+            query = NormalizePhrase(query);
+            valid = valid && !query.empty() && query.size() <= kMaxQueryLength && result.profile.queryChoices.size() < kMaxQueryChoices;
+            if (valid) valid = queryKeys.insert({query, id}).second;
+            if (valid) result.profile.queryChoices.push_back({query, id, number});
         } else if (valid && fields[0] == "alias" && version >= 2) {
             std::wstring phrase, value;
             valid = fields.size() == 4 && Unescape(fields[1], phrase) && !phrase.empty() &&
@@ -236,7 +270,7 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
 ProfileStorage::ProfileStorage(std::filesystem::path directory, std::filesystem::path legacyDirectory)
     : directory_(std::move(directory)), legacyDirectory_(std::move(legacyDirectory)) {}
 
-ProfileLoad ProfileStorage::Load() {
+ProfileLoad ProfileStorage::Load(const Catalog* catalog) {
     ProfileLoad result;
     readOnly_ = false;
     std::string bytes;
@@ -249,7 +283,8 @@ ProfileLoad ProfileStorage::Load() {
     }
     if (primary.format == ProfileFormat::Valid) {
         result.profile = primary.profile;
-        if (primary.version < kVersion) {
+        const bool normalized = catalog && NormalizeFamilyHistory(result.profile, *catalog);
+        if (primary.version < kVersion || normalized) {
             std::wstring error;
             result.migrated = Save(result.profile, error);
             result.unsaved = !result.migrated;
@@ -268,6 +303,7 @@ ProfileLoad ProfileStorage::Load() {
     }
     if (backup.format == ProfileFormat::Valid) {
         result.profile = backup.profile;
+        if (catalog) NormalizeFamilyHistory(result.profile, *catalog);
         result.recovered = true;
         result.diagnostic = L"Profile recovered from the last complete backup.";
         std::wstring error;
@@ -282,6 +318,7 @@ ProfileLoad ProfileStorage::Load() {
     bool failed = false;
     size_t skipped{};
     result.profile = ImportLegacy(directory_, legacyDirectory_, failed, skipped);
+    if (catalog) NormalizeFamilyHistory(result.profile, *catalog);
     if (failed) {
         readOnly_ = true;
         result.diagnostic = L"Legacy data could not be read. Changes will not be saved.";
@@ -300,7 +337,8 @@ bool ProfileStorage::Save(const Profile& profile, std::wstring& diagnostic) {
     if (readOnly_) { diagnostic = L"Profile is read-only. Changes remain in memory."; return false; }
     const auto bytes = EncodeProfile(profile);
     const auto validation = DecodeProfile(bytes);
-    if (validation.format != ProfileFormat::Valid || validation.skippedRecords || profile.aliases.size() > kMaxAliases) {
+    if (validation.format != ProfileFormat::Valid || validation.skippedRecords || profile.aliases.size() > kMaxAliases ||
+        profile.pins.size() > kMaxPins || profile.queryChoices.size() > kMaxQueryChoices) {
         diagnostic = L"Profile contains invalid or excessive data. Changes remain in memory.";
         return false;
     }

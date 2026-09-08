@@ -11,7 +11,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     Catalog catalog;
     if (!catalog.Load(data) || !catalog.LoadIntents(intents)) return 1;
     ProfileStorage store(directory / "vocabulary-preview-profile");
-    auto profile = store.Load().profile;
+    auto profile = store.Load(&catalog).profile;
     std::wstring diagnostic;
     return ShowVocabulary(nullptr, instance, catalog, profile, L"bra jobbet", {ResultKind::Emoji, L"👏"},
         [&] { return store.Save(profile, diagnostic); }) ? 0 : 1;

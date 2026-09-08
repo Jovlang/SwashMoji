@@ -15,6 +15,7 @@
 #include "storage.h"
 #include "insertion_win32.h"
 #include "vocabulary.h"
+#include "edit_controls.h"
 #include <windowsx.h>
 
 #include <algorithm>
@@ -47,6 +48,8 @@ constexpr int kRecoveryId = 103;
 constexpr int kCopyInsteadId = 104;
 constexpr int kTeachPhraseId = 105;
 constexpr int kVocabularyId = 205;
+constexpr int kPinId = 206;
+constexpr int kLearnQueriesId = 207;
 constexpr int kRecoveryHeight = 68;
 constexpr int kExitId = 200;
 constexpr int kPositionAboveTextFieldId = 201;
@@ -89,6 +92,7 @@ HWINEVENTHOOK g_foregroundHook{};
 PickerSession g_session;
 Catalog g_catalog;
 Profile g_profile;
+RankingPreferences g_rankingPreferences;
 ProfileStorage g_storage;
 bool g_profileUnsaved{};
 std::wstring g_storageDiagnostic;
@@ -145,7 +149,7 @@ void LoadProfile() {
     } else {
         g_storage = ProfileStorage(std::filesystem::current_path());
     }
-    auto loaded = g_storage.Load();
+    auto loaded = g_storage.Load(&g_catalog);
     g_profile = std::move(loaded.profile);
     g_profileUnsaved = loaded.unsaved || g_storage.ReadOnly();
     g_storageDiagnostic = std::move(loaded.diagnostic);
@@ -159,17 +163,21 @@ void SaveProfile() {
 
 void SaveSettings() { SaveProfile(); }
 
-void Remember(const wchar_t* glyph) {
-    SwashMoji::Remember(g_profile, glyph);
+void RememberSelection(const ResultId& target) {
+    RecordChoice(g_profile, target, g_session.query);
     SaveProfile();
 }
 
 void RefreshList() {
     wchar_t input[256]{};
     GetWindowTextW(g_edit, input, static_cast<int>(std::size(input)));
+    const auto oldIndex = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
+    const auto previous = oldIndex >= 0 && static_cast<size_t>(oldIndex) < g_displayVisible.size()
+        ? g_displayVisible[oldIndex].id : g_session.selected;
+    const bool preserveSelection = g_session.query == input;
     g_session.query = input;
     SendMessageW(g_list, LB_RESETCONTENT, 0, 0);
-    g_visible = Search(g_catalog, g_profile, g_session.query);
+    g_visible = Search(g_catalog, g_profile, g_session.query, &g_rankingPreferences);
     ShowWindow(g_teachPhrase, g_visible.empty() && !NormalizePhrase(g_session.query).empty() ? SW_SHOW : SW_HIDE);
     g_displayVisible.clear();
     g_session.rankingSnapshot.clear();
@@ -193,7 +201,35 @@ void RefreshList() {
     for (const auto& result : g_displayVisible) {
         SendMessageW(g_list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(result.payload.c_str()));
     }
-    if (!g_displayVisible.empty()) SendMessageW(g_list, LB_SETCURSEL, 0, 0);
+    if (!g_displayVisible.empty()) {
+        size_t selection = 0;
+        if (preserveSelection) for (size_t i = 0; i < g_displayVisible.size(); ++i)
+            if (g_displayVisible[i].id == previous) { selection = i; break; }
+        SendMessageW(g_list, LB_SETCURSEL, selection, 0);
+        g_session.selected = g_displayVisible[selection].id;
+    }
+}
+
+void ToggleSelectedPin() {
+    const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
+    if (index < 0 || static_cast<size_t>(index) >= g_displayVisible.size()) return;
+    const auto id = g_displayVisible[index].id;
+    if (IsPinned(g_profile, id)) Unpin(g_profile, id);
+    else {
+        const auto result = Pin(g_profile, g_catalog, id);
+        if (result == PinResult::LimitReached) {
+            MessageBoxW(g_window, L"You can pin up to ten favorites. Unpin one in My vocabulary to make room.", L"Favorites", MB_ICONINFORMATION);
+            return;
+        }
+        if (result != PinResult::Pinned) return;
+    }
+    SaveProfile();
+    RefreshList();
+}
+
+void BeginPickerSession() {
+    g_rankingPreferences = g_profile;
+    RefreshList();
 }
 
 void CancelPendingReturn() {
@@ -259,17 +295,17 @@ void Recover(const std::wstring& message) {
     }
 }
 
-void CopySelection() {
+void CopySelection(ClipboardPlatform* platformOverride = nullptr) {
     CancelPendingReturn();
     const int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     if (selected < 0 || selected >= static_cast<int>(g_displayVisible.size())) return;
     g_session.selected = g_displayVisible[selected].id;
     const std::wstring value = g_displayVisible[selected].payload;
     Win32ClipboardPlatform clipboard(g_window);
-    const auto outcome = CopyText(clipboard, value);
+    const auto outcome = CopyText(platformOverride ? *platformOverride : clipboard, value);
     if (outcome.status == CopyStatus::Copied) {
         SetRecoveryMessage(L"");
-        Remember(value.c_str());
+        RememberSelection(g_session.selected);
         DismissPicker();
         return;
     }
@@ -287,13 +323,13 @@ void CopySelection() {
     }
 }
 
-void InsertSelection(bool keepOpen = false) {
+void InsertSelection(bool keepOpen = false, InputPlatform* platformOverride = nullptr) {
     CancelPendingReturn();
     const int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     if (selected < 0 || selected >= static_cast<int>(g_displayVisible.size())) return;
     g_session.selected = g_displayVisible[selected].id;
     const std::wstring value = g_displayVisible[selected].payload;
-    const auto outcome = InsertText(g_inputPlatform, g_inputTarget, value);
+    const auto outcome = InsertText(platformOverride ? *platformOverride : g_inputPlatform, g_inputTarget, value);
     if (outcome.status != InsertionStatus::FullySubmitted) {
         switch (outcome.status) {
         case InsertionStatus::NoTarget: Recover(L"The original app is no longer available.\nCopy instead, then paste where you want."); break;
@@ -320,7 +356,7 @@ void InsertSelection(bool keepOpen = false) {
         }
     }
     if (!keepOpen) DismissPicker();
-    Remember(value.c_str());
+    RememberSelection(g_session.selected);
 }
 
 void CALLBACK ForegroundChanged(HWINEVENTHOOK, DWORD, HWND window, LONG, LONG, DWORD, DWORD eventTime) {
@@ -371,6 +407,7 @@ int PickerHeight() {
 
 void CenterOnActiveMonitor() {
     CancelPendingReturn();
+    BeginPickerSession();
     HWND active = GetForegroundWindow();
     const auto target = CaptureExternalTarget(active);
     if (target.window) {
@@ -630,12 +667,13 @@ void ToggleSortMode() {
 void ConfirmAndClearUsageHistory() {
     const int result = MessageBoxW(
         g_window,
-        L"Forget all recently used emoji and reset how often each emoji was chosen?\n\nThis cannot be undone.",
-        L"Clear remembered emoji",
+        L"Clear recent choices, usage counts, and learned search preferences?\n\nYour aliases, favorites, and appearance settings will stay. This cannot be undone.",
+        L"Clear learned history",
         MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
     if (result != IDYES) return;
 
     ClearHistory(g_profile);
+    g_rankingPreferences = g_profile;
     SaveProfile();
     RefreshList();
 }
@@ -722,6 +760,8 @@ LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         DrawHelpRow(dc, 28, leftY, 315, 72, L"Alt+C", L"After an insertion error: Copy instead. Check the destination if input was partial.");
         leftY += 74;
         DrawHelpRow(dc, 28, leftY, 315, 66, L"Alt+A", L"Add an alias for your selection, or teach a phrase with no matches.");
+        leftY += 68;
+        DrawHelpRow(dc, 28, leftY, 315, 46, L"Alt+P", L"Pin or unpin the selected favorite.");
 
         constexpr int rightX = 374;
         DrawHelpText(dc, L"CUSTOMIZE", RECT{rightX, 112, 690, 136},
@@ -744,14 +784,14 @@ LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
                      g_helpHeadingFont, heading);
         rightY += 31;
         DrawHelpText(dc,
-                     L"SwashMoji remembers which emoji you choose. Recent mode puts your latest choices first; most-used mode puts your frequent choices first. This stays on your PC.",
+                     L"Learning improves future searches. Turn it off with Learn from searches in the tray. Recent/most-used order follows your choices.",
                      RECT{rightX, rightY, 692, rightY + 90}, g_helpBodyFont, kText);
         rightY += 96;
         DrawHelpText(dc,
-                     L"Right-click a result to add an alias. In the tray menu, My vocabulary edits or removes your saved aliases. Clearing history keeps them.",
+                     L"My vocabulary manages aliases and reorders favorites. Clear learned history keeps your aliases and favorites. Changes to ranking apply when you reopen.",
                      RECT{rightX, rightY, 692, rightY + 90}, g_helpBodyFont, kText);
 
-        DrawHelpText(dc, L"All usage data is stored locally in %LOCALAPPDATA%\\SwashMoji",
+        DrawHelpText(dc, L"All preferences are stored locally in %LOCALAPPDATA%\\SwashMoji",
                      RECT{28, client.bottom - 37, client.right - 28, client.bottom - 17},
                      g_statusFont, kMutedText,
                      DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
@@ -815,8 +855,10 @@ void ShowTrayMenu() {
     AppendMenuW(menu, MF_STRING, kSortMostUsedId, L"Sort: Most used");
     CheckMenuRadioItem(menu, kSortRecentId, kSortMostUsedId,
                        g_sortByUsage ? kSortMostUsedId : kSortRecentId, MF_BYCOMMAND);
-    AppendMenuW(menu, MF_STRING, kClearUsageHistoryId, L"Clear remembered emoji...");
+    AppendMenuW(menu, MF_STRING, kClearUsageHistoryId, L"Clear learned history...");
     AppendMenuW(menu, MF_STRING, kVocabularyId, L"My vocabulary...");
+    AppendMenuW(menu, MF_STRING | (g_profile.settings.learnQueries ? MF_CHECKED : MF_UNCHECKED),
+        kLearnQueriesId, L"Learn from searches");
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(menu, MF_STRING, kExitId, L"Exit");
     POINT point{};
@@ -838,6 +880,10 @@ void ShowTrayMenu() {
         ConfirmAndClearUsageHistory();
     } else if (command == kVocabularyId) {
         OpenVocabulary(false);
+    } else if (command == kLearnQueriesId) {
+        g_profile.settings.learnQueries = !g_profile.settings.learnQueries;
+        SaveProfile();
+        RefreshList();
     } else if (command == kExitId) {
         DestroyWindow(g_window);
     }
@@ -886,10 +932,15 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
         if (g_displayVisible.empty()) return 0;
         HMENU menu = CreatePopupMenu();
         AppendMenuW(menu, MF_STRING, kVocabularyId, L"Add alias...\tAlt+A");
+        const auto index = SendMessageW(control, LB_GETCURSEL, 0, 0);
+        if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size())
+            AppendMenuW(menu, MF_STRING, kPinId, IsPinned(g_profile, g_displayVisible[index].id)
+                ? L"Unpin favorite\tAlt+P" : L"Pin favorite\tAlt+P");
         const auto command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON,
             point.x, point.y, 0, g_window, nullptr);
         DestroyMenu(menu);
         if (command == kVocabularyId) OpenVocabulary(true);
+        if (command == kPinId) ToggleSelectedPin();
         return 0;
     }
     if (control == g_list && message == WM_LBUTTONUP) {
@@ -936,6 +987,7 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
 LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_CREATE: {
+        g_rankingPreferences = g_profile;
         g_edit = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
                                  0, 0, 0, 0, window,
                                  reinterpret_cast<HMENU>(static_cast<INT_PTR>(kEditId)), nullptr, nullptr);
@@ -968,6 +1020,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
                                                                   reinterpret_cast<LONG_PTR>(InputProc)));
         g_listProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(g_list, GWLP_WNDPROC,
                                                                   reinterpret_cast<LONG_PTR>(InputProc)));
+        EnableWordDeletion(g_edit);
         LayoutChildren(window);
         RefreshList();
         AddTrayIcon(window);
@@ -1177,6 +1230,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
             (message.hwnd == g_window || IsChild(g_window, message.hwnd));
         if (pickerKey && altPressed && firstKeyPress && message.wParam == 'A') {
             OpenVocabulary(true);
+            continue;
+        }
+        if (pickerKey && altPressed && firstKeyPress && message.wParam == 'P') {
+            ToggleSelectedPin();
             continue;
         }
         if (pickerKey && message.hwnd == g_teachPhrase) {

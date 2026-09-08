@@ -1,18 +1,20 @@
-# Local profile format (M0–M2)
+# Local profile format (M0–M3)
 
 The runtime uses `%LOCALAPPDATA%\SwashMoji\profile.tsv`. All profile tests pass an
 isolated directory explicitly; they never resolve or change the user's profile.
 
-## Version 2
+## Version 3
 
 Files are UTF-8 with LF line endings. The reader also accepts a UTF-8 BOM and CRLF.
-The header is `SwashMoji<TAB>2`. Following lines contain typed records:
+The header is `SwashMoji<TAB>3`. Following lines contain typed records:
 
 | Record | Fields after the record type |
 | --- | --- |
 | `setting` | setting name, unsigned integer value |
-| `recent` | exact emoji glyph, newest records first |
-| `usage` | exact emoji glyph, nonzero unsigned 32-bit count |
+| `recent` | target kind, stable target ID; newest records first |
+| `usage` | target kind, stable target ID, nonzero unsigned 32-bit count |
+| `query` | normalized complete query, target kind, stable target ID, nonzero unsigned 32-bit count; most recently chosen pair first |
+| `pin` | target kind, stable target ID; display order |
 | `alias` | display phrase, target kind (`emoji` or reserved `combination`), stable target ID |
 | `end` | number of preceding records, excluding the header |
 
@@ -28,11 +30,18 @@ return as `\r`. Unknown escapes, invalid UTF-8, and embedded NULs are rejected.
 Counts use decimal digits without signs or suffixes; overflow is rejected.
 
 Settings are `position_above_text_field` and `sort_by_usage` (0–1), `emoji_rows`
-(1–3), and `skin_tone` (0–5). Defaults match the previous application. Font and
+(1–3), `skin_tone` (0–5), and `learn_queries` (0–1, default 1). Font and
 status-line visibility remain session-only, as before M0.
 
-Usage still stores exact glyphs. Family aggregation, query learning, pins, and
-combinations belong to later milestones. M2 adds up to 500 aliases; phrases have
+History and usage now store family IDs; tone variants share counts and recency.
+Target kinds are `emoji` or reserved `combination`. Up to ten unique pins retain
+their explicit order. Up to 1,000 unique `(query, target)` records retain their
+most-recently-chosen order for LRU eviction. Queries have at most 256 UTF-16 code
+units after normalization; punctuation-only queries are not learned. Reading or
+searching does not refresh LRU order. Counts saturate at UINT32_MAX. Duplicate
+history, usage, pin, and normalized query records are skipped (first valid wins).
+
+M2 introduced up to 500 aliases; phrases have
 at most 96 UTF-16 code units and must normalize to at least one letter or digit.
 The normalized phrase is the unique lookup key; the original phrase is kept for
 display. Duplicate normalized records are skipped (first valid record wins).
@@ -47,10 +56,18 @@ neither pointer values nor catalog indices are persisted.
 
 ## Migration and persistence
 
-Version 1 profiles are read with settings, exact-glyph history, and counts intact,
-then atomically upgraded to version 2. The previous complete version 1 file becomes
-the backup. A failed write keeps version 1 on disk and reports unsaved state;
-the next launch can retry. Unsupported future versions remain read-only.
+Versions 1 and 2 use exact-glyph `recent` and `usage` records; version 2 also has
+aliases. On load, the catalog resolves known glyphs to stable families, adds their
+usage counts with saturation, and keeps each family's newest history position.
+Unknown IDs are preserved, and missing metadata never produces a fabricated base.
+The mapping is idempotent and also handles catalogs that later recognize an ID.
+Aliases and settings are preserved. The runtime passes its loaded catalog to
+`ProfileStorage::Load`; codec-only consumers may omit that catalog.
+
+Migration atomically writes version 3 and backs up the previous complete file.
+A failed write leaves the previous format on disk, retains the migrated values
+in memory, and reports unsaved state. Retrying does not double counts. Unsupported
+future versions remain read-only.
 
 When both the primary and backup profiles are absent, import each legacy
 `settings.txt`, `history.txt`, and `usage.txt` from the SwashMoji directory. For a

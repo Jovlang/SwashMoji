@@ -1,5 +1,6 @@
 #include "vocabulary.h"
 #include "vocabulary_ids.h"
+#include "edit_controls.h"
 #include <algorithm>
 
 namespace SwashMoji {
@@ -25,6 +26,28 @@ std::wstring Text(HWND dialog, int id) {
 
 void Status(HWND dialog, const wchar_t* message) { SetDlgItemTextW(dialog, IDC_VOCABULARY_STATUS, message); }
 
+void PinButtons(HWND dialog, const Editor& editor) {
+    const auto selected = SendDlgItemMessageW(dialog, IDC_PINS, LB_GETCURSEL, 0, 0);
+    const bool valid = selected >= 0 && static_cast<size_t>(selected) < editor.profile.pins.size();
+    EnableWindow(GetDlgItem(dialog, IDC_PIN_UP), valid && selected > 0);
+    EnableWindow(GetDlgItem(dialog, IDC_PIN_DOWN), valid && static_cast<size_t>(selected + 1) < editor.profile.pins.size());
+    EnableWindow(GetDlgItem(dialog, IDC_UNPIN), valid);
+}
+
+void RefreshPins(HWND dialog, Editor& editor, const ResultId& selected = {}) {
+    SendDlgItemMessageW(dialog, IDC_PINS, LB_RESETCONTENT, 0, 0);
+    size_t selection = 0;
+    for (size_t i = 0; i < editor.profile.pins.size(); ++i) {
+        const auto& id = editor.profile.pins[i];
+        const auto* emoji = id.kind == ResultKind::Emoji ? editor.catalog.FindFamily({id.value}) : nullptr;
+        const auto label = std::to_wstring(i + 1) + L". " + (emoji ? emoji->glyph + L" " + emoji->name : L"Unavailable: " + id.value);
+        SendDlgItemMessageW(dialog, IDC_PINS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+        if (id == selected) selection = i;
+    }
+    if (!editor.profile.pins.empty()) SendDlgItemMessageW(dialog, IDC_PINS, LB_SETCURSEL, selection, 0);
+    PinButtons(dialog, editor);
+}
+
 void RefreshAliases(HWND dialog, Editor& editor) {
     auto list = GetDlgItem(dialog, IDC_ALIASES);
     SendMessageW(list, LB_RESETCONTENT, 0, 0);
@@ -42,6 +65,8 @@ void Preview(HWND dialog, Editor& editor) {
     const auto label = emoji ? emoji->glyph + L"  " + emoji->name :
         (editor.target.value.empty() ? L"Choose an emoji above." : L"Unavailable target. Choose a replacement emoji.");
     SetDlgItemTextW(dialog, IDC_TARGET_PREVIEW, label.c_str());
+    EnableWindow(GetDlgItem(dialog, IDC_PIN_TARGET), emoji != nullptr);
+    SetDlgItemTextW(dialog, IDC_PIN_TARGET, IsPinned(editor.profile, editor.target) ? L"Unpin &favorite" : L"Pin &favorite");
 }
 
 void FindTargets(HWND dialog, Editor& editor) {
@@ -94,7 +119,10 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         SetWindowLongPtrW(dialog, DWLP_USER, lParam);
         SendDlgItemMessageW(dialog, IDC_PHRASE, EM_SETLIMITTEXT, kMaxAliasLength, 0);
         SendDlgItemMessageW(dialog, IDC_TARGET_QUERY, EM_SETLIMITTEXT, 255, 0);
+        EnableWordDeletion(GetDlgItem(dialog, IDC_PHRASE));
+        EnableWordDeletion(GetDlgItem(dialog, IDC_TARGET_QUERY));
         LoadDraft(dialog, *editor, editor->phrase, editor->target);
+        RefreshPins(dialog, *editor);
         SetFocus(GetDlgItem(dialog, IDC_PHRASE));
         return FALSE;
     }
@@ -104,7 +132,28 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
     const int id = LOWORD(wParam), notification = HIWORD(wParam);
     if (id == IDCANCEL) { EndDialog(dialog, IDCANCEL); return TRUE; }
     if (editor->loading) return FALSE;
-    if (id == IDC_NEW_ALIAS) {
+    if (id == IDC_PINS && notification == LBN_SELCHANGE) {
+        PinButtons(dialog, *editor);
+    } else if (id == IDC_PIN_TARGET) {
+        if (IsPinned(editor->profile, editor->target)) Unpin(editor->profile, editor->target);
+        else {
+            const auto result = Pin(editor->profile, editor->catalog, editor->target);
+            if (result == PinResult::LimitReached) { Status(dialog, L"You have ten favorites. Unpin one to make room."); return TRUE; }
+            if (result != PinResult::Pinned) { Status(dialog, L"Choose an emoji to pin."); return TRUE; }
+        }
+        RefreshPins(dialog, *editor, editor->target);
+        Preview(dialog, *editor);
+        Status(dialog, editor->persist() ? L"Favorites saved." : L"Favorites not saved to disk. Changes remain in this session.");
+    } else if (id == IDC_PIN_UP || id == IDC_PIN_DOWN || id == IDC_UNPIN) {
+        const auto index = SendDlgItemMessageW(dialog, IDC_PINS, LB_GETCURSEL, 0, 0);
+        if (index < 0 || static_cast<size_t>(index) >= editor->profile.pins.size()) return TRUE;
+        const auto target = editor->profile.pins[index];
+        const bool changed = id == IDC_UNPIN ? Unpin(editor->profile, target) : MovePin(editor->profile, target, id == IDC_PIN_UP ? -1 : 1);
+        if (!changed) return TRUE;
+        RefreshPins(dialog, *editor, target);
+        Preview(dialog, *editor);
+        Status(dialog, editor->persist() ? L"Favorites saved." : L"Favorites not saved to disk. Changes remain in this session.");
+    } else if (id == IDC_NEW_ALIAS) {
         editor->original.clear();
         LoadDraft(dialog, *editor, L"", {});
         SetFocus(GetDlgItem(dialog, IDC_PHRASE));

@@ -5,7 +5,7 @@ network access. Exact personal aliases rank first, then exact English/localized
 names or a pasted known emoji, exact curated intent phrases, name prefixes,
 all-token lexical matches, and finally fuzzy matches only when ordinary results
 are absent. Partial aliases use the corresponding prefix/token classes. Existing
-recency/usage breaks ties within a class; M3 will add query learning and family counts.
+query learning and recency/usage break ties within a class; see [learning.md](learning.md).
 
 Text uses Windows NFKC normalization and invariant Unicode lowercase conversion.
 Letters and digits form words; punctuation and whitespace become word boundaries.
@@ -33,7 +33,7 @@ opening shortcuts and tray callbacks cannot reset the picker while it is open.
 
 `emojis.txt` has five tab-separated UTF-8 columns: glyph, English name, English
 keywords, Bokmål name, Bokmål keywords. The loader still accepts older three-column
-catalogs. `intent_phrases.tsv` holds 49 separately maintained intent mappings.
+catalogs. `intent_phrases.tsv` holds 51 separately maintained intent mappings (50 phrases).
 Both files and `UNICODE_LICENSE.txt` must be distributed beside the executable;
 CMake copies them.
 
@@ -63,10 +63,10 @@ same catalog and manifest. Runtime startup reads only the bundled generated file
 
 ## Verification
 
-The checked-in `tests/search_corpus.tsv` has 109 cases: 40 names/keywords, 49 intent
+The checked-in `tests/search_corpus.tsv` has 111 cases: 40 names/keywords, 51 intent
 phrases, seven normalization cases, four typos, three glyphs, three aliases and
-three intentional misses. All 109 meet the expected top-three/no-result outcome;
-the intent subset is 49/49. Tests also enforce the exact-name tier for every
+three intentional misses. All 111 meet the expected top-three/no-result outcome;
+the intent subset is 51/51. Tests also enforce the exact-name tier for every
 untoned English and Bokmål catalog name, explicit alias priority, duplicate/rename
 transactions, limits, codec restart, and version 1 migration with backup retention.
 Python fixture tests cover locale inheritance, English fallback, offline missing

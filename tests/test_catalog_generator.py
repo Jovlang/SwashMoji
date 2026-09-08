@@ -46,15 +46,15 @@ class CatalogGeneration(unittest.TestCase):
 
     def test_curated_intents_are_separate_valid_records(self):
         glyphs = {line.split("\t")[0] for line in (ROOT / "emojis.txt").read_text(encoding="utf-8").splitlines()}
-        phrases = set()
+        mappings = set()
         for line in (ROOT / "intent_phrases.tsv").read_text(encoding="utf-8").splitlines():
             if not line or line.startswith("#"):
                 continue
             phrase, glyph = line.split("\t")
             self.assertIn(glyph, glyphs)
-            self.assertNotIn(phrase, phrases)
-            phrases.add(phrase)
-        self.assertGreaterEqual(len(phrases), 40)
+            self.assertNotIn((phrase, glyph), mappings)
+            mappings.add((phrase, glyph))
+        self.assertGreaterEqual(len(mappings), 40)
 
 
 if __name__ == "__main__":

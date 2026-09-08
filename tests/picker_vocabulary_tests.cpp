@@ -10,7 +10,7 @@
 #include "../vocabulary_ids.h"
 
 namespace {
-enum class DialogAction { Create, Cancel, Edit, DeclineReplacement, Delete, CheckHeartPrefill };
+enum class DialogAction { Create, Cancel, Edit, DeclineReplacement, Delete, CheckHeartPrefill, Favorites };
 DialogAction action;
 std::string dialogFailure;
 
@@ -47,7 +47,23 @@ void CALLBACK DriveDialog(HWND, UINT, UINT_PTR timer, DWORD) {
         const auto query = g_session.query;
         SendMessageW(g_window, WM_HOTKEY, kHotkeyId, 0);
         CHECK(g_session.query == query);
-        if (action == DialogAction::CheckHeartPrefill) {
+        if (action == DialogAction::Favorites) {
+            Command(dialog, IDC_PIN_TARGET);
+            CHECK(IsPinned(g_profile, {ResultKind::Emoji, L"🚀"}));
+            SetDlgItemTextW(dialog, IDC_TARGET_QUERY, L"thumbs up");
+            SendDlgItemMessageW(dialog, IDC_TARGET_RESULTS, LB_SETCURSEL, 0, 0);
+            Command(dialog, IDC_TARGET_RESULTS, LBN_SELCHANGE);
+            Command(dialog, IDC_PIN_TARGET);
+            CHECK(g_profile.pins.size() == 2 && g_profile.pins[1].value == L"👍");
+            Command(dialog, IDC_PIN_UP);
+            CHECK(g_profile.pins[0].value == L"👍");
+            CHECK(SendDlgItemMessageW(dialog, IDC_PINS, LB_GETCURSEL, 0, 0) == 0);
+            Command(dialog, IDC_PIN_DOWN);
+            CHECK(g_profile.pins[0].value == L"🚀");
+            Command(dialog, IDC_UNPIN);
+            CHECK(g_profile.pins.size() == 1);
+            CHECK(g_storage.Load(&g_catalog).profile.pins == g_profile.pins);
+        } else if (action == DialogAction::CheckHeartPrefill) {
             wchar_t targetQuery[32]{};
             GetDlgItemTextW(dialog, IDC_TARGET_QUERY, targetQuery, 32);
             CHECK(std::wstring(targetQuery) == L"❤️");
@@ -104,6 +120,96 @@ void ExerciseDialog(DialogAction next) {
           g_inputTarget.thread == inputTarget.thread && g_session.originalTarget == inputTarget.window);
     CHECK(g_storage.Load().profile.aliases.size() == g_profile.aliases.size());
 }
+
+struct StubInput : InputPlatform {
+    bool valid{true}, denied{};
+    int accept{-1};
+    WindowToken foreground{};
+    bool ValidTarget(const InputTarget&) override { return valid; }
+    WindowToken Foreground() override { return foreground; }
+    void Activate(WindowToken window) override { if (!denied) foreground = window; }
+    std::vector<std::uint16_t> HeldModifiers() override { return {}; }
+    size_t Send(const std::vector<KeyEvent>& events) override { return accept < 0 ? events.size() : std::min(events.size(), static_cast<size_t>(accept)); }
+};
+
+struct StubClipboard : ClipboardPlatform {
+    int failure{};
+    bool Prepare(const std::wstring&) override { return failure != 1; }
+    bool Open() override { return failure != 2; }
+    bool Empty() override { return failure != 3; }
+    bool Publish() override { return failure != 4; }
+    bool Close() override { return failure != 5; }
+    void Release() override {}
+};
+
+void SelectResult(const ResultId& target) {
+    for (size_t i = 0; i < g_displayVisible.size(); ++i) if (g_displayVisible[i].id == target) {
+        SendMessageW(g_list, LB_SETCURSEL, i, 0);
+        g_session.selected = target;
+        return;
+    }
+    CHECK(false);
+}
+
+void LearningIntegration() {
+    const ResultId thumbs{ResultKind::Emoji, L"👍"}, okay{ResultKind::Emoji, L"👌"};
+    ClearHistory(g_profile);
+    SwashMoji::Remember(g_profile, thumbs);
+    BeginPickerSession();
+    SetWindowTextW(g_edit, L"nice");
+    CHECK(g_visible[0].id == thumbs);
+    SelectResult(okay);
+    const auto originalOrder = g_session.rankingSnapshot;
+    const auto before = EncodeProfile(g_profile);
+    for (int failure = 0; failure < 4; ++failure) {
+        StubInput input;
+        input.valid = failure != 0;
+        input.denied = failure == 1;
+        if (failure >= 2) input.accept = failure - 2; // Zero and partial submission.
+        InsertSelection(true, &input);
+        CHECK(EncodeProfile(g_profile) == before);
+        CHECK(g_session.selected == okay && g_session.rankingSnapshot == originalOrder);
+    }
+    for (int failure = 1; failure <= 5; ++failure) {
+        StubClipboard clipboard;
+        clipboard.failure = failure;
+        CopySelection(&clipboard);
+        CHECK(EncodeProfile(g_profile) == before);
+    }
+    StubInput success;
+    InsertSelection(true, &success);
+    InsertSelection(true, &success);
+    CHECK(QueryCount(g_profile, L"nice", okay) == 2 && UsageCount(g_profile, okay) == 2);
+    CHECK(g_session.rankingSnapshot == originalOrder && g_session.selected == okay);
+    // Re-rendering and changing query within this session still use frozen preferences.
+    RefreshList();
+    CHECK(g_session.rankingSnapshot == originalOrder && g_session.selected == okay);
+    SetEmojiRows(3);
+    CHECK(g_session.rankingSnapshot == originalOrder && g_session.selected == okay);
+    CycleSkinTone();
+    CHECK(g_session.rankingSnapshot == originalOrder && g_session.selected == okay);
+    g_emojiFonts = {{L"Segoe UI Emoji", true}};
+    g_emojiFont = nullptr; // The test initially used a stock font, which it must not delete.
+    CycleEmojiFont();
+    CHECK(g_session.rankingSnapshot == originalOrder && g_session.selected == okay);
+    SetWindowTextW(g_edit, L"bra");
+    SetWindowTextW(g_edit, L"nice");
+    CHECK(g_visible[0].id == thumbs);
+    SelectResult(okay);
+    StubClipboard copied;
+    CopySelection(&copied);
+    CHECK(QueryCount(g_profile, L"nice", okay) == 3 && UsageCount(g_profile, okay) == 3);
+    CHECK(QueryCount(g_profile, L"bra", okay) == 0);
+    BeginPickerSession();
+    CHECK(g_visible[0].id == okay);
+    const auto selectedBeforePin = g_session.selected;
+    ToggleSelectedPin();
+    CHECK(IsPinned(g_profile, okay) && g_session.selected == selectedBeforePin);
+    CHECK(g_storage.Load(&g_catalog).profile.pins == g_profile.pins);
+    g_profile.settings.skinTone = 0;
+    SetEmojiRows(1);
+    SetRecoveryMessage(L"");
+}
 }
 
 int wmain(int argc, wchar_t** argv) {
@@ -116,8 +222,8 @@ int wmain(int argc, wchar_t** argv) {
     report("RUNNING");
     try {
         CHECK(LoadEmojis());
-        g_storage = ProfileStorage(directory / (L"vocabulary-test-" + std::to_wstring(GetCurrentProcessId())));
-        g_profile = g_storage.Load().profile;
+        g_storage = ProfileStorage(directory / (L"vocabulary-test-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(GetTickCount64())));
+        g_profile = g_storage.Load(&g_catalog).profile;
         g_uiFont = g_statusFont = g_emojiFont = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
         g_backgroundBrush = CreateSolidBrush(kBackground);
         g_inputBrush = CreateSolidBrush(kInputBackground);
@@ -127,14 +233,14 @@ int wmain(int argc, wchar_t** argv) {
         type.lpfnWndProc = WindowProc;
         type.hCursor = LoadCursorW(nullptr, IDC_ARROW);
         CHECK(RegisterClassW(&type));
-        g_window = CreateWindowExW(WS_EX_TOOLWINDOW, kClassName, L"SwashMoji M2 test picker", WS_POPUP,
+        g_window = CreateWindowExW(WS_EX_TOOLWINDOW, kClassName, L"SwashMoji M3 test picker", WS_POPUP,
             300, 300, kPickerWidth, PickerHeight(), nullptr, nullptr, type.hInstance, nullptr);
         CHECK(g_window);
 
         TargetProcess targetProcess;
         wchar_t executable[MAX_PATH]{};
         GetModuleFileNameW(nullptr, executable, MAX_PATH);
-        const auto title = L"SwashMoji M2 target " + std::to_wstring(GetCurrentProcessId());
+        const auto title = L"SwashMoji M3 target " + std::to_wstring(GetCurrentProcessId());
         std::wstring command = L"\"" + std::wstring(executable) + L"\" --target \"" + title + L"\"";
         STARTUPINFOW startup{sizeof(startup)};
         CHECK(CreateProcessW(executable, command.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW,
@@ -150,6 +256,9 @@ int wmain(int argc, wchar_t** argv) {
         g_inputTarget = CaptureExternalTarget(targetProcess.window);
         CHECK(g_inputTarget.window);
         g_session.originalTarget = g_inputTarget.window;
+        SetWindowTextW(g_edit, L"rocket");
+        ExerciseDialog(DialogAction::Favorites);
+        LearningIntegration();
         SetWindowTextW(g_edit, L"rocket");
         ExerciseDialog(DialogAction::Create);
         const auto saved = EncodeProfile(g_profile);
@@ -169,12 +278,13 @@ int wmain(int argc, wchar_t** argv) {
 
         const auto clipboard = GetClipboardSequenceNumber();
         CHECK(g_inputPlatform.HeldModifiers().empty());
-        // Uses the exact destination captured before all six editor visits.
+        // Uses the exact destination captured before all editor visits and learning checks.
         InsertSelection();
         CHECK(g_recoveryMessage.empty());
         CHECK(WaitText(GetDlgItem(targetProcess.window, kEdit), L"🚀"));
         CHECK(GetClipboardSequenceNumber() == clipboard);
-        report("PASS: editor create/edit/delete persisted; cancelled draft and replacement left data intact; picker query, selection and original target survived; real target received exact emoji, clipboard unchanged.");
+        CHECK(QueryCount(g_profile, L"rocket", {ResultKind::Emoji, L"🚀"}) == 1);
+        report("PASS: alias/favorite editing persisted; failures did not learn; successful insert/copy learned once; picker order and selection survived repeat insertion, rows, tone and font changes; next session applied learning; original target received exact emoji; clipboard unchanged.");
         PostMessageW(targetProcess.window, WM_CLOSE, 0, 0);
         DestroyWindow(g_window);
     } catch (const std::exception& error) {

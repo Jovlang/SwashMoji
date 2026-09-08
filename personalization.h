@@ -9,6 +9,9 @@ class Catalog;
 constexpr size_t kMaxHistory = 40;
 constexpr size_t kMaxAliases = 500;
 constexpr size_t kMaxAliasLength = 96;
+constexpr size_t kMaxPins = 10;
+constexpr size_t kMaxQueryChoices = 1000;
+constexpr size_t kMaxQueryLength = 256;
 
 struct Alias { std::wstring phrase; ResultId target; };
 
@@ -17,20 +20,44 @@ struct Settings {
     bool sortByUsage{};
     int emojiRows{1};
     int skinTone{};
+    bool learnQueries{true};
 };
 
-struct Profile {
+struct QueryChoice {
+    std::wstring query;
+    ResultId target;
+    unsigned int count{};
+};
+
+struct RankingPreferences {
+    std::vector<ResultId> history;
+    std::map<ResultId, unsigned int> usage;
+    // Most recently chosen pair first. Searching alone does not touch this LRU.
+    std::vector<QueryChoice> queryChoices;
+};
+
+struct Profile : RankingPreferences {
     Settings settings;
-    // Preserve exact glyph usage until the family aggregation milestone (M3).
-    std::vector<std::wstring> history;
-    std::map<std::wstring, unsigned int> usage;
     std::map<std::wstring, Alias> aliases;
+    std::vector<ResultId> pins;
 };
 
+void Remember(Profile& profile, const ResultId& target);
+// Legacy import/test convenience. Live selections use their catalog-backed ID.
 void Remember(Profile& profile, const std::wstring& glyph);
+void RecordChoice(Profile& profile, const ResultId& target, const std::wstring& query);
+bool NormalizeFamilyHistory(Profile& profile, const Catalog& catalog);
 void ClearHistory(Profile& profile);
-int HistoryBoost(const Profile& profile, const std::wstring& glyph);
-unsigned int UsageCount(const Profile& profile, const std::wstring& glyph);
+int HistoryBoost(const RankingPreferences& profile, const ResultId& target);
+unsigned int UsageCount(const RankingPreferences& profile, const ResultId& target);
+int HistoryBoost(const RankingPreferences& profile, const std::wstring& glyph);
+unsigned int UsageCount(const RankingPreferences& profile, const std::wstring& glyph);
+unsigned int QueryCount(const RankingPreferences& profile, const std::wstring& query, const ResultId& target);
+enum class PinResult { Pinned, AlreadyPinned, InvalidTarget, LimitReached };
+PinResult Pin(Profile& profile, const Catalog& catalog, const ResultId& target);
+bool Unpin(Profile& profile, const ResultId& target);
+bool MovePin(Profile& profile, const ResultId& target, int direction);
+bool IsPinned(const Profile& profile, const ResultId& target);
 enum class AliasResult { Saved, Duplicate, InvalidPhrase, InvalidTarget, LimitReached, MissingOriginal };
 AliasResult SetAlias(Profile& profile, const Catalog& catalog, const std::wstring& phrase,
                      const ResultId& target, const std::wstring& original = {}, bool replace = false);

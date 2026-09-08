@@ -5,8 +5,12 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - `Alt+E` åpner velgeren på skjermen til det aktive vinduet.
 - Høyreklikk systemstatusikonet for plassering, sortering og sletting av lokal brukshistorikk.
 - Søk på engelsk og norsk bokmål samtidig: navn, Unicode-nøkkelord og uttrykk som `bra jobbet`, `på vei` og `thank you`. Skrivefeil tolereres når det ikke finnes vanlige treff.
+- `Ctrl+Backspace` sletter forrige ord eller markert tekst i søkefeltet og tekstfeltene i **My vocabulary**. `Ctrl+Z` kan angre slettingen.
 - Høyreklikk et treff og velg **Add alias**, eller bruk `Alt+A`. Søket fylles inn som forslag til din egen frase. Uten treff kan du velge **Teach this phrase** og finne ønsket emoji.
 - **My vocabulary** i systemstatusmenyen lar deg opprette, endre og slette aliaser. **Save alias** lagrer; **Close** forkaster utkastet. Lagrede aliaser beholdes når brukshistorikken slettes.
+- `Alt+P` eller **Pin favorite** i treffmenyen fester valgt emoji som favoritt. Opptil ti favoritter vises først uten søketekst; **My vocabulary** lar deg flytte dem opp/ned eller fjerne dem.
+- Velgeren lærer hvilke treff du velger for hele søket. Læring kan slås av med **Learn from searches** i systemstatusmenyen. Nye valg påvirker rangeringen neste gang velgeren åpnes, slik at gjentatt innsetting ikke flytter treffene.
+- Hudtonevariantene deler brukshistorikk. Bytte av hudtone, font og antall rader beholder markeringen.
 - Treff vises i én til tre emoji-rader; bruk `Alt+1`, `Alt+2` eller `Alt+3` for å velge antall rader, og piltastene for å flytte markeringen.
 - Klikk en emoji for å sette den inn og gå tilbake til SwashMoji.
 - `Enter` setter valgt emoji direkte inn i det aktive programmet uten å endre utklippstavlen.
@@ -24,7 +28,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - `Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
 - Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
 - Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.
-- Brukshistorikken kan slettes fra systemstatusmenyen etter en bekreftelse.
+- **Clear learned history** sletter nylige valg, brukstellere og lærte søk etter bekreftelse. Aliaser, favoritter og utseende beholdes.
 - Ikonet i systemstatusfeltet åpner velgeren ved venstreklikk og har `Exit` ved høyreklikk.
 - Emoji-katalogen og uttrykkene leses fra UTF-8-filene `emojis.txt` og `intent_phrases.tsv` ved siden av programfilen. Begge må følge med når programmet flyttes.
 
@@ -59,6 +63,7 @@ valgene beholdes i minnet. Ukjente profilversjoner overskrives ikke.
 Katalog, søk, personalisering og lagring ligger i det delte C++-biblioteket
 `SwashMojiCore`. Se `docs/profile-format.md` for filformat og migreringsregler,
 og `docs/insertion.md` for innsetting, feilhåndtering og testdekning.
+M3-regler for læring, favoritter og stabile treff er beskrevet i `docs/learning.md`.
 
 Søkenavn og nøkkelord er basert på [Unicode CLDR 48.2](https://cldr.unicode.org/),
 lisensiert under [Unicode License v3](https://www.unicode.org/license.txt). Katalogen kan

@@ -25,7 +25,7 @@ struct ProfileLoad {
 class ProfileStorage {
 public:
     explicit ProfileStorage(std::filesystem::path directory = {}, std::filesystem::path legacyDirectory = {});
-    ProfileLoad Load();
+    ProfileLoad Load(const Catalog* catalog = nullptr);
     bool Save(const Profile& profile, std::wstring& diagnostic);
     bool ReadOnly() const { return readOnly_; }
 private:

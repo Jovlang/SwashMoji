@@ -2,8 +2,10 @@
 #include "test_support.h"
 #include "storage.h"
 #include "text.h"
+#include "catalog.h"
 #include <fstream>
 #include <iterator>
+#include <sstream>
 
 using namespace SwashMoji;
 namespace fs = std::filesystem;
@@ -36,10 +38,13 @@ std::string Read(const fs::path& path) {
 void Codec() {
     Profile profile;
     profile.settings = {true, true, 3, 5};
+    profile.settings.learnQueries = false;
     Remember(profile, L"👍🏽");
     Remember(profile, L"🚀\t\\\n\r✨");
     profile.aliases[L"på vei"] = {L"PÅ\tvei", {ResultKind::Emoji, L"🚶"}};
     profile.aliases[L"future combo"] = {L"future combo", {ResultKind::Combination, L"reserved-42"}};
+    profile.pins = {{ResultKind::Emoji, L"👍"}, {ResultKind::Combination, L"reserved-42"}};
+    profile.queryChoices = {{L"på vei", {ResultKind::Emoji, L"🚶"}, 8}, {L"launch", {ResultKind::Combination, L"reserved-42"}, 3}};
     const auto bytes = EncodeProfile(profile);
     auto decoded = DecodeProfile(bytes);
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 0);
@@ -47,18 +52,68 @@ void Codec() {
     CHECK(decoded.profile.usage == profile.usage);
     CHECK(decoded.profile.settings.positionAboveTextField);
     CHECK(decoded.profile.settings.sortByUsage);
+    CHECK(!decoded.profile.settings.learnQueries);
+    CHECK(decoded.profile.pins == profile.pins);
+    CHECK(QueryCount(decoded.profile, L"PÅ VEI", {ResultKind::Emoji, L"🚶"}) == 8);
     CHECK(decoded.profile.settings.emojiRows == 3 && decoded.profile.settings.skinTone == 5);
     CHECK(EncodeProfile(decoded.profile) == bytes);
     for (size_t size = 0; size < bytes.size(); ++size) CHECK(DecodeProfile(bytes.substr(0, size)).format != ProfileFormat::Valid);
     CHECK(decoded.profile.aliases.at(L"på vei").target.value == L"🚶");
-    CHECK(DecodeProfile("SwashMoji\t3\nend\t0\n").format == ProfileFormat::Unsupported);
-    CHECK(DecodeProfile("SwashMoji\t3").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t4\nend\t0\n").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t4").format == ProfileFormat::Unsupported);
     CHECK(DecodeProfile("\xEF\xBB\xBF" "SwashMoji\t1\r\nsetting\temoji_rows\t2\r\nend\t1\r\n").profile.settings.emojiRows == 2);
     decoded = DecodeProfile("SwashMoji\t1\nusage\trocket\t4294967296\nrecent\tbad\\q\nsetting\temoji_rows\t99\nusage\tgood\t2\nend\t4\n");
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 3);
-    CHECK(decoded.profile.settings.emojiRows == 1 && decoded.profile.usage.at(L"good") == 2);
+    CHECK(decoded.profile.settings.emojiRows == 1 && UsageCount(decoded.profile, L"good") == 2);
     CHECK(DecodeProfile("SwashMoji\t1\nend\t0\ntrailing\n").format == ProfileFormat::Invalid);
     CHECK(DecodeProfile(std::string(4 * 1024 * 1024 + 1, 'x')).format == ProfileFormat::Invalid);
+    decoded = DecodeProfile("SwashMoji\t3\nquery\tPÅ VEI\temoji\t🚶\t8\nquery\tpå-vei\temoji\t🚶\t9\nquery\t!!!\temoji\t🚶\t1\nquery\tbad\temoji\t🚶\t4294967296\npin\temoji\t🚶\npin\temoji\t🚶\nend\t6\n");
+    CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 4);
+    CHECK(decoded.profile.queryChoices.size() == 1 && decoded.profile.pins.size() == 1);
+    CHECK(QueryCount(decoded.profile, L"på vei", {ResultKind::Emoji, L"🚶"}) == 8);
+    std::string excessive = "SwashMoji\t3\n";
+    for (size_t i = 0; i <= kMaxQueryChoices; ++i) excessive += "query\tquery " + std::to_string(i) + "\temoji\t🚶\t1\n";
+    excessive += "end\t" + std::to_string(kMaxQueryChoices + 1) + "\n";
+    decoded = DecodeProfile(excessive);
+    CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 1);
+    CHECK(decoded.profile.queryChoices.size() == kMaxQueryChoices);
+}
+
+void FamilyMigration(const fs::path& root) {
+    std::istringstream data("👍\tthumbs up\tgood\n👍🏽\tthumbs up medium skin tone\tgood\n🚀\trocket\tlaunch\n");
+    Catalog catalog;
+    CHECK(catalog.Load(data));
+    const std::string v2 = "SwashMoji\t2\nrecent\t👍🏽\nrecent\t🚀\nrecent\t👍\nusage\t👍\t7\nusage\t👍🏽\t8\nusage\t🚀\t4\nalias\tlaunch\temoji\t🚀\nsetting\tskin_tone\t3\nend\t8\n";
+    const auto directory = root / L"family-migration";
+    Write(directory / L"profile.tsv", v2);
+    ProfileStorage store(directory);
+    auto loaded = store.Load(&catalog);
+    CHECK(loaded.migrated && !loaded.unsaved);
+    CHECK(loaded.profile.settings.skinTone == 3 && loaded.profile.settings.learnQueries);
+    CHECK(loaded.profile.history == (std::vector<ResultId>{{ResultKind::Emoji, L"👍"}, {ResultKind::Emoji, L"🚀"}}));
+    CHECK(UsageCount(loaded.profile, L"👍") == 15);
+    CHECK(loaded.profile.aliases.at(L"launch").target.value == L"🚀");
+    CHECK(Read(directory / L"profile.tsv.bak") == v2);
+    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 3);
+    loaded = store.Load(&catalog);
+    CHECK(!loaded.migrated && UsageCount(loaded.profile, L"👍") == 15);
+    RecordChoice(loaded.profile, {ResultKind::Emoji, L"👍"}, L"good");
+    std::wstring diagnostic;
+    CHECK(store.Save(loaded.profile, diagnostic));
+    CHECK(UsageCount(store.Load(&catalog).profile, L"👍") == 16);
+
+    const auto locked = root / L"locked-family-migration";
+    Write(locked / L"profile.tsv", v2);
+    ProfileStorage blocked(locked);
+    const auto handle = CreateFileW((locked / L"profile.tsv").c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+    CHECK(handle != INVALID_HANDLE_VALUE);
+    loaded = blocked.Load(&catalog);
+    CloseHandle(handle);
+    CHECK(loaded.unsaved && !loaded.migrated && !loaded.diagnostic.empty());
+    CHECK(UsageCount(loaded.profile, L"👍") == 15);
+    CHECK(Read(locked / L"profile.tsv") == v2);
+    CHECK(blocked.Save(loaded.profile, diagnostic));
+    CHECK(!blocked.Load(&catalog).migrated && UsageCount(blocked.Load(&catalog).profile, L"👍") == 15);
 }
 
 void Migration(const fs::path& root) {
@@ -69,9 +124,9 @@ void Migration(const fs::path& root) {
     const auto upgraded = oldStore.Load();
     CHECK(upgraded.migrated && !upgraded.unsaved);
     CHECK(upgraded.profile.settings.skinTone == 3 && UsageCount(upgraded.profile, L"👍🏽") == 8);
-    CHECK(upgraded.profile.history == std::vector<std::wstring>{L"👍🏽"});
+    CHECK(upgraded.profile.history == (std::vector<ResultId>{{ResultKind::Emoji, L"👍🏽"}}));
     CHECK(Read(v1Directory / L"profile.tsv.bak") == v1);
-    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 2);
+    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 3);
     CHECK(!oldStore.Load().migrated);
     const auto directory = root / L"migration";
     const auto fallback = root / L"WinMoji";
@@ -83,7 +138,7 @@ void Migration(const fs::path& root) {
     auto loaded = store.Load();
     CHECK(loaded.migrated && !loaded.unsaved && !store.ReadOnly());
     CHECK(loaded.profile.settings.skinTone == 4 && loaded.profile.settings.emojiRows == 3);
-    CHECK(loaded.profile.history == (std::vector<std::wstring>{L"👍🏽", L"🚀"}));
+    CHECK(loaded.profile.history == (std::vector<ResultId>{{ResultKind::Emoji, L"👍🏽"}, {ResultKind::Emoji, L"🚀"}}));
     CHECK(UsageCount(loaded.profile, L"👍🏽") == 9);
     CHECK(!loaded.diagnostic.empty());
     CHECK(Read(directory / L"settings.txt") == settings);
@@ -174,7 +229,7 @@ void FailedWrites(const fs::path& root) {
 int main() {
     try {
         TestDirectory directory;
-        Codec(); Migration(directory.path); Recovery(directory.path);
+        Codec(); Migration(directory.path); FamilyMigration(directory.path); Recovery(directory.path);
         ProtectFutureAndCorrupt(directory.path); FailedWrites(directory.path);
         std::cout << "Profile codec, migration, recovery and write-failure checks passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
