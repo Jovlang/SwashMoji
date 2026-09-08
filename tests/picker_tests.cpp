@@ -7,6 +7,14 @@
 using namespace SwashMoji;
 int main(int argc, char** argv) {
     try {
+        CHECK(GridRows(0, 3) == 1);
+        CHECK(GridRows(5, 3) == 1);
+        CHECK(GridRows(10, 3) == 1);
+        CHECK(GridRows(11, 3) == 2);
+        CHECK(GridRows(20, 3) == 2);
+        CHECK(GridRows(21, 3) == 3);
+        CHECK(GridRows(100, 2) == 2);
+        CHECK(GridRows(100, 1) == 1);
         for (int rows = 1; rows <= 3; ++rows) {
             for (size_t count = 0; count <= 125; ++count) {
                 auto order = GridOrder(count, rows);

@@ -34,13 +34,12 @@ constexpr wchar_t kClassName[] = L"SwashMojiWindow";
 constexpr wchar_t kHelpClassName[] = L"SwashMojiHelpWindow";
 constexpr UINT kHotkeyId = 1;
 constexpr int kPickerWidth = 500;
-constexpr int kPickerHeight = 176;
+constexpr int kPickerHeight = 132;
 constexpr int kInputHeight = 34;
 constexpr int kResultSize = 48;
 constexpr int kEmojiColumns = 10;
 constexpr int kMinEmojiRows = 1;
 constexpr int kMaxEmojiRows = 3;
-constexpr int kStatusHeight = 42;
 constexpr int kHelpWidth = 720;
 constexpr int kHelpHeight = 840;
 constexpr int kEditId = 100;
@@ -70,7 +69,7 @@ constexpr COLORREF kBackground = RGB(24, 24, 24);
 constexpr COLORREF kInputBackground = RGB(35, 35, 35);
 constexpr COLORREF kText = RGB(235, 235, 235);
 constexpr COLORREF kMutedText = RGB(155, 155, 155);
-constexpr COLORREF kSelected = RGB(38, 79, 120);
+constexpr COLORREF kSelected = RGB(42, 86, 128);
 
 struct EmojiFont {
     std::wstring name;
@@ -85,7 +84,7 @@ HWND g_helpWindow{};
 HWND g_recoveryLabel{};
 HWND g_copyInstead{};
 HWND g_teachPhrase{};
-HWND g_detailsButton{}, g_hoverWindow{}, g_searchLabel{};
+HWND g_hoverWindow{};
 bool g_detailsOpen{};
 int g_hoverIndex{-1}, g_pressedIndex{-1};
 POINT g_hoverPoint{};
@@ -132,6 +131,7 @@ HBRUSH g_inputBrush{};
 HICON g_appIcon{};
 HFONT g_uiFont{};
 HFONT g_statusFont{};
+HFONT g_resultLabelFont{};
 HFONT g_emojiFont{};
 size_t g_emojiFontIndex{};
 std::vector<EmojiFont> g_emojiFonts;
@@ -201,19 +201,30 @@ void RefreshList() {
     g_session.query = input;
     SendMessageW(g_list, LB_RESETCONTENT, 0, 0);
     g_visible = Search(g_catalog, g_profile, g_session.query, &g_rankingPreferences);
+    // Fit the current results without changing the user's preferred maximum.
+    // Resize before filling the multicolumn list so its native row count agrees
+    // with the item mapping, hit tests and keyboard navigation.
+    const auto window = GetParent(g_list);
+    RECT bounds{};
+    GetWindowRect(window, &bounds);
+    if (bounds.bottom - bounds.top != PickerHeight()) {
+        SetWindowPos(window, nullptr, 0, 0, Px(kPickerWidth), PickerHeight(),
+            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ClampWindow(window);
+    }
+    LayoutChildren(window);
     ShowWindow(g_teachPhrase, g_visible.empty() && !NormalizePhrase(g_session.query).empty() ? SW_SHOW : SW_HIDE);
     g_displayVisible.clear();
     g_session.rankingSnapshot.clear();
     for (const auto& result : g_visible) g_session.rankingSnapshot.push_back(result.id);
     g_session.selected = g_visible.empty() ? ResultId{} : g_visible.front().id;
-    for (const auto index : GridOrder(g_visible.size(), g_emojiRows, kEmojiColumns))
+    for (const auto index : GridOrder(g_visible.size(), GridRows(g_visible.size(), g_emojiRows), kEmojiColumns))
         g_displayVisible.push_back(g_visible[index]);
     for (const auto& result : g_displayVisible) {
         const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
         const auto label = exact ? exact->name : result.label;
         SendMessageW(g_list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
-    EnableWindow(g_detailsButton, !g_visible.empty());
     if (!g_displayVisible.empty()) {
         size_t selection = 0;
         if (preserveSelection) for (size_t i = 0; i < g_displayVisible.size(); ++i)
@@ -424,8 +435,8 @@ bool TryGetTextFieldAnchor(HWND active, RECT& anchor) {
 }
 
 int PickerHeight() {
-    const int listHeight = g_emojiRows * kResultSize;
-    return Px(kPickerHeight + listHeight - kResultSize - (g_statusVisible ? 0 : 9)
+    const int listHeight = GridRows(g_visible.size(), g_emojiRows) * kResultSize;
+    return Px(kPickerHeight + listHeight - kResultSize - (g_statusVisible ? 0 : 26)
         + (g_recoveryMessage.empty() ? 0 : kRecoveryHeight));
 }
 
@@ -483,8 +494,7 @@ void UpdateStatusLine() {
         label = exact ? exact->name : result.label;
         if (result.id == g_variantTarget && !g_variantPayload.empty()) label += L" (once)";
     }
-    const auto text = label + L"\r\nEnter: insert   Ctrl: keep open   Shift+Enter: copy";
-    SetWindowTextW(g_status, text.c_str());
+    SetWindowTextW(g_status, label.c_str());
 }
 
 void ShowFontToast() {
@@ -677,11 +687,9 @@ void AddTrayIcon(HWND window) {
 }
 
 void UpdateSortIndicator() {
-    const wchar_t* cue = g_sortByUsage
-                             ? L"Search — most used first (Alt+T)"
-                             : L"Search — most recent first (Alt+T)";
+    const wchar_t* cue = L"";
     SendMessageW(g_edit, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(cue));
-    std::wstring tip = g_sortByUsage ? L"SwashMoji — most used — Alt+E" : L"SwashMoji — most recent — Alt+E";
+    std::wstring tip = g_sortByUsage ? L"SwashMoji — Most used (Alt+T) — Alt+E" : L"SwashMoji — Most recent (Alt+T) — Alt+E";
     if (g_profileUnsaved) tip += L" — Changes not saved";
     else if (!g_storageDiagnostic.empty()) tip += L" — " + g_storageDiagnostic;
     lstrcpynW(g_tray.szTip, tip.c_str(), static_cast<int>(std::size(g_tray.szTip)));
@@ -718,12 +726,12 @@ const wchar_t* HelpText() {
         L"Alt+E: Open from any app. Search English or Norwegian names, phrases and aliases.\r\n\r\n"
         L"Click or Enter: Insert and close.\r\nCtrl+click or Ctrl+Enter: Insert and keep open.\r\n"
         L"Shift+Enter: Copy and close after success.\r\n"
-        L"Tab / Shift+Tab: Move between search, results and actions.\r\n"
-        L"Empty search: Arrows navigate results; typing starts a query. With query text: Down focuses results; Left/Right edit normally.\r\n"
+        L"Tab / Shift+Tab: Move between search, results and available recovery actions.\r\n"
+        L"Arrows and Ctrl+arrows navigate results, including while searching. Keep typing to refine the query. Shift+arrows and Home/End edit the query.\r\n"
         L"Arrows in results: Move spatially. Page Up/Down: Previous/next page. Home/End: First/last result.\r\n"
         L"Ctrl+Backspace: Delete the previous word or selection. Ctrl+Z: Undo.\r\n"
         L"Esc: Close Details, vocabulary or help first; otherwise dismiss and return to the original app.\r\n\r\n"
-        L"Details (Alt+D): Larger preview and valid catalog variants. Use once applies to the next successful insertion or copy; Cancel discards the draft. Your global tone stays unchanged.\r\n"
+        L"Details (Alt+D or right-click): Larger preview and valid catalog variants. Use once applies to the next successful insertion or copy; Cancel discards the draft. Your global tone stays unchanged.\r\n"
         L"Hover briefly over a result for a preview without changing keyboard selection.\r\n\r\n"
         L"Alt+F: Cycle emoji fonts (formerly Tab).\r\nAlt+I: Cycle global skin tone.\r\n"
         L"Alt+1 / 2 / 3: One, two or three rows.\r\nAlt+T: Recent / most-used sorting.\r\n"
@@ -853,14 +861,13 @@ void LayoutChildren(HWND window) {
     if (!g_list) return;
     RECT area{}; GetClientRect(window, &area);
     const int margin = Px(10);
-    MoveWindow(g_searchLabel, margin, Px(2), area.right - margin * 2, Px(16), TRUE);
-    MoveWindow(g_edit, margin, Px(20), area.right - margin * 2, Px(kInputHeight), TRUE);
-    const int listY = Px(62), listHeight = g_emojiRows * Px(kResultSize);
+    MoveWindow(g_edit, margin, Px(10), area.right - margin * 2, Px(kInputHeight), TRUE);
+    const int listY = Px(52), listHeight = GridRows(g_visible.size(), g_emojiRows) * Px(kResultSize);
     MoveWindow(g_list, margin, listY, area.right - margin * 2, listHeight, TRUE);
     MoveWindow(g_teachPhrase, margin + Px(12), listY + Px(5), area.right - margin * 2 - Px(24), Px(36), TRUE);
-    MoveWindow(g_status, margin, listY + listHeight + Px(5), area.right - margin * 2 - Px(78), Px(kStatusHeight), TRUE);
-    MoveWindow(g_detailsButton, area.right - margin - Px(74), listY + listHeight + Px(8), Px(74), Px(28), TRUE);
-    const int recoveryY = listY + listHeight + Px(8) + (g_statusVisible ? Px(kStatusHeight + 5) : Px(38));
+    const int footerY = listY + listHeight;
+    MoveWindow(g_status, margin + Px(2), footerY + Px(6), area.right - margin * 2 - Px(4), Px(20), TRUE);
+    const int recoveryY = footerY + (g_statusVisible ? Px(34) : Px(8));
     MoveWindow(g_recoveryLabel, margin, recoveryY, area.right - margin * 2 - Px(132), Px(kRecoveryHeight - 12), TRUE);
     MoveWindow(g_copyInstead, area.right - margin - Px(126), recoveryY + Px(8), Px(126), Px(30), TRUE);
 }
@@ -899,7 +906,7 @@ void RestoreTargetOnEscape() {
 }
 
 void FocusNext(bool reverse) {
-    const HWND order[]{g_edit, g_list, g_detailsButton, g_teachPhrase, g_copyInstead};
+    const HWND order[]{g_edit, g_list, g_teachPhrase, g_copyInstead};
     std::vector<HWND> available;
     for (auto window : order) if (IsWindowVisible(window) && IsWindowEnabled(window) &&
         (window != g_list || !g_displayVisible.empty())) available.push_back(window);
@@ -925,15 +932,20 @@ void ClampWindow(HWND window) {
 void UpdateDpi(UINT dpi) {
     g_dpi = dpi ? dpi : 96;
     auto oldUi = g_uiFont, oldStatus = g_statusFont;
+    auto oldLabel = g_resultLabelFont;
     g_uiFont = CreateFontW(-Px(20), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
         OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
     g_statusFont = CreateFontW(-Px(13), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
         OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+    g_resultLabelFont = CreateFontW(-Px(14), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
     for (auto control : {g_edit, g_list}) if (control) SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
-    for (auto control : {g_status, g_detailsButton, g_searchLabel, g_teachPhrase, g_copyInstead, g_recoveryLabel})
+    for (auto control : {g_teachPhrase, g_copyInstead, g_recoveryLabel})
         if (control) SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
+    if (g_status) SendMessageW(g_status, WM_SETFONT, reinterpret_cast<WPARAM>(g_resultLabelFont), TRUE);
     if (oldUi) DeleteObject(oldUi);
     if (oldStatus && oldStatus != oldUi) DeleteObject(oldStatus);
+    if (oldLabel) DeleteObject(oldLabel);
     SelectEmojiFont(g_emojiFontIndex);
     if (g_list) {
         SendMessageW(g_list, LB_SETITEMHEIGHT, 0, Px(kResultSize));
@@ -1168,26 +1180,28 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
             else InsertSelection();
             return 0;
         }
-        // Opening focuses search so typing works immediately. With no query,
-        // arrows navigate results without requiring a preliminary focus change.
-        // Keep search focused so the next character still starts a query.
-        const bool emptySearchArrow = control == g_edit && GetWindowTextLengthW(g_edit) == 0 &&
+        // Search stays focused throughout keyboard navigation, so typing always
+        // refines the query. Ctrl+arrows also navigate; Shift retains text selection.
+        const bool searchArrow = control == g_edit &&
+            !(GetKeyState(VK_SHIFT) & 0x8000) &&
+            !(GetKeyState(VK_MENU) & 0x8000) &&
             (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN);
-        if (control == g_edit && wParam == VK_DOWN && !emptySearchArrow) {
-            CloseHover(); if (!g_displayVisible.empty()) SetFocus(g_list); return 0;
-        }
-        if (control == g_list || emptySearchArrow) {
+        if (control == g_list || searchArrow) {
             int dx = 0, dy = 0;
             if (wParam == VK_LEFT) dx = -1;
             if (wParam == VK_RIGHT) dx = 1;
             if (wParam == VK_UP) dy = -1;
             if (wParam == VK_DOWN) dy = 1;
+            // A single row has no vertical neighbor: Up/Down still select the
+            // previous/next result, both in search and in the results control.
+            const int rows = GridRows(g_visible.size(), g_emojiRows);
+            if (rows == 1 && dy) { dx = dy; dy = 0; }
             if (wParam == VK_PRIOR) dx = -kEmojiColumns;
             if (wParam == VK_NEXT) dx = kEmojiColumns;
             if (dx || dy || wParam == VK_HOME || wParam == VK_END) {
                 CloseHover();
                 const auto old = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
-                auto next = GridMove(old < 0 ? 0 : old, g_displayVisible.size(), g_emojiRows, dx, dy);
+                auto next = GridMove(old < 0 ? 0 : old, g_displayVisible.size(), rows, dx, dy);
                 if (wParam == VK_HOME) next = 0;
                 if (wParam == VK_END && !g_displayVisible.empty()) next = g_displayVisible.size() - 1;
                 SendMessageW(g_list, LB_SETCURSEL, next, 0);
@@ -1203,8 +1217,6 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
     case WM_CREATE: {
         g_dpi = GetDpiForWindow(window);
         g_rankingPreferences = g_profile;
-        g_searchLabel = CreateWindowExW(0, L"STATIC", L"&Search emoji", WS_CHILD | WS_VISIBLE,
-            0, 0, 0, 0, window, nullptr, nullptr, nullptr);
         g_edit = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
                                  0, 0, 0, 0, window,
                                  reinterpret_cast<HMENU>(static_cast<INT_PTR>(kEditId)), nullptr, nullptr);
@@ -1217,8 +1229,6 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
                                    WS_CHILD | WS_VISIBLE | SS_LEFT | SS_ENDELLIPSIS | SS_NOPREFIX,
                                    0, 0, 0, 0, window,
                                    reinterpret_cast<HMENU>(static_cast<INT_PTR>(kStatusId)), nullptr, nullptr);
-        g_detailsButton = CreateWindowExW(0, L"BUTTON", L"&Details", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-            0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kDetailsId)), nullptr, nullptr);
         g_recoveryLabel = CreateWindowExW(0, L"STATIC", L"", WS_CHILD | SS_LEFT,
             0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(kRecoveryId)), nullptr, nullptr);
         g_copyInstead = CreateWindowExW(0, L"BUTTON", L"&Copy instead", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
@@ -1231,7 +1241,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         SendMessageW(g_edit, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
         SendMessageW(g_edit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(8, 8));
         SendMessageW(g_list, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
-        SendMessageW(g_status, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
+        SendMessageW(g_status, WM_SETFONT, reinterpret_cast<WPARAM>(g_resultLabelFont ? g_resultLabelFont : g_statusFont), TRUE);
         SendMessageW(g_list, LB_SETCOLUMNWIDTH, Px(kResultSize), 0);
         SetWindowTheme(g_edit, HighContrast() ? L"" : L"DarkMode_Explorer", nullptr);
         SetWindowTheme(g_list, HighContrast() ? L"" : L"DarkMode_Explorer", nullptr);
@@ -1241,7 +1251,6 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
                                                                   reinterpret_cast<LONG_PTR>(InputProc)));
         EnableWordDeletion(g_edit);
         SetWindowTextW(g_list, L"Matching emoji");
-        SendMessageW(g_detailsButton, WM_SETFONT, reinterpret_cast<WPARAM>(g_statusFont), TRUE);
         LayoutChildren(window);
         RefreshList();
         AddTrayIcon(window);
@@ -1296,6 +1305,13 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         InflateRect(&glyph, -3, -3);
         DrawColorEmoji(item->hDC, glyph, result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload,
             selected && HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : Foreground());
+        if (selected && !HighContrast()) {
+            RECT outline = item->rcItem;
+            InflateRect(&outline, -Px(1), -Px(1));
+            const auto edge = CreateSolidBrush(RGB(104, 157, 201));
+            FrameRect(item->hDC, &outline, edge);
+            DeleteObject(edge);
+        }
         if (item->itemState & ODS_FOCUS) DrawFocusRect(item->hDC, &item->rcItem);
         SelectObject(item->hDC, previousFont);
         return TRUE;
@@ -1309,12 +1325,12 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         SetBkColor(reinterpret_cast<HDC>(wParam), Background());
         return reinterpret_cast<LRESULT>(HighContrast() ? GetSysColorBrush(COLOR_WINDOW) : g_backgroundBrush);
     case WM_CTLCOLORSTATIC:
-        SetTextColor(reinterpret_cast<HDC>(wParam), HighContrast() ? Foreground() : kMutedText);
+        SetTextColor(reinterpret_cast<HDC>(wParam), HighContrast() || reinterpret_cast<HWND>(lParam) == g_status
+            ? Foreground() : kMutedText);
         SetBkColor(reinterpret_cast<HDC>(wParam), Background());
         return reinterpret_cast<LRESULT>(HighContrast() ? GetSysColorBrush(COLOR_WINDOW) : g_backgroundBrush);
     case WM_COMMAND:
         if (LOWORD(wParam) == kListId && HIWORD(wParam) == LBN_SELCHANGE) SelectionChanged();
-        if (LOWORD(wParam) == kDetailsId && HIWORD(wParam) == BN_CLICKED) OpenDetails();
         if (LOWORD(wParam) == kTeachPhraseId && HIWORD(wParam) == BN_CLICKED) OpenVocabulary(true);
         if (LOWORD(wParam) == kCopyInsteadId && HIWORD(wParam) == BN_CLICKED) CopySelection();
         if (LOWORD(wParam) == kEditId && HIWORD(wParam) == EN_CHANGE) RefreshList();
@@ -1408,8 +1424,7 @@ bool ProcessAppMessage(const MSG& message) {
             DestroyWindow(g_helpWindow); return true;
         }
         if (pickerKey && message.wParam == VK_ESCAPE) { RestoreTargetOnEscape(); return true; }
-        if (pickerKey && ((altPressed && firstKeyPress && message.wParam == 'D') ||
-            (message.hwnd == g_detailsButton && message.wParam == VK_RETURN))) { OpenDetails(); return true; }
+        if (pickerKey && altPressed && firstKeyPress && message.wParam == 'D') { OpenDetails(); return true; }
         if (pickerKey && altPressed && firstKeyPress && message.wParam == 'A') {
             OpenVocabulary(true);
             return true;
@@ -1538,6 +1553,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     if (g_d2dFactory) g_d2dFactory->Release();
     DeleteObject(g_emojiFont);
     DeleteObject(g_statusFont);
+    DeleteObject(g_resultLabelFont);
     DeleteObject(g_uiFont);
     DeleteObject(g_inputBrush);
     DeleteObject(g_backgroundBrush);

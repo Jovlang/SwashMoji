@@ -195,9 +195,10 @@ and the delivered Ctrl+Backspace behavior throughout.
 | Tab / Shift+Tab | Move focus between search, results, and visible actions |
 | Alt+F | Cycle emoji font, replacing the current Tab binding |
 | Arrow keys in results | Move spatially through the visible grid |
-| Left / Right in search | Edit the query normally |
+| Plain arrows or Ctrl+arrows in search | Navigate results before and after typing; retain search focus |
+| Shift+arrows and Home/End in search | Edit the query normally |
 | Ctrl+Backspace in text fields | Delete selected text or the previous word; retain undo (already implemented) |
-| Down in search | Move focus into results |
+| Tab from search | Move focus into results |
 | Esc | Close the active detail/editor first; otherwise dismiss picker and restore target |
 
 Enter from the search field still inserts the current first/selected result. Preserve Alt+E, Alt+A, Alt+P, Alt+I, Alt+T, Alt+1–3, Alt+S, Ctrl+Backspace, and F1. Route shortcuts by focused control: an editor's Enter must save its form rather than insert into another application. Document the click and Tab changes visibly in release notes and help.

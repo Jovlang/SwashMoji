@@ -3,6 +3,13 @@
 #include <numeric>
 
 namespace SwashMoji {
+int GridRows(size_t count, int preferredRows, int columns) {
+    columns = std::max(1, columns);
+    preferredRows = std::clamp(preferredRows, 1, 3);
+    if (!count) return 1;
+    return static_cast<int>(std::min(static_cast<size_t>(preferredRows), 1 + (count - 1) / columns));
+}
+
 std::vector<size_t> GridOrder(size_t count, int rows, int columns) {
     rows = std::max(1, rows);
     columns = std::max(1, columns);

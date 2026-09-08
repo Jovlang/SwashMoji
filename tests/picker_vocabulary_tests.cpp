@@ -269,9 +269,9 @@ void SelectionIntegration() {
     SendMessageW(g_list, WM_LBUTTONUP, 0, MAKELPARAM(Px(200), Px(20)));
     CHECK(EncodeProfile(g_profile) == beforeClick && g_recoveryMessage.empty());
     SendMessageW(g_edit, EM_SETSEL, 3, 3);
-    SendMessageW(g_edit, WM_KEYDOWN, VK_LEFT, 0);
+    SendMessageW(g_edit, WM_KEYDOWN, VK_HOME, 0);
     DWORD caret{}; SendMessageW(g_edit, EM_GETSEL, reinterpret_cast<WPARAM>(&caret), 0);
-    CHECK(caret == 2);
+    CHECK(caret == 0);
     for (UINT dpi : {96u, 120u, 144u, 192u}) {
         UpdateDpi(dpi);
         SetWindowPos(g_window, nullptr, 0, 0, Px(kPickerWidth), PickerHeight(), SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);

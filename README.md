@@ -12,6 +12,8 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - Velgeren lærer hvilke treff du velger for hele søket. Læring kan slås av med **Learn from searches** i systemstatusmenyen. Nye valg påvirker rangeringen neste gang velgeren åpnes, slik at gjentatt innsetting ikke flytter treffene.
 - Hudtonevariantene deler brukshistorikk. Bytte av hudtone, font og antall rader beholder markeringen.
 - Treff vises i én til tre emoji-rader; bruk `Alt+1`, `Alt+2` eller `Alt+3` for å velge antall rader, og piltastene for å flytte markeringen.
+- Valgt radantall er en øvre grense: opptil ti treff samles i én rad, og vinduet krymper automatisk. Flere treff utvider visningen igjen uten å endre innstillingen.
+- Med én rad velger pil opp/ned forrige/neste treff. Med flere rader flytter de markeringen opp/ned i samme kolonne.
 - Klikk en emoji for å sette den inn og lukke velgeren. `Ctrl+klikk` lar SwashMoji forbli åpen.
 - `Enter` setter valgt emoji direkte inn i det aktive programmet uten å endre utklippstavlen.
 - `Ctrl+Enter` setter inn valgt emoji og lar SwashMoji forbli åpen.
@@ -22,12 +24,12 @@ En liten, avhengighetsfri Win32 emoji-velger.
   allerede ble tømt før feilen oppstod.
 - `Esc` lukker vinduet.
 - `F1` viser en komplett oversikt over funksjoner og hurtigtaster.
-- `Tab` og `Shift+Tab` flytter fokus mellom søk, treff og tilgjengelige handlinger. Med tomt søk navigerer piltastene treffene direkte, også rett etter åpning. Med søketekst flytter pil ned fokus til treffene; venstre/høyre flytter tekstmarkøren.
+- `Tab` og `Shift+Tab` flytter fokus mellom søk, treff og tilgjengelige handlinger. Piltastene og `Ctrl`+piltaster navigerer treffene direkte, både før og etter at du skriver. Søket beholder fokus, slik at du kan fortsette å skrive. Bruk `Shift`+piltaster eller `Home`/`End` for å redigere søketeksten.
 - `Alt+F` bytter til neste installerte fargefont eller monokrome emoji-font (tidligere `Tab`).
 - **Details** (`Alt+D` eller treffmenyen) viser en større forhåndsvisning og gyldige varianter fra katalogen, også blandede hudtoner. **Use once** velger varianten for neste vellykkede innsetting eller kopiering uten å endre global hudtone. **Cancel** forkaster utkastet.
 - Hold pekeren rolig over et treff i omtrent 350 ms for en forhåndsvisning uten å flytte tastaturmarkeringen.
 - `Alt+I` bytter global hudtone for alle kompatible emojier.
-- Statuslinjen viser navnet på valgt variant og tastene for innsetting/kopiering. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
+- Under treffene vises bare navnet på valgt variant. Søket er uten etikett eller plassholder, og hurtigtastene vises ikke fast i velgeren. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
 - `Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
 - Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
 - Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.

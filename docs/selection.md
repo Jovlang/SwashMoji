@@ -5,23 +5,36 @@ verification record below before treating this as release-ready.
 
 ## Keyboard and pointer behavior
 
+The saved row count is a maximum: up to ten matches use one row, eleven to
+twenty use up to two, and larger sets use up to three. The window shrinks and
+expands with the results, retaining the preference and using the displayed row
+count for navigation and hit testing. Empty searches with no results retain one
+row for the teaching action.
+
 Click or Enter inserts and closes. Ctrl+click or Ctrl+Enter keeps the picker open.
 Shift+Enter copies and closes only after success. A click must start and finish
 on the same real result; empty grid space never inserts the previous selection.
 
-Tab and Shift+Tab cycle through search, results, Details and visible teaching or
-recovery actions. With an empty search, arrows immediately navigate results while
-search keeps focus for typing. With query text, Down focuses results and
-Left/Right edit the query.
+Tab and Shift+Tab cycle through search, results and visible teaching or
+recovery actions. Plain arrows and Ctrl+arrows immediately navigate results both
+before and after typing. Search keeps focus so further typing refines the query. Shift+arrows
+and Home/End retain native query-editing behavior.
 Result arrows move spatially, Page Up/Down move ten columns, and Home/End reach
-the first/last slot. Alt+F replaces the old Tab font shortcut. Other existing
+the first/last slot. In a one-row layout, Up/Down select the previous/next result.
+Alt+F replaces the old Tab font shortcut. Other existing
 Alt shortcuts and Ctrl+Backspace/undo remain available. Escape closes an active
 dialog or help first; otherwise it dismisses the picker and requests focus for
 the still-valid original target. Vocabulary uses Save alias as its default button.
 
-The footer identifies the exact emitted variant and shows insertion/copy hints.
-Its full text remains in the native static control even when visually ellipsized.
-Font and tone changes temporarily show their status for 800 ms.
+The picker shows only an unlabelled, empty search control, the grid, and a
+compact selected-name line. The name identifies the exact variant and retains its
+full accessible text when ellipsized. Alt+S can hide it. Font/tone messages and
+failure recovery remain available, but there are no permanent shortcut hints or
+Details button. Right-click a result or press Alt+D for Details; F1 retains help.
+The normal window is 44 logical pixels shorter without changing grid geometry,
+ordering, search, or navigation. All ten CTest suites passed. Visual checking was
+attempted, but the preview exposed no targetable window and the user stopped
+Computer Use with physical Escape; the visual acceptance check remains open.
 
 `picker.cpp` maps ranked results into the native listbox's column-major slots.
 Complete pages read left-to-right across ten columns. Incomplete final pages
@@ -35,7 +48,7 @@ A deliberate hover of roughly 350 ms opens a larger, nonactivating preview.
 Moving away, scrolling, changing results, opening a dialog or losing activation
 cancels it. Hover does not alter selection or the original insertion target.
 
-Details (Alt+D, button or context menu) opens an accessible native modal dialog.
+Details (Alt+D or context menu) opens an accessible native modal dialog.
 The variant list contains complete catalog sequences from the selected family,
 including available mixed-tone sequences. Selecting a row previews that exact
 sequence. Use once commits a pending payload; Cancel discards the draft.
