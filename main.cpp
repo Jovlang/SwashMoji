@@ -16,6 +16,8 @@
 #include "insertion_win32.h"
 #include "vocabulary.h"
 #include "edit_controls.h"
+#include "native_emoji.h"
+#include "native_theme.h"
 #include "picker.h"
 #include <oleacc.h>
 #include <windowsx.h>
@@ -984,10 +986,37 @@ struct DetailsState {
     size_t selected{};
 };
 INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    INT_PTR themeResult{};
+    if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
+    if (message == WM_MEASUREITEM && reinterpret_cast<MEASUREITEMSTRUCT*>(lParam)->CtlID == 403) {
+        reinterpret_cast<MEASUREITEMSTRUCT*>(lParam)->itemHeight = MulDiv(20, GetDpiForWindow(dialog), 96);
+        return TRUE;
+    }
+    if (message == WM_DRAWITEM && reinterpret_cast<DRAWITEMSTRUCT*>(lParam)->CtlID == 403) {
+        auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
+        if (item->itemID == static_cast<UINT>(-1)) return TRUE;
+        const auto length = SendMessageW(item->hwndItem, LB_GETTEXTLEN, item->itemID, 0);
+        std::wstring text(static_cast<size_t>(std::max<LRESULT>(0, length)) + 1, L'\0');
+        SendMessageW(item->hwndItem, LB_GETTEXT, item->itemID, reinterpret_cast<LPARAM>(text.data()));
+        text.resize(static_cast<size_t>(std::max<LRESULT>(0, length)));
+        const bool selected = (item->itemState & ODS_SELECTED) != 0;
+        HBRUSH fill = selected
+            ? CreateSolidBrush(HighContrast() ? GetSysColor(COLOR_HIGHLIGHT) : kSelected)
+            : NativeTheme::SurfaceBrush();
+        FillRect(item->hDC, &item->rcItem, fill);
+        if (selected) DeleteObject(fill);
+        const auto color = selected && HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : Foreground();
+        NativeEmoji::DrawLine(item->hDC, item->rcItem, text,
+            static_cast<float>(MulDiv(14, GetDpiForWindow(dialog), 96)), color, false, !HighContrast());
+        if (item->itemState & ODS_FOCUS) DrawFocusRect(item->hDC, &item->rcItem);
+        return TRUE;
+    }
     auto* state = reinterpret_cast<DetailsState*>(GetWindowLongPtrW(dialog, DWLP_USER));
     if (message == WM_INITDIALOG) {
+        NativeTheme::Apply(dialog);
         state = reinterpret_cast<DetailsState*>(lParam);
         SetWindowLongPtrW(dialog, DWLP_USER, lParam);
+        NativeTheme::ApplyEmojiFont(dialog, {402, 403});
         int width = 0;
         HDC dc = GetDC(dialog);
         auto font = SelectObject(dc, reinterpret_cast<HFONT>(SendDlgItemMessageW(dialog, 403, WM_GETFONT, 0, 0)));
@@ -1007,6 +1036,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         return FALSE;
     }
     if (!state) return FALSE;
+    if (message == WM_DESTROY) { NativeTheme::ReleaseEmojiFont(dialog); return FALSE; }
     if (message == WM_COMMAND) {
         if (LOWORD(wParam) == IDCANCEL) { EndDialog(dialog, IDCANCEL); return TRUE; }
         if (LOWORD(wParam) == IDOK) { EndDialog(dialog, IDOK); return TRUE; }
@@ -1020,7 +1050,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
     }
     if (message == WM_DRAWITEM && reinterpret_cast<DRAWITEMSTRUCT*>(lParam)->CtlID == 401) {
         auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
-        FillRect(item->hDC, &item->rcItem, GetSysColorBrush(COLOR_WINDOW));
+        FillRect(item->hDC, &item->rcItem, NativeTheme::SurfaceBrush());
         DrawLargePreview(item->hDC, item->rcItem, state->variants[state->selected]->glyph, GetDpiForWindow(dialog));
         return TRUE;
     }

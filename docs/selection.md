@@ -107,6 +107,14 @@ placement, and actual insertion into the planned Win32/Notepad/browser/Chromium
 editor/terminal matrix (including the elevated-target boundary). Record actual
 app versions and observed delivery; simulated input success does not satisfy it.
 
+The 2026-09-08 native-editor polish pass did not change picker geometry, drawing,
+focus routing, accessibility events or high-contrast handling. Its `build-polish`
+run passed all 11 registered CTest suites, and the separate native harness again
+passed the picker/editor and simulated 96/120/144/192-DPI checks before failing its
+known final external foreground assertion. Computer Use exposed no native-app
+surface for the rebuilt previews, so the visual and real-monitor items above remain
+open; source inspection and automated geometry checks are not visual acceptance.
+
 `build-m4/SwashMojiPickerPreview.exe` opens an isolated picker seeded with two
 favorites; `SwashMojiVocabularyPreview.exe` opens the separate editor preview.
 Both use test profiles under the build directory, not the user's profile. Exit

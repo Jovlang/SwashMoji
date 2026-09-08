@@ -48,3 +48,43 @@ Computer Use visually inspected the native vocabulary and combination editor on
 with physical Escape before the keyboard walkthrough, populated-picker preview,
 and Details review. Those interactive checks, Narrator and actual target-app
 insertion remain open for M6; automated adapter success is not delivery acceptance.
+
+### Visual-polish verification — 2026-09-08
+
+The editor resource now uses consistent compact margins, gaps, button heights and
+aligned edges. Subtle native dividers distinguish the saved list, Add emoji flow,
+and authored Sequence without changing control types or interaction semantics.
+The right-hand workflow uses numbered native headings matching the supplied
+design reference. Dialogs share the picker's dark background, inset surface and
+text colors while retaining system-color fallback in high contrast.
+The follow-up reference pass widens the two-pane layout, adds short muted workflow
+hints, enlarges the saved list and payload preview, and includes the saved count in
+the left heading. Search-within-saved and drag reordering shown by the reference
+remain intentionally absent because they are not existing product behaviors.
+`.\build.cmd test build-reference-dark` passed all 11 registered CTest suites.
+The subsequent emoji-font correction applies DPI-scaled Segoe UI Emoji to result,
+variant, sequence and preview controls; `.\build.cmd test build-reference-emoji`
+also passed all 11 registered suites.
+Because GDI still rendered that font monochrome, `build-color-panels` moves the
+emoji-bearing rows and previews to native owner-draw controls backed by the same
+DirectWrite color-font option as the picker. All 11 registered suites pass; the
+test also verifies the required owner-draw styles are present.
+Preview is a single-line read-only payload field beside the bottom actions; the
+status line has its own row below it. The default button label was normalized from
+`Sa&ve` to `&Save`.
+
+`.\build.cmd test build-polish` passed all 11 CTest suites discovered by that
+configuration. The native editor test additionally checks section ordering,
+non-overlap, aligned actions, equal button heights, status separation, the Save
+label, and the existing results-to-Save alias Tab transition. The separate picker
+and vocabulary harness passed its dialog and 96/120/144/192-DPI layout assertions,
+then reached the known final foreground check and failed with **Could not focus the
+original app**; actual external insertion is not accepted.
+
+The desktop connector exposed no native-app surface, so the rebuilt My vocabulary,
+Combinations, picker and Details windows could not be visually inspected in this
+pass. Real monitor transitions at 100%, 125%, 150% and 200%, high contrast,
+keyboard focus indicators, clipping/ellipsis, Inspect/Narrator, and target-app
+insertion therefore remain manual acceptance items. The standalone Python catalog
+test was also unavailable because no `python` command is installed; CTest did not
+register that optional twelfth suite.

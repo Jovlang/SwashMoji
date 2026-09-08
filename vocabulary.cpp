@@ -1,11 +1,105 @@
 #include "vocabulary.h"
 #include "vocabulary_ids.h"
 #include "edit_controls.h"
+#include "native_emoji.h"
+#include "native_theme.h"
 #include "picker.h"
 #include <algorithm>
 
 namespace SwashMoji {
 namespace {
+bool EmojiControl(int id) {
+    switch (id) {
+    case IDC_PINS:
+    case IDC_TARGET_RESULTS:
+    case IDC_TARGET_PREVIEW:
+    case IDC_COMBO_RESULTS:
+    case IDC_COMBO_VARIANTS:
+    case IDC_COMBO_ENTRIES:
+    case IDC_COMBO_PREVIEW:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool MeasureEmojiControl(HWND dialog, LPARAM lParam) {
+    auto* item = reinterpret_cast<MEASUREITEMSTRUCT*>(lParam);
+    if (!EmojiControl(item->CtlID)) return false;
+    const int logicalHeight = item->CtlID == IDC_COMBO_ENTRIES ? 26 : 20;
+    item->itemHeight = MulDiv(logicalHeight, GetDpiForWindow(dialog), 96);
+    return true;
+}
+
+std::wstring DrawItemText(const DRAWITEMSTRUCT& item) {
+    if (item.CtlType == ODT_STATIC || item.itemID == static_cast<UINT>(-1)) {
+        std::wstring text(GetWindowTextLengthW(item.hwndItem) + 1, L'\0');
+        text.resize(GetWindowTextW(item.hwndItem, text.data(), static_cast<int>(text.size())));
+        return text;
+    }
+    const UINT message = item.CtlType == ODT_COMBOBOX ? CB_GETLBTEXT : LB_GETTEXT;
+    const UINT lengthMessage = item.CtlType == ODT_COMBOBOX ? CB_GETLBTEXTLEN : LB_GETTEXTLEN;
+    const auto length = SendMessageW(item.hwndItem, lengthMessage, item.itemID, 0);
+    if (length < 0) return {};
+    std::wstring text(static_cast<size_t>(length) + 1, L'\0');
+    SendMessageW(item.hwndItem, message, item.itemID, reinterpret_cast<LPARAM>(text.data()));
+    text.resize(static_cast<size_t>(length));
+    return text;
+}
+
+bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
+    auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
+    if (!EmojiControl(item->CtlID)) return false;
+    const bool selected = (item->itemState & ODS_SELECTED) != 0;
+    HBRUSH fill = selected
+        ? CreateSolidBrush(NativeTheme::HighContrast() ? GetSysColor(COLOR_HIGHLIGHT) : RGB(42, 86, 128))
+        : NativeTheme::SurfaceBrush();
+    FillRect(item->hDC, &item->rcItem, fill);
+    if (selected) DeleteObject(fill);
+    const auto color = selected && NativeTheme::HighContrast()
+        ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
+    const bool preview = item->CtlID == IDC_COMBO_PREVIEW || item->CtlID == IDC_TARGET_PREVIEW;
+    const float size = static_cast<float>(MulDiv(preview ? 22 : 14, GetDpiForWindow(dialog), 96));
+    NativeEmoji::DrawLine(item->hDC, item->rcItem, DrawItemText(*item), size, color, preview,
+                          !NativeTheme::HighContrast());
+    if (item->itemState & ODS_FOCUS) DrawFocusRect(item->hDC, &item->rcItem);
+    return true;
+}
+
+void StyleHeading(HWND dialog, int id) {
+    const auto control = GetDlgItem(dialog, id);
+    const auto base = reinterpret_cast<HFONT>(SendMessageW(control, WM_GETFONT, 0, 0));
+    LOGFONTW description{};
+    if (!base || !GetObjectW(base, sizeof(description), &description)) return;
+    description.lfWeight = FW_SEMIBOLD;
+    const auto font = CreateFontIndirectW(&description);
+    if (!font) return;
+    SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+    SetPropW(control, L"SwashMojiHeadingFont", font);
+}
+
+void ReleaseHeading(HWND dialog, int id) {
+    const auto control = GetDlgItem(dialog, id);
+    if (const auto font = RemovePropW(control, L"SwashMojiHeadingFont")) DeleteObject(font);
+}
+
+void StylePreview(HWND dialog, int id) {
+    const auto control = GetDlgItem(dialog, id);
+    const auto base = reinterpret_cast<HFONT>(SendMessageW(control, WM_GETFONT, 0, 0));
+    LOGFONTW description{};
+    if (!base || !GetObjectW(base, sizeof(description), &description)) return;
+    description.lfHeight = MulDiv(description.lfHeight, 15, 10);
+    const auto font = CreateFontIndirectW(&description);
+    if (!font) return;
+    SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+    SetPropW(control, L"SwashMojiPreviewFont", font);
+}
+
+void ReleasePreview(HWND dialog, int id) {
+    const auto control = GetDlgItem(dialog, id);
+    if (const auto font = RemovePropW(control, L"SwashMojiPreviewFont")) DeleteObject(font);
+}
+
 struct Editor {
     const Catalog& catalog;
     Profile& profile;
@@ -113,7 +207,7 @@ void LoadDraft(HWND dialog, Editor& editor, const std::wstring& phrase, const Re
     SetDlgItemTextW(dialog, IDC_PHRASE, phrase.c_str());
     const auto* emoji = target.kind == ResultKind::Emoji ? editor.catalog.FindFamily({target.value}) : nullptr;
     const auto combination = target.kind == ResultKind::Combination ? editor.profile.combinations.find(target.value) : editor.profile.combinations.end();
-    SetDlgItemTextW(dialog, IDC_TARGET_QUERY, emoji ? emoji->glyph.c_str() :
+    SetDlgItemTextW(dialog, IDC_TARGET_QUERY, emoji ? emoji->name.c_str() :
         combination != editor.profile.combinations.end() ? combination->second.name.c_str() : L"");
     FindTargets(dialog, editor);
     RefreshAliases(dialog, editor);
@@ -121,6 +215,10 @@ void LoadDraft(HWND dialog, Editor& editor, const std::wstring& phrase, const Re
 }
 
 INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    INT_PTR themeResult{};
+    if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
+    if (message == WM_MEASUREITEM && MeasureEmojiControl(dialog, lParam)) return TRUE;
+    if (message == WM_DRAWITEM && DrawEmojiControl(dialog, lParam)) return TRUE;
     auto* editor = reinterpret_cast<Editor*>(GetWindowLongPtrW(dialog, DWLP_USER));
     if (message == WM_INITDIALOG) {
         editor = reinterpret_cast<Editor*>(lParam);
@@ -129,12 +227,26 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         SendDlgItemMessageW(dialog, IDC_TARGET_QUERY, EM_SETLIMITTEXT, 255, 0);
         EnableWordDeletion(GetDlgItem(dialog, IDC_PHRASE));
         EnableWordDeletion(GetDlgItem(dialog, IDC_TARGET_QUERY));
+        NativeTheme::Apply(dialog);
+        StyleHeading(dialog, IDC_ALIAS_HEADING);
+        StyleHeading(dialog, IDC_ALIASES_HEADING);
+        StyleHeading(dialog, IDC_PINS_HEADING);
+        NativeTheme::ApplyEmojiFont(dialog, {IDC_ALIASES, IDC_PINS, IDC_TARGET_QUERY,
+                                             IDC_TARGET_RESULTS, IDC_TARGET_PREVIEW});
+        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_VOCABULARY_STATUS));
         LoadDraft(dialog, *editor, editor->phrase, editor->target);
         RefreshPins(dialog, *editor);
         SetFocus(GetDlgItem(dialog, IDC_PHRASE));
         return FALSE;
     }
     if (!editor) return FALSE;
+    if (message == WM_DESTROY) {
+        ReleaseHeading(dialog, IDC_ALIAS_HEADING);
+        ReleaseHeading(dialog, IDC_ALIASES_HEADING);
+        ReleaseHeading(dialog, IDC_PINS_HEADING);
+        NativeTheme::ReleaseEmojiFont(dialog);
+        return FALSE;
+    }
     if (message == WM_CLOSE) { EndDialog(dialog, IDCANCEL); return TRUE; }
     if (message != WM_COMMAND) return FALSE;
     const int id = LOWORD(wParam), notification = HIWORD(wParam);
@@ -247,6 +359,8 @@ void ComboSaved(HWND dialog, CombinationEditor& e) {
         e.keys.push_back(item.first);
         if (item.first == e.draft.id) SendDlgItemMessageW(dialog, IDC_COMBO_SAVED, LB_SETCURSEL, index, 0);
     }
+    const auto heading = L"&Saved combinations (" + std::to_wstring(e.keys.size()) + L")";
+    SetDlgItemTextW(dialog, IDC_COMBO_SAVED_HEADING, heading.c_str());
     ComboButtons(dialog, e);
 }
 void ComboVariants(HWND dialog, CombinationEditor& e) {
@@ -278,7 +392,10 @@ void ComboSearch(HWND dialog, CombinationEditor& e) {
     ComboVariants(dialog, e);
 }
 INT_PTR CALLBACK ConfirmCombinationDelete(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    INT_PTR themeResult{};
+    if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
     if (message == WM_INITDIALOG) {
+        NativeTheme::Apply(dialog);
         SetDlgItemTextW(dialog, IDC_COMBO_PREVIEW, reinterpret_cast<const wchar_t*>(lParam));
         SetFocus(GetDlgItem(dialog, IDCANCEL)); return FALSE;
     }
@@ -289,17 +406,43 @@ INT_PTR CALLBACK ConfirmCombinationDelete(HWND dialog, UINT message, WPARAM wPar
     return FALSE;
 }
 INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    INT_PTR themeResult{};
+    if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
+    if (message == WM_MEASUREITEM && MeasureEmojiControl(dialog, lParam)) return TRUE;
+    if (message == WM_DRAWITEM && DrawEmojiControl(dialog, lParam)) return TRUE;
     auto* e = reinterpret_cast<CombinationEditor*>(GetWindowLongPtrW(dialog, DWLP_USER));
     if (message == WM_INITDIALOG) {
         e = reinterpret_cast<CombinationEditor*>(lParam); SetWindowLongPtrW(dialog, DWLP_USER, lParam);
         SendDlgItemMessageW(dialog, IDC_COMBO_NAME, EM_SETLIMITTEXT, kMaxAliasLength, 0);
         SendDlgItemMessageW(dialog, IDC_COMBO_QUERY, EM_SETLIMITTEXT, 255, 0);
         EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_NAME)); EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_QUERY));
+        NativeTheme::Apply(dialog);
+        StyleHeading(dialog, IDC_COMBO_SAVED_HEADING);
+        StyleHeading(dialog, IDC_COMBO_NAME_HEADING);
+        StyleHeading(dialog, IDC_COMBO_ADD_HEADING);
+        StyleHeading(dialog, IDC_COMBO_SEQUENCE_HEADING);
+        NativeTheme::ApplyEmojiFont(dialog, {IDC_COMBO_QUERY, IDC_COMBO_RESULTS, IDC_COMBO_VARIANTS,
+                                             IDC_COMBO_ENTRIES, IDC_COMBO_PREVIEW});
+        StylePreview(dialog, IDC_COMBO_PREVIEW);
+        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_SAVED_HINT));
+        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_NAME_HINT));
+        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_ADD_HINT));
+        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_SEQUENCE_HINT));
+        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_STATUS));
         ComboSaved(dialog, *e); ComboSearch(dialog, *e);
         ComboStatus(dialog, L"Choose emoji and variants, then Add. Close discards the unfinished draft.");
         SetFocus(GetDlgItem(dialog, IDC_COMBO_NAME)); return FALSE;
     }
     if (!e) return FALSE;
+    if (message == WM_DESTROY) {
+        ReleaseHeading(dialog, IDC_COMBO_SAVED_HEADING);
+        ReleaseHeading(dialog, IDC_COMBO_NAME_HEADING);
+        ReleaseHeading(dialog, IDC_COMBO_ADD_HEADING);
+        ReleaseHeading(dialog, IDC_COMBO_SEQUENCE_HEADING);
+        ReleasePreview(dialog, IDC_COMBO_PREVIEW);
+        NativeTheme::ReleaseEmojiFont(dialog);
+        return FALSE;
+    }
     if (message == WM_CLOSE) { EndDialog(dialog, IDCANCEL); return TRUE; }
     if (message != WM_COMMAND) return FALSE;
     const int id = LOWORD(wParam), notification = HIWORD(wParam);
@@ -363,12 +506,19 @@ void EditCombinations(HWND dialog, Editor& editor) {
 }
 struct CombinationDetails { const Catalog& catalog; const Combination& combination; };
 INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    INT_PTR themeResult{};
+    if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
     if (message == WM_INITDIALOG) {
+        NativeTheme::Apply(dialog);
+        NativeTheme::ApplyEmojiFont(dialog, {IDC_COMBO_PREVIEW, IDC_COMBO_ENTRIES});
         const auto& state = *reinterpret_cast<CombinationDetails*>(lParam);
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, state.combination.name.c_str());
         Sequence(dialog, state.catalog, state.combination);
         return TRUE;
     }
+    if (message == WM_MEASUREITEM && MeasureEmojiControl(dialog, lParam)) return TRUE;
+    if (message == WM_DRAWITEM && DrawEmojiControl(dialog, lParam)) return TRUE;
+    if (message == WM_DESTROY) { NativeTheme::ReleaseEmojiFont(dialog); return FALSE; }
     if (message == WM_CLOSE || (message == WM_COMMAND && LOWORD(wParam) == IDCANCEL)) { EndDialog(dialog, IDCANCEL); return TRUE; }
     return FALSE;
 }
