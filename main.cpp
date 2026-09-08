@@ -719,7 +719,7 @@ const wchar_t* HelpText() {
         L"Click or Enter: Insert and close.\r\nCtrl+click or Ctrl+Enter: Insert and keep open.\r\n"
         L"Shift+Enter: Copy and close after success.\r\n"
         L"Tab / Shift+Tab: Move between search, results and actions.\r\n"
-        L"Down in search: Focus results. Left/Right in search: Edit normally.\r\n"
+        L"Empty search: Arrows navigate results; typing starts a query. With query text: Down focuses results; Left/Right edit normally.\r\n"
         L"Arrows in results: Move spatially. Page Up/Down: Previous/next page. Home/End: First/last result.\r\n"
         L"Ctrl+Backspace: Delete the previous word or selection. Ctrl+Z: Undo.\r\n"
         L"Esc: Close Details, vocabulary or help first; otherwise dismiss and return to the original app.\r\n\r\n"
@@ -1168,10 +1168,15 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
             else InsertSelection();
             return 0;
         }
-        if (control == g_edit && wParam == VK_DOWN) {
+        // Opening focuses search so typing works immediately. With no query,
+        // arrows navigate results without requiring a preliminary focus change.
+        // Keep search focused so the next character still starts a query.
+        const bool emptySearchArrow = control == g_edit && GetWindowTextLengthW(g_edit) == 0 &&
+            (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN);
+        if (control == g_edit && wParam == VK_DOWN && !emptySearchArrow) {
             CloseHover(); if (!g_displayVisible.empty()) SetFocus(g_list); return 0;
         }
-        if (control == g_list) {
+        if (control == g_list || emptySearchArrow) {
             int dx = 0, dy = 0;
             if (wParam == VK_LEFT) dx = -1;
             if (wParam == VK_RIGHT) dx = 1;

@@ -10,7 +10,9 @@ Shift+Enter copies and closes only after success. A click must start and finish
 on the same real result; empty grid space never inserts the previous selection.
 
 Tab and Shift+Tab cycle through search, results, Details and visible teaching or
-recovery actions. Down in search focuses results; Left/Right edit the query.
+recovery actions. With an empty search, arrows immediately navigate results while
+search keeps focus for typing. With query text, Down focuses results and
+Left/Right edit the query.
 Result arrows move spatially, Page Up/Down move ten columns, and Home/End reach
 the first/last slot. Alt+F replaces the old Tab font shortcut. Other existing
 Alt shortcuts and Ctrl+Backspace/undo remain available. Escape closes an active

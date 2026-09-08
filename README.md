@@ -22,7 +22,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
   allerede ble tømt før feilen oppstod.
 - `Esc` lukker vinduet.
 - `F1` viser en komplett oversikt over funksjoner og hurtigtaster.
-- `Tab` og `Shift+Tab` flytter fokus mellom søk, treff og tilgjengelige handlinger. Pil ned fra søket flytter fokus til treffene; venstre/høyre i søket flytter tekstmarkøren.
+- `Tab` og `Shift+Tab` flytter fokus mellom søk, treff og tilgjengelige handlinger. Med tomt søk navigerer piltastene treffene direkte, også rett etter åpning. Med søketekst flytter pil ned fokus til treffene; venstre/høyre flytter tekstmarkøren.
 - `Alt+F` bytter til neste installerte fargefont eller monokrome emoji-font (tidligere `Tab`).
 - **Details** (`Alt+D` eller treffmenyen) viser en større forhåndsvisning og gyldige varianter fra katalogen, også blandede hudtoner. **Use once** velger varianten for neste vellykkede innsetting eller kopiering uten å endre global hudtone. **Cancel** forkaster utkastet.
 - Hold pekeren rolig over et treff i omtrent 350 ms for en forhåndsvisning uten å flytte tastaturmarkeringen.
