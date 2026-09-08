@@ -52,11 +52,14 @@ See [profile-format.md](profile-format.md) for bounds, LRU ordering and recovery
 
 ## Verification
 
-Run `.\build.cmd test build-m3`. Seven CTest suites cover the bilingual corpus,
+Run `.\build.cmd test build-m3-edit`. Eight CTest suites cover the bilingual corpus,
 exact-name invariants, query-class boundaries, full-query isolation, disabled
 learning, 1,000-pair LRU eviction, saturation, snapshot stability, pin limits and
 ordering, family aggregation, restart, and locked-file migration retries. The
-corpus has 111 top-three/no-match cases, including 51 intent cases.
+edit-control suite verifies Ctrl+Backspace deletion, selection/caret handling,
+Unicode safety, repeat behavior and undo in native text fields. All eight suites
+passed on 2026-09-08. The corpus passes 111/111 top-three/no-match cases, including
+51/51 intent cases.
 
 The separate `SwashMojiPickerVocabularyTests.exe` uses an isolated profile and
 the real picker/editor code. It verifies favorite ordering and persistence,
@@ -69,5 +72,7 @@ writes `picker-vocabulary-result.txt` next to itself and then exits.
 
 `SwashMojiVocabularyPreview.exe` opens a separate test profile for keyboard and
 visual checks. These native tools need an interactive desktop; ordinary CTest does
-not change focus or submit input. Broader application compatibility, DPI/monitor
-and screen-reader verification remains in M4/M6.
+not change focus or submit input. The final M3 favorites visual review was
+interrupted when Computer Use was stopped and remains outstanding for M4.
+Broader application compatibility, DPI/monitor and screen-reader verification
+remains in M4/M6.

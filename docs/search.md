@@ -82,9 +82,11 @@ Results are written to `picker-vocabulary-result.txt`. The separate
 and uses `vocabulary-preview-profile` beside the executable.
 This is separate from CTest because it changes desktop focus and submits real input.
 
-Verified on 2026-09-07: all six CTest suites passed, including both offline Python
+M2 verification on 2026-09-07: all six CTest suites passed, including both offline Python
 fixture tests; full-cache regeneration was byte-identical. The native picker/editor
 test passed on the interactive desktop, including variation-selector prefilling.
 Visual inspection and keyboard Save/Escape passed in the standalone preview, and
 UI Automation exposed named phrase/search/result controls. Broader target-app,
 multi-monitor/DPI and screen-reader acceptance remains assigned to M4/M6.
+For the current eight-suite baseline and remaining M3 visual review, see
+[learning verification](learning.md#verification).

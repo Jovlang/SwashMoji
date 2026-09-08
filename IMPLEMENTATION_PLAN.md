@@ -1,15 +1,10 @@
 # SwashMoji: implementation plan for all five improvements
 
-Status: M0, M1 and M2 implemented on 2026-09-07; M3–M6 remain planned.
-
-M2 delivery: pinned CLDR English/Bokmål catalog with Norwegian inheritance and
-English fallback, 49 separate curated intent phrases, Unicode normalization,
-priority-ranked personal aliases, and a native My vocabulary editor accessible
-from results, empty search and the tray. Profile version 2 migrates version 1
-without changing history/settings. The 109-query acceptance corpus and all exact
-catalog-name invariants pass. Native integration verifies alias CRUD/reload,
-cancelled edits, preserved picker state/target, and real external text delivery.
-See `docs/search.md` for behavior, provenance, test commands and scope.
+Status updated 2026-09-08: M0–M3 implemented. M4 is next; M5 and M6 remain planned.
+The M3 implementation and Ctrl+Backspace support are committed and pushed in
+[`4dba231`](https://github.com/Jovlang/SwashMoji/commit/4dba2318e3fab21761f93a0b2a93bf1953eaecf1).
+Automated and controlled native checks pass; the final M3 favorites visual review
+was interrupted when Computer Use was stopped and remains outstanding for M4.
 
 M0 delivery: shared catalog/text/search/personalization/storage modules, stable
 family/result identities and picker-session state, version 1 profile migration,
@@ -17,7 +12,7 @@ atomic replacement with backup recovery, and three passing CTest suites via
 `.\build.cmd test build-m0`. Existing insertion and shortcut handlers remain in
 `main.cpp` for their later milestones; the proposed file table below describes
 the eventual module boundaries. Profile v1 deliberately retains exact-glyph
-history until M3 and will be versioned when new persistent record types arrive.
+history at that milestone; M3 subsequently migrated it to family IDs in profile v3.
 The catalog now uses existing valid bases rather than fabricating an empty or
 unsupported base from tone modifiers. See `docs/profile-format.md` for details.
 
@@ -30,21 +25,52 @@ input, clipboard preservation, and stale/internal target rejection. The wider
 application, DPI, and accessibility matrix remains part of M4/M6. See
 `docs/insertion.md` for the tested scope and remaining compatibility limits.
 
+M2 delivery (2026-09-07): pinned CLDR English/Bokmål catalog with Norwegian
+inheritance and English fallback, separately maintained curated intent phrases,
+Unicode normalization, priority-ranked personal aliases, and a native My vocabulary
+editor accessible from results, empty search and the tray. Profile version 2
+introduced aliases while preserving settings/history. The milestone passed its
+109-case corpus and native alias CRUD/reload, cancellation, target preservation,
+and external text delivery checks. See [search documentation](docs/search.md).
+
+M3 delivery (2026-09-08): query-specific learning with 1,000-pair LRU eviction,
+saturating counts, a Learn from searches toggle, and Clear learned history;
+up to ten ordered favorites with `Alt+P`, context-menu actions, and vocabulary
+Up/Down/Unpin controls; family-based history and usage with profile v3 migration;
+and frozen ranking preferences during an open picker session. Selection survives
+font, tone and row changes. Curated `nice` matches now include both 👌 and 👍.
+See [learning documentation](docs/learning.md) and [profile format](docs/profile-format.md).
+
+Additional delivered shortcut: `Ctrl+Backspace` deletes selected text or the
+previous whitespace-delimited word in search and vocabulary text fields, with
+native undo support. Tests cover caret positions, selections, whitespace,
+Norwegian text, emoji sequences, surrogate pairs, repeated deletion and undo.
+
+Latest verification: `.\build.cmd test build-m3-edit` passes all eight CTest
+suites: ranking, core, storage, insertion, vocabulary, learning, edit controls,
+and the offline catalog generator. The corpus passes 111/111 cases, including
+51/51 intent cases. The M3 native picker/editor test separately passed favorite
+editing/persistence, no learning on failures, once-per-success insertion/copy
+learning, stable session order/selection, next-session ranking, and actual
+delivery to the original external Win32 edit without changing the clipboard.
+The latest full build includes Ctrl+Backspace; the broader app/DPI/accessibility
+matrix and interrupted favorites visual review are not claimed as completed.
+
 Product goal: make the intended emoji or saved combination easy to find, predictable to select, and reliable to insert. Preserve the native C++17/Win32 application, portable distribution, offline runtime, and local personalization.
 
 ## Delivery order
 
 The five product steps are covered below; implementation starts with shared foundations and insertion recovery because the other features depend on them.
 
-| Milestone | Scope | Depends on | Completion gate |
-| --- | --- | --- | --- |
-| M0 | Extract shared models, persistence, and test seams | Existing app | Current search and shortcuts preserved; migration fixtures pass |
-| M1 | Step 4: insertion and clipboard recovery | M0 | Failure paths preserve the selection; controlled target tests pass |
-| M2 | Step 1: bilingual intent search and personal aliases | M0 | Search acceptance corpus and alias workflows pass |
-| M3 | Step 2: query learning, stable favorites, tone-family history | M2 | Deterministic ranking, migration, and session stability pass |
-| M4 | Step 3 plus remaining step 4: selection UI, variants, DPI, accessibility | M1, M3 | Keyboard, pointer, screen-reader, and monitor matrix pass |
-| M5 | Step 5: saved combinations | M4 | Create, edit, search, pin, insert, and copy sequences end to end |
-| M6 | Integrated release verification and documentation | M1–M5 | All automated checks and documented manual acceptance pass |
+| Milestone | Status | Scope | Depends on | Completion gate |
+| --- | --- | --- | --- | --- |
+| M0 | Implemented | Extract shared models, persistence, and test seams | Existing app | Current search and shortcuts preserved; migration fixtures pass |
+| M1 | Implemented | Step 4: insertion and clipboard recovery | M0 | Failure paths preserve the selection; controlled target tests pass |
+| M2 | Implemented | Step 1: bilingual intent search and personal aliases | M0 | Search acceptance corpus and alias workflows pass |
+| M3 | Implemented; visual follow-up noted above | Step 2: query learning, stable favorites, tone-family history | M2 | Deterministic ranking, migration, and session stability pass |
+| M4 | Next | Step 3 plus remaining step 4: selection UI, variants, DPI, accessibility | M1, M3 | Keyboard, pointer, screen-reader, and monitor matrix pass |
+| M5 | Planned | Step 5: saved combinations | M4 | Create, edit, search, pin, insert, and copy sequences end to end |
+| M6 | Planned | Integrated release verification and documentation | M1–M5 | All automated checks and documented manual acceptance pass |
 
 Each milestone should be a reviewable change or a small series of changes. Keep the application buildable throughout. These are dependency boundaries, not calendar estimates; target-app compatibility and accessibility are the largest uncertainty.
 
@@ -60,7 +86,8 @@ Extract responsibilities incrementally from `main.cpp`, rather than redesigning 
 | `storage.h/.cpp` | Versioned local data, validation, atomic replacement, migration |
 | `insertion.h/.cpp` | Target capture, insertion attempt state, clipboard operations |
 | `picker.h/.cpp` | Result selection, preview, keyboard navigation, layout |
-| `library_dialog.h/.cpp` | Native editor for aliases, favorites, and combinations |
+| `vocabulary.h/.cpp`, `vocabulary.rc` | Implemented native alias/favorites editor; combinations extend it in M5 |
+| `edit_controls.h/.cpp` | Shared Ctrl+Backspace behavior for native text fields |
 | `main.cpp` | Process lifecycle, tray integration, dispatch and coordination |
 
 Introduce stable IDs before adding more state:
@@ -109,6 +136,14 @@ Acceptance: a checked-in corpus covers bilingual names, phrases, case, Norwegian
 
 ## Step 2 / M3: query learning and stable favorites
 
+Implemented. The following policy is the current behavior; saved combinations
+remain reserved for M5. Query records store most-recently-chosen pairs first,
+with a maximum normalized query length of 256 UTF-16 code units. Reading/searching
+does not refresh LRU order. Disabling learning stops both collecting and applying
+query counts while retaining them for re-enabling. Recency/usage continues to work.
+Explicit alias/favorite edits and sort/learning settings apply immediately;
+clearing learned history also resets the open session's preference snapshot.
+
 ### Ranking policy
 
 Within each match class, order by query-specific choice count, existing recency/usage preference, lexical detail, default popularity, and stable result ID. Query learning cannot promote an unrelated item into the results or cross match-class boundaries. An explicit alias is how users teach a relationship the catalog does not know.
@@ -124,9 +159,13 @@ Snapshot preferences when the picker opens. Recompute matching when the query ch
 - Aggregate legacy usage across mapped tone variants and retain the latest family recency. Global tone affects emitted glyphs; changing it must not reset ranking or duplicate history entries.
 - Clearing learned history removes recency, counts, and query preferences. User-authored aliases, combinations, pins, and appearance settings remain independently editable.
 
-Acceptance: repeated `nice` → 👌 choices improve its position within the eligible class; unrelated queries remain unaffected; exact-name results stay ahead of learned keyword matches; pins remain stable; repeated insertions do not reorder an open picker; toned selections contribute to the same family history after restart.
+Acceptance: repeated `nice` → 👌 choices improve its position within the eligible class; query-specific counts do not affect other queries, while ordinary recency/usage remains global; exact-name results stay ahead of learned keyword matches; pins remain stable; repeated insertions do not reorder an open picker; toned selections contribute to the same family history after restart. Automated and native integration checks pass; the interrupted visual check of favorites remains a follow-up.
 
 ## Step 3 / M4: confident selection
+
+Next milestone. Resume the interrupted favorites visual/keyboard review alongside
+the selection UI work. Preserve M3's learning boundaries, family IDs, ordered pins,
+session snapshots, and the delivered Ctrl+Backspace behavior throughout.
 
 ### Visible behavior
 
@@ -147,10 +186,11 @@ Acceptance: repeated `nice` → 👌 choices improve its position within the eli
 | Alt+F | Cycle emoji font, replacing the current Tab binding |
 | Arrow keys in results | Move spatially through the visible grid |
 | Left / Right in search | Edit the query normally |
+| Ctrl+Backspace in text fields | Delete selected text or the previous word; retain undo (already implemented) |
 | Down in search | Move focus into results |
 | Esc | Close the active detail/editor first; otherwise dismiss picker and restore target |
 
-Enter from the search field still inserts the current first/selected result. Preserve Alt+E, Alt+I, Alt+T, Alt+1–3, Alt+S, and F1. Route shortcuts by focused control: an editor's Enter must save its form rather than insert into another application. Document the click and Tab changes visibly in release notes and help.
+Enter from the search field still inserts the current first/selected result. Preserve Alt+E, Alt+A, Alt+P, Alt+I, Alt+T, Alt+1–3, Alt+S, Ctrl+Backspace, and F1. Route shortcuts by focused control: an editor's Enter must save its form rather than insert into another application. Document the click and Tab changes visibly in release notes and help.
 
 Use a logical row/column selection model independent of the Win32 multi-column listbox storage order. Hit-test clicks so empty grid space cannot insert the previous selection. Cover partial rows and page boundaries. Start by retaining the native owner-drawn listbox and supplying names through its item strings while drawing the corresponding glyph; assess accessibility before deciding whether a custom provider is required.
 
@@ -191,6 +231,11 @@ Deleting a combination removes its dependent pins, aliases, and learned counts i
 Acceptance: `launch` → 🚀✨ and `please` → 🥺🙏 can be created, found, renamed, pinned, inserted, copied, and deleted. Ordering, tone variants, joiners, variation selectors, and surrogate pairs survive save/reload. A failed insertion preserves the entire combination and never automatically sends a second copy.
 
 ## M6: integrated validation and release
+
+Existing baseline: eight passing suites, 111 corpus cases with 51 intent cases,
+and controlled native insertion/editor checks. Extend this coverage for M4/M5;
+do not treat it as completion of the release, application, monitor, accessibility,
+or performance acceptance work below.
 
 - Add focused CTest executables for search ranking, family mapping, personalization/storage migration, logical grid navigation, combinations, and insertion state transitions. Use injected platform-operation seams for deterministic failures and a small native target harness for real input delivery. Retain existing ranking tests.
 - Add Python standard-library tests for deterministic catalog generation using local source fixtures, locale fallback, and curated phrase merging. Tests should not depend on a network download.
