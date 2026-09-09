@@ -32,7 +32,7 @@ struct Resources {
 inline Resources& Get() { static Resources resources; return resources; }
 
 inline void DrawLine(HDC dc, const RECT& bounds, const std::wstring& text, float size,
-                     COLORREF color, bool centered, bool colorEmoji) {
+                     COLORREF color, bool centered, bool colorEmoji, bool singleLine = false) {
     auto& resources = Get();
     if (!resources.target || !resources.write || FAILED(resources.target->BindDC(dc, &bounds))) {
         SetBkMode(dc, TRANSPARENT); SetTextColor(dc, color);
@@ -45,6 +45,15 @@ inline void DrawLine(HDC dc, const RECT& bounds, const std::wstring& text, float
             DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, size, L"", &format))) return;
     format->SetTextAlignment(centered ? DWRITE_TEXT_ALIGNMENT_CENTER : DWRITE_TEXT_ALIGNMENT_LEADING);
     format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+    if (singleLine) {
+        format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+        IDWriteInlineObject* ellipsis{};
+        if (SUCCEEDED(resources.write->CreateEllipsisTrimmingSign(format, &ellipsis))) {
+            DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
+            format->SetTrimming(&trimming, ellipsis);
+            ellipsis->Release();
+        }
+    }
     resources.target->BeginDraw();
     ID2D1SolidColorBrush* brush{};
     const D2D1_COLOR_F value{GetRValue(color) / 255.0f, GetGValue(color) / 255.0f,

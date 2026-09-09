@@ -94,3 +94,31 @@ UI Automation exposed named phrase/search/result controls. Broader target-app,
 multi-monitor/DPI and screen-reader acceptance remains assigned to M4/M6.
 For the current eight-suite baseline and remaining M3 visual review, see
 [learning verification](learning.md#verification).
+
+### Vocabulary visual redesign — 2026-09-09
+
+My vocabulary now groups saved aliases and pinned favorites in a Library panel,
+with a separate Alias editor. Results and the selected preview distinguish the
+English name from its Bokmål translation. Save alias is the primary action;
+Close and New combination / edit remain global footer actions. Native controls
+retain their mnemonics, Tab navigation, accessible names and selection behavior.
+The resizable layout expands both columns and lists, uses DPI-scaled geometry,
+and provides explicit focus outlines, subdued destructive actions and empty states.
+Status messages are local to the editor; draft changes replace permanent instructions.
+
+The implementation uses a reusable native presentation layer in vocabulary_style.h
+and opt-in single-line DirectWrite ellipsis. No runtime dependencies or profile
+format changes were introduced. The first rendered preview was inspected, followed
+by a second pass correcting input alignment, preview spacing, footer surfaces,
+focus outlines and clipping. The final preview was inspected with empty and saved
+aliases; Save and native Tab focus were exercised with its isolated profile.
+Build and all 11 registered CTest suites passed with
+`.\build.cmd test build-vocabulary-polish`, including layout growth, action alignment,
+empty results and draft-status regression checks. Python generator tests were not
+registered in this environment. Real multi-monitor DPI transitions and Narrator
+remain manual acceptance checks.
+The separate picker/vocabulary harness passed its preceding editor and layout
+checks but failed at external insertion with "Could not focus the original app"
+(`picker-vocabulary-result.txt`); actual target-app insertion remains unverified.
+The final button repaint/high-contrast focus correction was verified by a fresh
+`.\build.cmd test build-vocabulary-final`: all 11 registered suites passed.

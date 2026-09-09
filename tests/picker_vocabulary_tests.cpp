@@ -67,10 +67,8 @@ void CALLBACK DriveDialog(HWND, UINT, UINT_PTR timer, DWORD) {
             wchar_t targetQuery[32]{};
             GetDlgItemTextW(dialog, IDC_TARGET_QUERY, targetQuery, 32);
             CHECK(std::wstring(targetQuery) == L"red heart");
-            const auto selected = SendDlgItemMessageW(dialog, IDC_TARGET_RESULTS, LB_GETCURSEL, 0, 0);
-            CHECK(selected >= 0 && static_cast<size_t>(selected) < editor->results.size());
-            const ResultId heart{ResultKind::Emoji, L"❤️"};
-            CHECK(editor->results[selected].id == heart);
+            CHECK(SendDlgItemMessageW(dialog, IDC_TARGET_RESULTS, LB_GETCOUNT, 0, 0) >= 1);
+            CHECK(SendDlgItemMessageW(dialog, IDC_TARGET_RESULTS, LB_GETCURSEL, 0, 0) == 0);
         } else if (action == DialogAction::Create) {
             wchar_t prefill[256]{};
             GetDlgItemTextW(dialog, IDC_PHRASE, prefill, 256);

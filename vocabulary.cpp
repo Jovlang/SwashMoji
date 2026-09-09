@@ -3,6 +3,7 @@
 #include "edit_controls.h"
 #include "native_emoji.h"
 #include "native_theme.h"
+#include "vocabulary_style.h"
 #include "picker.h"
 #include <algorithm>
 
@@ -10,6 +11,7 @@ namespace SwashMoji {
 namespace {
 bool EmojiControl(int id) {
     switch (id) {
+    case IDC_ALIASES:
     case IDC_PINS:
     case IDC_TARGET_RESULTS:
     case IDC_TARGET_PREVIEW:
@@ -26,7 +28,7 @@ bool EmojiControl(int id) {
 bool MeasureEmojiControl(HWND dialog, LPARAM lParam) {
     auto* item = reinterpret_cast<MEASUREITEMSTRUCT*>(lParam);
     if (!EmojiControl(item->CtlID)) return false;
-    const int logicalHeight = item->CtlID == IDC_COMBO_ENTRIES ? 26 : 20;
+    const int logicalHeight = item->CtlID == IDC_TARGET_RESULTS ? 48 : item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS ? 36 : item->CtlID == IDC_COMBO_ENTRIES ? 26 : 20;
     item->itemHeight = MulDiv(logicalHeight, GetDpiForWindow(dialog), 96);
     return true;
 }
@@ -50,6 +52,38 @@ std::wstring DrawItemText(const DRAWITEMSTRUCT& item) {
 bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
     auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
     if (!EmojiControl(item->CtlID)) return false;
+    if (item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS || item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_TARGET_PREVIEW) {
+        auto r = item->rcItem;
+        FillRect(item->hDC, &r, VocabularyStyle::InputBrush());
+        const bool selected = (item->itemState & ODS_SELECTED) != 0;
+        const bool hot = item->itemID != static_cast<UINT>(-1) && reinterpret_cast<UINT_PTR>(GetPropW(item->hwndItem,L"VocabularyHotRow")) == item->itemID+1;
+        if (selected || hot) {
+            InflateRect(&r, -VocabularyStyle::Px(dialog,3), -VocabularyStyle::Px(dialog,2));
+            VocabularyStyle::Round(item->hDC,r,NativeTheme::HighContrast() ? GetSysColor(COLOR_HIGHLIGHT) : (selected ? RGB(48,65,88) : RGB(48,52,59)),VocabularyStyle::Px(dialog,6));
+        }
+        const auto color = selected && NativeTheme::HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
+        auto text = DrawItemText(*item);
+        r = item->rcItem; InflateRect(&r,-VocabularyStyle::Px(dialog,10),0);
+        if (item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_TARGET_PREVIEW) {
+            const auto split = text.find(L"  ");
+            if (split != std::wstring::npos) {
+                auto glyph = r; glyph.right = glyph.left + VocabularyStyle::Px(dialog,44);
+                NativeEmoji::DrawLine(item->hDC,glyph,text.substr(0,split),static_cast<float>(VocabularyStyle::Px(dialog,item->CtlID==IDC_TARGET_PREVIEW ? 32 : 26)),color,false,!NativeTheme::HighContrast(),true);
+                r.left = glyph.right + VocabularyStyle::Px(dialog,8);
+                text = text.substr(split+2);
+                const auto translation = text.find(L" / ");
+                const int blockHeight = VocabularyStyle::Px(dialog,40);
+                r.top += std::max(0L,(r.bottom-r.top-blockHeight)/2); r.bottom = r.top+blockHeight;
+                auto title = r; title.bottom = title.top + blockHeight/2;
+                auto secondary = r; secondary.top = title.bottom;
+                NativeEmoji::DrawLine(item->hDC,translation==std::wstring::npos ? r : title,text.substr(0,translation),static_cast<float>(VocabularyStyle::Px(dialog,14)),color,false,!NativeTheme::HighContrast(),true);
+                if (translation != std::wstring::npos)
+                    NativeEmoji::DrawLine(item->hDC,secondary,text.substr(translation+3),static_cast<float>(VocabularyStyle::Px(dialog,12)), selected && NativeTheme::HighContrast() ? color : NativeTheme::SecondaryText(),false,!NativeTheme::HighContrast(),true);
+            } else NativeEmoji::DrawLine(item->hDC,r,text,static_cast<float>(VocabularyStyle::Px(dialog,13)),NativeTheme::SecondaryText(),false,!NativeTheme::HighContrast(),true);
+        } else NativeEmoji::DrawLine(item->hDC,r,text,static_cast<float>(VocabularyStyle::Px(dialog,14)),color,false,!NativeTheme::HighContrast(),true);
+        if (item->itemState & ODS_FOCUS) { InflateRect(&r,-2,-2); DrawFocusRect(item->hDC,&r); }
+        return true;
+    }
     const bool selected = (item->itemState & ODS_SELECTED) != 0;
     HBRUSH fill = selected
         ? CreateSolidBrush(NativeTheme::HighContrast() ? GetSysColor(COLOR_HIGHLIGHT) : RGB(42, 86, 128))
@@ -161,7 +195,8 @@ void RefreshAliases(HWND dialog, Editor& editor) {
 void Preview(HWND dialog, Editor& editor) {
     SearchResult result;
     const bool valid = ResolveResult(editor.catalog, editor.profile, editor.target, result);
-    const auto label = valid ? result.payload + L"  " + result.label :
+    const auto* emoji = valid && result.id.kind == ResultKind::Emoji ? editor.catalog.FindFamily({result.id.value}) : nullptr;
+    const auto label = valid ? result.payload + L"  " + result.label + (emoji && !emoji->nbName.empty() ? L" / " + emoji->nbName : L"") :
         (editor.target.value.empty() ? L"Choose an emoji above." : L"Unavailable target. Choose a replacement emoji.");
     SetDlgItemTextW(dialog, IDC_TARGET_PREVIEW, label.c_str());
     EnableWindow(GetDlgItem(dialog, IDC_PIN_TARGET), valid);
@@ -198,7 +233,7 @@ void FindTargets(HWND dialog, Editor& editor) {
     InvalidateRect(list, nullptr, TRUE);
     Preview(dialog, editor);
     if (editor.results.empty()) Status(dialog, L"No emoji matches. Try a shorter name or another phrase.");
-    else Status(dialog, L"Choose a result, then save. Close discards changes to this draft.");
+    else Status(dialog, L"");
 }
 
 void LoadDraft(HWND dialog, Editor& editor, const std::wstring& phrase, const ResultId& target) {
@@ -212,9 +247,25 @@ void LoadDraft(HWND dialog, Editor& editor, const std::wstring& phrase, const Re
     FindTargets(dialog, editor);
     RefreshAliases(dialog, editor);
     editor.loading = false;
+    if (editor.original.empty() && !phrase.empty()) Status(dialog,L"Unsaved changes");
 }
 
 INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == WM_DPICHANGED) PostMessageW(dialog,WM_APP+71,0,0);
+    if (message == WM_APP+71) { VocabularyStyle::Layout(dialog); return TRUE; }
+    if (message == WM_PAINT) { VocabularyStyle::Paint(dialog); return TRUE; }
+    if (message == WM_SIZE && GetDlgItem(dialog,IDC_PHRASE)) { VocabularyStyle::Layout(dialog); return TRUE; }
+    if (message == WM_GETMINMAXINFO) {
+        RECT r{0,0,552,432}; MapDialogRect(dialog,&r);
+        AdjustWindowRectExForDpi(&r,static_cast<DWORD>(GetWindowLongPtrW(dialog,GWL_STYLE)),FALSE,static_cast<DWORD>(GetWindowLongPtrW(dialog,GWL_EXSTYLE)),GetDpiForWindow(dialog));
+        auto* info=reinterpret_cast<MINMAXINFO*>(lParam); info->ptMinTrackSize={r.right-r.left,r.bottom-r.top}; return TRUE;
+    }
+    if (message == WM_CTLCOLOREDIT || message == WM_CTLCOLORLISTBOX || message == WM_CTLCOLORSTATIC) {
+        auto dc=reinterpret_cast<HDC>(wParam); auto control=reinterpret_cast<HWND>(lParam);
+        SetTextColor(dc,GetPropW(control,L"SwashMojiMuted") ? NativeTheme::SecondaryText() : NativeTheme::Foreground());
+        SetBkMode(dc,TRANSPARENT); SetBkColor(dc,VocabularyStyle::Input());
+        return reinterpret_cast<INT_PTR>(message != WM_CTLCOLORSTATIC ? VocabularyStyle::InputBrush() : GetDlgCtrlID(control)==IDC_VOCABULARY_INTRO ? NativeTheme::BackgroundBrush() : VocabularyStyle::PanelBrush());
+    }
     INT_PTR themeResult{};
     if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
     if (message == WM_MEASUREITEM && MeasureEmojiControl(dialog, lParam)) return TRUE;
@@ -228,6 +279,10 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         EnableWordDeletion(GetDlgItem(dialog, IDC_PHRASE));
         EnableWordDeletion(GetDlgItem(dialog, IDC_TARGET_QUERY));
         NativeTheme::Apply(dialog);
+        VocabularyStyle::Apply(dialog);
+        StyleHeading(dialog, IDC_LIBRARY_HEADING);
+        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_VOCABULARY_INTRO));
+        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_SELECTED_LABEL));
         StyleHeading(dialog, IDC_ALIAS_HEADING);
         StyleHeading(dialog, IDC_ALIASES_HEADING);
         StyleHeading(dialog, IDC_PINS_HEADING);
@@ -241,6 +296,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
     }
     if (!editor) return FALSE;
     if (message == WM_DESTROY) {
+        ReleaseHeading(dialog, IDC_LIBRARY_HEADING);
         ReleaseHeading(dialog, IDC_ALIAS_HEADING);
         ReleaseHeading(dialog, IDC_ALIASES_HEADING);
         ReleaseHeading(dialog, IDC_PINS_HEADING);
@@ -280,6 +336,8 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         editor->original.clear();
         LoadDraft(dialog, *editor, L"", {});
         SetFocus(GetDlgItem(dialog, IDC_PHRASE));
+    } else if (id == IDC_PHRASE && notification == EN_CHANGE) {
+        Status(dialog, L"Unsaved changes");
     } else if (id == IDC_TARGET_QUERY && notification == EN_CHANGE) {
         editor->target = {};
         FindTargets(dialog, *editor);
@@ -287,6 +345,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         const auto index = SendDlgItemMessageW(dialog, id, LB_GETCURSEL, 0, 0);
         if (index >= 0 && static_cast<size_t>(index) < editor->results.size()) editor->target = editor->results[index].id;
         Preview(dialog, *editor);
+        Status(dialog, L"Unsaved changes");
     } else if (id == IDC_ALIASES && notification == LBN_SELCHANGE) {
         const auto index = SendDlgItemMessageW(dialog, id, LB_GETCURSEL, 0, 0);
         if (index >= 0 && static_cast<size_t>(index) < editor->aliasKeys.size()) {
