@@ -10,6 +10,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - **My vocabulary** i systemstatusmenyen lar deg opprette, endre og slette aliaser. **Save alias** lagrer; **Close** forkaster utkastet. Lagrede aliaser beholdes når brukshistorikken slettes.
 - Vokabularvinduet kan endre størrelse. **Library** samler aliaser og festede favoritter, mens **Alias editor** viser søketreff og valgt emoji med engelsk og norsk navn. **Close** og kombinasjonsredigering ligger nederst i vinduet.
 - **New combination / edit...** i **My vocabulary** lagrer sekvenser av 2–8 emojier med eget navn, for eksempel `launch` → 🚀✨. Velg hudtone per emoji og rekkefølge før **Save**. Lagrede sekvenser påvirkes ikke av global hudtone. Se [kombinasjoner og teststatus](docs/combinations.md).
+- Kombinasjonsredigeringen viser sekvensen som vannrette emoji-fliser. Pilknappene flytter valgt emoji, **Save combination** lagrer, og **Close** nederst lukker vinduet. Bibliotek og treffliste tilpasser seg vindusstørrelsen.
 - `Alt+P` eller **Pin favorite** i treffmenyen fester valgt emoji som favoritt. Opptil ti favoritter vises først uten søketekst; **My vocabulary** lar deg flytte dem opp/ned eller fjerne dem.
 - Velgeren lærer hvilke treff du velger for hele søket. Læring kan slås av med **Learn from searches** i systemstatusmenyen. Nye valg påvirker rangeringen neste gang velgeren åpnes, slik at gjentatt innsetting ikke flytter treffene.
 - Hudtonevariantene deler brukshistorikk. Bytte av hudtone, font og antall rader beholder markeringen.

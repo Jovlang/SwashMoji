@@ -4,6 +4,7 @@
 #include "native_emoji.h"
 #include "native_theme.h"
 #include "vocabulary_style.h"
+#include "combination_style.h"
 #include "picker.h"
 #include <algorithm>
 
@@ -11,6 +12,7 @@ namespace SwashMoji {
 namespace {
 bool EmojiControl(int id) {
     switch (id) {
+    case IDC_COMBO_SAVED:
     case IDC_ALIASES:
     case IDC_PINS:
     case IDC_TARGET_RESULTS:
@@ -28,7 +30,7 @@ bool EmojiControl(int id) {
 bool MeasureEmojiControl(HWND dialog, LPARAM lParam) {
     auto* item = reinterpret_cast<MEASUREITEMSTRUCT*>(lParam);
     if (!EmojiControl(item->CtlID)) return false;
-    const int logicalHeight = item->CtlID == IDC_TARGET_RESULTS ? 48 : item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS ? 36 : item->CtlID == IDC_COMBO_ENTRIES ? 26 : 20;
+    const int logicalHeight = (item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_COMBO_RESULTS) ? 48 : item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS || item->CtlID == IDC_COMBO_SAVED ? 36 : item->CtlID == IDC_COMBO_ENTRIES ? 26 : 20;
     item->itemHeight = MulDiv(logicalHeight, GetDpiForWindow(dialog), 96);
     return true;
 }
@@ -52,7 +54,26 @@ std::wstring DrawItemText(const DRAWITEMSTRUCT& item) {
 bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
     auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
     if (!EmojiControl(item->CtlID)) return false;
-    if (item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS || item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_TARGET_PREVIEW) {
+    if (GetDlgItem(dialog,IDC_COMBO_EDITOR) && (item->CtlID == IDC_COMBO_ENTRIES || item->CtlID == IDC_COMBO_PREVIEW)) {
+        auto r=item->rcItem; FillRect(item->hDC,&r,VocabularyStyle::InputBrush());
+        auto text=DrawItemText(*item);
+        if(item->CtlID==IDC_COMBO_ENTRIES && item->itemID!=static_cast<UINT>(-1)) {
+            auto start=text.find(L". ");
+            if(start!=std::wstring::npos) text=text.substr(start+2);
+            auto end=text.find(L"  "); if(end!=std::wstring::npos) text.resize(end);
+            InflateRect(&r,-VocabularyStyle::Px(dialog,3),-VocabularyStyle::Px(dialog,3));
+            const bool selected=(item->itemState&ODS_SELECTED)!=0;
+            const bool hot=reinterpret_cast<UINT_PTR>(GetPropW(item->hwndItem,L"VocabularyHotRow"))==item->itemID+1;
+            VocabularyStyle::Round(item->hDC,r,NativeTheme::HighContrast() ? GetSysColor(selected?COLOR_HIGHLIGHT:COLOR_WINDOW) :
+                selected ? RGB(48,65,88) : hot ? RGB(53,58,66) : RGB(45,48,54),VocabularyStyle::Px(dialog,8));
+        }
+        auto color=NativeTheme::HighContrast() && (item->itemState&ODS_SELECTED) ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
+        if(text.empty()) NativeEmoji::DrawLine(item->hDC,r,L"Your combination preview",static_cast<float>(VocabularyStyle::Px(dialog,13)),NativeTheme::SecondaryText(),false,false,true);
+        else NativeEmoji::DrawLine(item->hDC,r,text,static_cast<float>(VocabularyStyle::Px(dialog,30)),color,item->CtlID==IDC_COMBO_ENTRIES,!NativeTheme::HighContrast(),true);
+        if(item->itemState&ODS_FOCUS) { InflateRect(&r,-2,-2); DrawFocusRect(item->hDC,&r); }
+        return true;
+    }
+    if (item->CtlID == IDC_COMBO_SAVED || item->CtlID == IDC_COMBO_RESULTS || item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS || item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_TARGET_PREVIEW) {
         auto r = item->rcItem;
         FillRect(item->hDC, &r, VocabularyStyle::InputBrush());
         const bool selected = (item->itemState & ODS_SELECTED) != 0;
@@ -64,7 +85,7 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
         const auto color = selected && NativeTheme::HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
         auto text = DrawItemText(*item);
         r = item->rcItem; InflateRect(&r,-VocabularyStyle::Px(dialog,10),0);
-        if (item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_TARGET_PREVIEW) {
+        if (item->CtlID == IDC_COMBO_RESULTS || item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_TARGET_PREVIEW) {
             const auto split = text.find(L"  ");
             if (split != std::wstring::npos) {
                 auto glyph = r; glyph.right = glyph.left + VocabularyStyle::Px(dialog,44);
@@ -400,7 +421,7 @@ void Sequence(HWND dialog, const Catalog& catalog, const Combination& c, int sel
         payload += entry.payload;
     }
     SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETCURSEL, selection, 0);
-    SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETHORIZONTALEXTENT, 1000, 0);
+    if (!GetDlgItem(dialog,IDC_COMBO_EDITOR)) SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETHORIZONTALEXTENT, 1000, 0);
     SetDlgItemTextW(dialog, IDC_COMBO_PREVIEW, payload.c_str());
 }
 void ComboButtons(HWND dialog, const CombinationEditor& e) {
@@ -443,10 +464,11 @@ void ComboSearch(HWND dialog, CombinationEditor& e) {
     if (e.results.size() > 200) e.results.resize(200);
     SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_RESETCONTENT, 0, 0);
     for (const auto& result : e.results) {
-        const auto label = result.payload + L"  " + result.label;
+        const auto* emoji=e.parent.catalog.FindFamily({result.id.value});
+        const auto label = result.payload + L"  " + result.label + (emoji && !emoji->nbName.empty() ? L" / " + emoji->nbName : L"");
         SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
-    SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_SETHORIZONTALEXTENT, 1000, 0);
+
     SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_SETCURSEL, 0, 0);
     ComboVariants(dialog, e);
 }
@@ -466,6 +488,7 @@ INT_PTR CALLBACK ConfirmCombinationDelete(HWND dialog, UINT message, WPARAM wPar
 }
 INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
     INT_PTR themeResult{};
+    if (CombinationStyle::Message(dialog, message, wParam, lParam, themeResult)) return themeResult;
     if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
     if (message == WM_MEASUREITEM && MeasureEmojiControl(dialog, lParam)) return TRUE;
     if (message == WM_DRAWITEM && DrawEmojiControl(dialog, lParam)) return TRUE;
@@ -477,25 +500,29 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_NAME)); EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_QUERY));
         NativeTheme::Apply(dialog);
         StyleHeading(dialog, IDC_COMBO_SAVED_HEADING);
-        StyleHeading(dialog, IDC_COMBO_NAME_HEADING);
+        StyleHeading(dialog, IDC_COMBO_LIBRARY);
+        StyleHeading(dialog, IDC_COMBO_EDITOR);
         StyleHeading(dialog, IDC_COMBO_ADD_HEADING);
         StyleHeading(dialog, IDC_COMBO_SEQUENCE_HEADING);
         NativeTheme::ApplyEmojiFont(dialog, {IDC_COMBO_QUERY, IDC_COMBO_RESULTS, IDC_COMBO_VARIANTS,
                                              IDC_COMBO_ENTRIES, IDC_COMBO_PREVIEW});
         StylePreview(dialog, IDC_COMBO_PREVIEW);
+        CombinationStyle::Apply(dialog);
+        NativeTheme::MarkMuted(GetDlgItem(dialog,IDC_COMBO_INTRO));
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_SAVED_HINT));
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_NAME_HINT));
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_ADD_HINT));
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_SEQUENCE_HINT));
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_STATUS));
         ComboSaved(dialog, *e); ComboSearch(dialog, *e);
-        ComboStatus(dialog, L"Choose emoji and variants, then Add. Close discards the unfinished draft.");
+        ComboStatus(dialog, L"");
         SetFocus(GetDlgItem(dialog, IDC_COMBO_NAME)); return FALSE;
     }
     if (!e) return FALSE;
     if (message == WM_DESTROY) {
         ReleaseHeading(dialog, IDC_COMBO_SAVED_HEADING);
-        ReleaseHeading(dialog, IDC_COMBO_NAME_HEADING);
+        ReleaseHeading(dialog, IDC_COMBO_LIBRARY);
+        ReleaseHeading(dialog, IDC_COMBO_EDITOR);
         ReleaseHeading(dialog, IDC_COMBO_ADD_HEADING);
         ReleaseHeading(dialog, IDC_COMBO_SEQUENCE_HEADING);
         ReleasePreview(dialog, IDC_COMBO_PREVIEW);
@@ -507,7 +534,8 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
     const int id = LOWORD(wParam), notification = HIWORD(wParam);
     if (id == IDCANCEL) { EndDialog(dialog, IDCANCEL); return TRUE; }
     if (e->loading) return FALSE;
-    if (id == IDC_COMBO_QUERY && notification == EN_CHANGE) ComboSearch(dialog, *e);
+    if (id == IDC_COMBO_NAME && notification == EN_CHANGE) ComboStatus(dialog,L"Unsaved changes");
+    else if (id == IDC_COMBO_QUERY && notification == EN_CHANGE) ComboSearch(dialog, *e);
     else if (id == IDC_COMBO_RESULTS && notification == LBN_SELCHANGE) ComboVariants(dialog, *e);
     else if (id == IDC_COMBO_ENTRIES && notification == LBN_SELCHANGE) ComboButtons(dialog, *e);
     else if (id == IDC_COMBO_NEW || (id == IDC_COMBO_SAVED && notification == LBN_SELCHANGE)) {
@@ -521,7 +549,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, draft.name.c_str());
         e->loading = false;
         Sequence(dialog, e->parent.catalog, draft); ComboSaved(dialog, *e);
-        ComboStatus(dialog, L"Changes apply on Save. Close discards this draft.");
+        ComboStatus(dialog, L"");
         if (id == IDC_COMBO_NEW) SetFocus(GetDlgItem(dialog, IDC_COMBO_NAME));
     } else if (id == IDC_COMBO_ADD) {
         const auto index = SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_GETCURSEL, 0, 0);
@@ -529,6 +557,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         const auto* emoji = e->variants[index];
         e->draft.entries.push_back({emoji->family.value, emoji->glyph});
         Sequence(dialog, e->parent.catalog, e->draft, static_cast<int>(e->draft.entries.size() - 1)); ComboButtons(dialog, *e);
+        ComboStatus(dialog,L"Unsaved changes");
     } else if (id == IDC_COMBO_REMOVE || id == IDC_COMBO_LEFT || id == IDC_COMBO_RIGHT) {
         auto index = static_cast<int>(SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_GETCURSEL, 0, 0));
         if (index < 0 || static_cast<size_t>(index) >= e->draft.entries.size()) return TRUE;
@@ -539,6 +568,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
             std::swap(e->draft.entries[index], e->draft.entries[next]); index = next;
         }
         Sequence(dialog, e->parent.catalog, e->draft, index); ComboButtons(dialog, *e);
+        ComboStatus(dialog,L"Unsaved changes");
     } else if (id == IDOK) {
         e->draft.name = Text(dialog, IDC_COMBO_NAME);
         std::wstring error;

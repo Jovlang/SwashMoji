@@ -29,10 +29,10 @@ int main(int argc, char** argv) {
         const auto close = ControlRect(dialog, IDCANCEL);
         const auto status = ControlRect(dialog, IDC_COMBO_STATUS);
         CHECK(results.bottom < variants.top && variants.bottom < entries.top && entries.bottom < remove.top);
-        CHECK(preview.top + preview.bottom == save.top + save.bottom && save.top == close.top && save.right < close.left);
-        CHECK(Height(remove) == Height(save) && Height(save) == Height(close) && save.bottom < status.top);
+        CHECK(preview.top == save.top && preview.right < save.left && save.bottom < close.top);
+        CHECK(Height(remove) == Height(close) && save.bottom < status.top && status.bottom < close.top);
         wchar_t saveText[32]{}; GetWindowTextW(GetDlgItem(dialog, IDOK), saveText, 32);
-        CHECK(std::wstring(saveText) == L"&Save");
+        CHECK(std::wstring(saveText) == L"&Save combination");
         LOGFONTW resultFont{}, previewFont{};
         CHECK(GetObjectW(reinterpret_cast<HFONT>(SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, WM_GETFONT, 0, 0)),
                          sizeof(resultFont), &resultFont));
@@ -44,6 +44,11 @@ int main(int argc, char** argv) {
         CHECK((GetWindowLongPtrW(GetDlgItem(dialog, IDC_COMBO_RESULTS), GWL_STYLE) & LBS_OWNERDRAWFIXED) != 0);
         CHECK((GetWindowLongPtrW(GetDlgItem(dialog, IDC_COMBO_VARIANTS), GWL_STYLE) & CBS_OWNERDRAWFIXED) != 0);
         CHECK((GetWindowLongPtrW(GetDlgItem(dialog, IDC_COMBO_PREVIEW), GWL_STYLE) & SS_OWNERDRAW) != 0);
+        CHECK((GetWindowLongPtrW(GetDlgItem(dialog, IDC_COMBO_ENTRIES), GWL_STYLE) & LBS_MULTICOLUMN) != 0);
+        CHECK(!IsWindowEnabled(GetDlgItem(dialog,IDC_COMBO_LEFT)) && !IsWindowEnabled(GetDlgItem(dialog,IDC_COMBO_RIGHT)));
+        SetDlgItemTextW(dialog,IDC_COMBO_QUERY,L"zzzznoresultzzzz");
+        CHECK(SendDlgItemMessageW(dialog,IDC_COMBO_RESULTS,LB_GETCOUNT,0,0)==0);
+        CHECK(!IsWindowEnabled(GetDlgItem(dialog,IDC_COMBO_ADD)));
         Command(dialog, IDOK); CHECK(profile.combinations.empty() && saves == 0);
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, L"launch");
         SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"🚀"); Command(dialog, IDC_COMBO_ADD);
@@ -68,6 +73,18 @@ int main(int argc, char** argv) {
         const auto saved = state.draft.payload;
         for (int i = 0; i < 10; ++i) Command(dialog, IDC_COMBO_ADD);
         CHECK(state.draft.entries.size() == 8 && !IsWindowEnabled(GetDlgItem(dialog, IDC_COMBO_ADD)));
+        RECT firstTile{},lastTile{},sequenceClient{};
+        SendDlgItemMessageW(dialog,IDC_COMBO_ENTRIES,LB_GETITEMRECT,0,reinterpret_cast<LPARAM>(&firstTile));
+        SendDlgItemMessageW(dialog,IDC_COMBO_ENTRIES,LB_GETITEMRECT,7,reinterpret_cast<LPARAM>(&lastTile));
+        GetClientRect(GetDlgItem(dialog,IDC_COMBO_ENTRIES),&sequenceClient);
+        CHECK(firstTile.top==lastTile.top && lastTile.left>firstTile.left && lastTile.right<=sequenceClient.right);
+        CHECK(!IsWindowEnabled(GetDlgItem(dialog,IDC_COMBO_RIGHT)));
+        RECT originalWindow{}; GetWindowRect(dialog,&originalWindow);
+        SetWindowPos(dialog,nullptr,0,0,originalWindow.right-originalWindow.left+240,originalWindow.bottom-originalWindow.top+120,SWP_NOMOVE|SWP_NOZORDER);
+        CHECK(ControlRect(dialog,IDC_COMBO_RESULTS).right>results.right);
+        CHECK(Height(ControlRect(dialog,IDC_COMBO_RESULTS))>Height(results));
+        CHECK(ControlRect(dialog,IDC_COMBO_NAME).left==ControlRect(dialog,IDC_COMBO_RESULTS).left);
+        CHECK(ControlRect(dialog,IDC_COMBO_STATUS).bottom<ControlRect(dialog,IDCANCEL).top);
         Command(dialog, IDC_COMBO_REMOVE); CHECK(state.draft.entries.size() == 7);
         CHECK(profile.combinations.at(state.draft.id).payload == saved); // Draft edits have no persistent effect.
         DestroyWindow(dialog); dialog = nullptr;

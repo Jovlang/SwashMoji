@@ -1,5 +1,6 @@
 #pragma once
 #include "native_theme.h"
+#include "native_emoji.h"
 #include "vocabulary_ids.h"
 #include <commctrl.h>
 
@@ -40,15 +41,32 @@ inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LP
         auto result = DefSubclassProc(window, message, wParam, lParam);
         InvalidateRect(window, nullptr, FALSE); InvalidateRect(GetParent(window), nullptr, FALSE); return result;
     }
+    if (message == WM_PAINT && kind == 4 && !NativeTheme::HighContrast()) {
+        PAINTSTRUCT paint{}; auto dc=BeginPaint(window,&paint); RECT r{}; GetClientRect(window,&r);
+        FillRect(dc,&r,PanelBrush());
+        Round(dc,r,Input(),Px(window,8),GetFocus()==window ? RGB(133,180,244) : CLR_INVALID);
+        const auto selected=SendMessageW(window,CB_GETCURSEL,0,0);
+        std::wstring label=L"Choose an emoji";
+        if(selected>=0) {
+            const auto length=SendMessageW(window,CB_GETLBTEXTLEN,selected,0);
+            if(length>=0) { label.resize(static_cast<size_t>(length)+1); SendMessageW(window,CB_GETLBTEXT,selected,reinterpret_cast<LPARAM>(label.data())); label.resize(static_cast<size_t>(length)); }
+        }
+        auto text=r; text.left+=Px(window,8); text.right-=Px(window,32);
+        NativeEmoji::DrawLine(dc,text,label,static_cast<float>(Px(window,14)),selected>=0 ? NativeTheme::Foreground() : NativeTheme::SecondaryText(),false,true,true);
+        auto arrow=r; arrow.left=arrow.right-Px(window,28);
+        NativeEmoji::DrawLine(dc,arrow,L"⌄",static_cast<float>(Px(window,16)),NativeTheme::SecondaryText(),true,false,true);
+        EndPaint(window,&paint); return 0;
+    }
     if (message == WM_PAINT && kind == 1 && !NativeTheme::HighContrast()) {
         PAINTSTRUCT paint{}; auto dc = BeginPaint(window, &paint); RECT r{}; GetClientRect(window, &r);
         FillRect(dc, &r, (GetDlgCtrlID(window)==IDCANCEL || GetDlgCtrlID(window)==IDC_COMBINATIONS) ? NativeTheme::BackgroundBrush() : PanelBrush());
         int id = GetDlgCtrlID(window);
-        bool primary = id == IDC_SAVE_ALIAS;
-        bool quiet = id == IDC_DELETE_ALIAS || id == IDC_UNPIN || id == IDC_COMBINATIONS;
+        bool primary = id == IDC_SAVE_ALIAS || id == IDOK;
+        bool quiet = id == IDC_DELETE_ALIAS || id == IDC_UNPIN || id == IDC_COMBINATIONS || id == IDC_COMBO_DELETE || id == IDC_COMBO_REMOVE;
         bool enabled = IsWindowEnabled(window), hover = GetPropW(window, L"VocabularyHover") != nullptr;
         bool pressed = (SendMessageW(window, BM_GETSTATE, 0, 0) & BST_PUSHED) != 0;
         auto fill = primary ? RGB(133,180,244) : quiet ? (id==IDC_COMBINATIONS ? NativeTheme::Background : Panel()) : RGB(49,53,60);
+        if(id==IDC_COMBO_ADD) fill=RGB(48,70,104);
         if (enabled && hover) fill = primary ? RGB(156,196,250) : RGB(61,66,75);
         if (enabled && pressed) fill = primary ? RGB(105,154,219) : RGB(43,47,54);
         if (!enabled) fill = quiet ? Panel() : RGB(39,42,47);
@@ -56,6 +74,8 @@ inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LP
         wchar_t label[128]{}; GetWindowTextW(window, label, 128);
         if (id == IDC_PIN_UP) wcscpy_s(label, L"↑");
         if (id == IDC_PIN_DOWN) wcscpy_s(label, L"↓");
+        if (id == IDC_COMBO_LEFT) wcscpy_s(label,L"←");
+        if (id == IDC_COMBO_RIGHT) wcscpy_s(label,L"→");
         auto font = reinterpret_cast<HFONT>(SendMessageW(window, WM_GETFONT, 0, 0)); auto old = SelectObject(dc, font);
         SetBkMode(dc, TRANSPARENT);
         SetTextColor(dc, !enabled ? RGB(112,117,125) : primary ? RGB(19,32,51) : quiet && id != IDC_COMBINATIONS ? RGB(228,157,157) : NativeTheme::Foreground());
@@ -64,12 +84,26 @@ inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LP
         SelectObject(dc, old); EndPaint(window, &paint); return 0;
     }
     auto result = DefSubclassProc(window, message, wParam, lParam);
+    if (message == WM_PAINT && kind == 3 && GetDlgCtrlID(window)==IDC_COMBO_QUERY && GetWindowTextLengthW(window)==0) {
+        auto dc=GetDC(window); RECT r{}; GetClientRect(window,&r);
+        FillRect(dc,&r,InputBrush());
+        auto old=SelectObject(dc,reinterpret_cast<HFONT>(SendMessageW(window,WM_GETFONT,0,0)));
+        SetBkMode(dc,TRANSPARENT); SetTextColor(dc,NativeTheme::SecondaryText());
+        DrawTextW(dc,L"Search emoji in English or Norwegian",-1,&r,DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS);
+        SelectObject(dc,old); ReleaseDC(window,dc);
+    }
     if (message == WM_PAINT && kind == 2 && SendMessageW(window, LB_GETCOUNT, 0, 0) == 0) {
         auto dc = GetDC(window); RECT r{}; GetClientRect(window, &r); InflateRect(&r, -Px(window,12), 0);
         auto old = SelectObject(dc, reinterpret_cast<HFONT>(SendMessageW(window, WM_GETFONT,0,0)));
         SetBkMode(dc, TRANSPARENT); SetTextColor(dc, NativeTheme::SecondaryText());
-        const auto text = GetDlgCtrlID(window) == IDC_PINS ? L"No pinned favorites yet" : GetDlgCtrlID(window) == IDC_ALIASES ? L"Your saved phrases appear here" : L"No matching emoji";
-        DrawTextW(dc, text, -1, &r, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
+        const auto text = GetDlgCtrlID(window) == IDC_PINS ? L"No pinned favorites yet" : GetDlgCtrlID(window) == IDC_ALIASES ? L"Your saved phrases appear here" : GetDlgCtrlID(window) == IDC_COMBO_SAVED ? L"No saved combinations yet" : GetDlgCtrlID(window) == IDC_COMBO_ENTRIES ? L"No emoji added yet" : L"No matching emoji";
+        if(GetDlgCtrlID(window)==IDC_COMBO_SAVED) {
+            const int middle=(r.top+r.bottom)/2;
+            r.top=middle-Px(window,22); r.bottom=middle;
+            DrawTextW(dc,text,-1,&r,DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);
+            r.top=middle; r.bottom=middle+Px(window,22);
+            DrawTextW(dc,L"Create one to get started.",-1,&r,DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);
+        } else DrawTextW(dc, text, -1, &r, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
         SelectObject(dc, old); ReleaseDC(window, dc);
     }
     return result;
