@@ -33,6 +33,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - Hold pekeren rolig over et treff i omtrent 350 ms for en forhåndsvisning uten å flytte tastaturmarkeringen.
 - `Alt+I` bytter global hudtone for alle kompatible emojier.
 - Under treffene vises engelsk og norsk navn på valgt variant, atskilt med «·». Manglende navn utelates, og lange navn forkortes visuelt. Søket er uten etikett eller plassholder, og hurtigtastene vises ikke fast i velgeren. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
+- Navn i treff, forhåndsvisning og variantvalg bruker samme språkdata. Like oversettelser vises bare én gang. Engelsk og norsk er fortsatt standard; valg av visningsspråk kommer i neste fase av [I18N-planen](I18N.md).
 - `Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
 - Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
 - Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.

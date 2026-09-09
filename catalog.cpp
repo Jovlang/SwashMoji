@@ -4,6 +4,51 @@
 #include <limits>
 
 namespace SwashMoji {
+const std::vector<LocaleMetadata>& SupportedLocales() {
+    static const std::vector<LocaleMetadata> locales{{"en", L"English", true}, {"nb", L"Norwegian Bokmål", false}};
+    return locales;
+}
+
+void SetEmojiLocalization(Emoji& emoji, const std::string& locale,
+                          const std::wstring& name, const std::wstring& keywords) {
+    if (locale.empty()) return;
+    LocalizedEmojiName value;
+    value.name = name;
+    value.keywords = keywords.empty() ? name : keywords;
+    value.lowerName = NormalizePhrase(name);
+    value.lowerKeywords = NormalizePhrase(value.keywords);
+    value.nameWords = SplitWords(value.lowerName);
+    value.keywordWords = SplitWords(value.lowerKeywords);
+    const auto& locales = SupportedLocales();
+    const auto metadata = std::find_if(locales.begin(), locales.end(), [&](const auto& item) { return locale == item.code; });
+    if (metadata != locales.end() && metadata->englishInflections) {
+        for (const auto& word : value.nameWords) value.normalizedNameWords.push_back(NormalizeSearchWord(word));
+        for (const auto& word : value.keywordWords) value.normalizedKeywordWords.push_back(NormalizeSearchWord(word));
+    }
+    emoji.names[locale] = std::move(value);
+}
+
+std::wstring GetEmojiName(const Emoji& emoji, const std::string& locale) {
+    const auto found = emoji.names.find(locale);
+    return found == emoji.names.end() ? L"" : found->second.name;
+}
+
+std::wstring GetBestEmojiName(const Emoji& emoji, const std::vector<std::string>& preferredLocales) {
+    for (const auto& locale : preferredLocales) {
+        const auto name = GetEmojiName(emoji, locale);
+        if (!name.empty()) return name;
+    }
+    return GetEmojiName(emoji, "en");
+}
+
+std::wstring FormatEmojiDisplayName(const Emoji& emoji, const std::string& primary, const std::string& secondary) {
+    auto name = GetEmojiName(emoji, primary);
+    const auto other = secondary.empty() || secondary == primary ? L"" : GetEmojiName(emoji, secondary);
+    if (name.empty()) name = other;
+    else if (!other.empty() && name != other) name += kEmojiNameSeparator + other;
+    return name.empty() ? GetEmojiName(emoji, "en") : name;
+}
+
 int SkinToneIndex(const std::wstring& glyph) {
     for (size_t index = 0; index + 1 < glyph.size(); ++index) {
         if (glyph[index] == 0xD83C && glyph[index + 1] >= 0xDFFB && glyph[index + 1] <= 0xDFFF) {
@@ -60,22 +105,12 @@ bool Catalog::Load(std::istream& input) {
         const size_t fourth = third == std::string::npos ? std::string::npos : line.find('\t', third + 1);
         Emoji emoji;
         emoji.glyph = Utf8ToWide(line.substr(0, separator));
-        emoji.name = Utf8ToWide(line.substr(separator + 1, second - separator - 1));
-        if (second != std::string::npos) emoji.keywords = Utf8ToWide(line.substr(second + 1, third - second - 1));
-        if (third != std::string::npos) emoji.nbName = Utf8ToWide(line.substr(third + 1, fourth - third - 1));
-        if (fourth != std::string::npos) emoji.nbKeywords = Utf8ToWide(line.substr(fourth + 1));
-        if (emoji.glyph.empty() || emoji.name.empty() || glyphIndex_.count(emoji.glyph)) continue;
-        if (emoji.keywords.empty()) emoji.keywords = emoji.name;
-        emoji.lowerName = NormalizePhrase(emoji.name);
-        emoji.lowerKeywords = NormalizePhrase(emoji.keywords);
-        emoji.lowerNbName = NormalizePhrase(emoji.nbName);
-        emoji.lowerNbKeywords = NormalizePhrase(emoji.nbKeywords);
-        emoji.nbNameWords = SplitWords(emoji.lowerNbName);
-        emoji.nbKeywordWords = SplitWords(emoji.lowerNbKeywords);
-        emoji.nameWords = SplitWords(emoji.lowerName);
-        emoji.keywordWords = SplitWords(emoji.lowerKeywords);
-        for (const auto& word : emoji.nameWords) emoji.normalizedNameWords.push_back(NormalizeSearchWord(word));
-        for (const auto& word : emoji.keywordWords) emoji.normalizedKeywordWords.push_back(NormalizeSearchWord(word));
+        if (emoji.glyph.empty() || glyphIndex_.count(emoji.glyph)) continue;
+        SetEmojiLocalization(emoji, "en", Utf8ToWide(line.substr(separator + 1, second - separator - 1)),
+            second == std::string::npos ? L"" : Utf8ToWide(line.substr(second + 1, third - second - 1)));
+        if (third != std::string::npos) SetEmojiLocalization(emoji, "nb",
+            Utf8ToWide(line.substr(third + 1, fourth - third - 1)),
+            fourth == std::string::npos ? L"" : Utf8ToWide(line.substr(fourth + 1)));
         glyphIndex_.emplace(emoji.glyph, entries_.size());
         entries_.push_back(std::move(emoji));
     }

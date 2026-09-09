@@ -224,7 +224,7 @@ void RefreshList() {
         g_displayVisible.push_back(g_visible[index]);
     for (const auto& result : g_displayVisible) {
         const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
-        const auto label = exact ? exact->name : result.label;
+        const auto label = exact ? FormatEmojiDisplayName(*exact) : result.label;
         SendMessageW(g_list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
     if (!g_displayVisible.empty()) {
@@ -485,11 +485,6 @@ void CenterOnActiveMonitor() {
     SendMessageW(g_edit, EM_SETSEL, 0, -1);
 }
 
-std::wstring EmojiStatusName(const std::wstring& english, const std::wstring& norwegian) {
-    if (english.empty()) return norwegian;
-    if (norwegian.empty()) return english;
-    return english + L" · " + norwegian;
-}
 
 void UpdateStatusLine() {
     if (!g_status) return;
@@ -500,7 +495,7 @@ void UpdateStatusLine() {
         const auto& result = g_displayVisible[index];
         const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
         label = exact && result.id.kind == ResultKind::Emoji
-            ? EmojiStatusName(exact->name, exact->nbName) : result.label;
+            ? FormatEmojiDisplayName(*exact) : result.label;
         if (result.id == g_variantTarget && !g_variantPayload.empty()) label += L" (once)";
     }
     SetWindowTextW(g_status, label.c_str());
@@ -1029,7 +1024,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         HDC dc = GetDC(dialog);
         auto font = SelectObject(dc, reinterpret_cast<HFONT>(SendDlgItemMessageW(dialog, 403, WM_GETFONT, 0, 0)));
         for (const auto* emoji : state->variants) {
-            const auto label = emoji->glyph + L"  " + emoji->name;
+            const auto label = emoji->glyph + L"  " + FormatEmojiDisplayName(*emoji);
             SendDlgItemMessageW(dialog, 403, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
             SIZE extent{};
             GetTextExtentPoint32W(dc, label.c_str(), static_cast<int>(label.size()), &extent);
@@ -1038,7 +1033,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         SelectObject(dc, font); ReleaseDC(dialog, dc);
         SendDlgItemMessageW(dialog, 403, LB_SETHORIZONTALEXTENT, width + 16, 0);
         SendDlgItemMessageW(dialog, 403, LB_SETCURSEL, state->selected, 0);
-        SetDlgItemTextW(dialog, 402, state->variants[state->selected]->name.c_str());
+        SetDlgItemTextW(dialog, 402, FormatEmojiDisplayName(*state->variants[state->selected]).c_str());
         ClampWindow(dialog);
         SetFocus(GetDlgItem(dialog, 403));
         return FALSE;
@@ -1051,7 +1046,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         if (LOWORD(wParam) == 403 && HIWORD(wParam) == LBN_SELCHANGE) {
             const auto selection = SendDlgItemMessageW(dialog, 403, LB_GETCURSEL, 0, 0);
             if (selection >= 0 && static_cast<size_t>(selection) < state->variants.size()) state->selected = selection;
-            SetDlgItemTextW(dialog, 402, state->variants[state->selected]->name.c_str());
+            SetDlgItemTextW(dialog, 402, FormatEmojiDisplayName(*state->variants[state->selected]).c_str());
             InvalidateRect(GetDlgItem(dialog, 401), nullptr, TRUE);
             return TRUE;
         }
@@ -1118,7 +1113,7 @@ LRESULT CALLBACK HoverProc(HWND window, UINT message, WPARAM wParam, LPARAM lPar
             const auto* exact = g_catalog.Find(payload);
             auto old = SelectObject(dc, g_statusFont);
             SetTextColor(dc, GetSysColor(COLOR_INFOTEXT));
-            DrawTextW(dc, exact ? exact->name.c_str() : result.label.c_str(), -1, &label, DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
+            DrawTextW(dc, exact ? FormatEmojiDisplayName(*exact).c_str() : result.label.c_str(), -1, &label, DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
             SelectObject(dc, old);
         }
         EndPaint(window, &paint); return 0;

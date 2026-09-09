@@ -1,5 +1,35 @@
 # Bilingual search and personal vocabulary (M2)
 
+## Locale model (I18N foundation)
+
+The catalog now stores names, keywords and their normalized search caches by
+locale code in `Emoji::names`. `SetEmojiLocalization` builds/replaces one locale's
+data; `SupportedLocales` registers display metadata and English inflection policy.
+The existing three/five-column files are still accepted and map to `en`/`nb`.
+No additional translation dataset or runtime dependency is included.
+
+`GetEmojiName`, `GetBestEmojiName` and `FormatEmojiDisplayName` provide shared
+lookup/fallback and formatting. The formatter accepts primary and optional
+secondary locales, omits missing/duplicate names and falls back to English when
+neither selected translation exists. Current UI callers use English + Norwegian;
+persisted language selection is the next I18N phase. Vocabulary results retain
+their two-line presentation using the shared name separator.
+
+Search accepts an independent locale filter of any length. An empty filter uses
+all available localizations; aliases and curated intents remain available. Exact,
+prefix, token and fuzzy matching iterate locale data. English inflections and the
+existing English-name-length tie-break remain unchanged. Display labels do not
+switch to the query's language.
+
+The I18N foundation passed all 12 registered CTest suites in `build-i18n` on
+2026-09-09, including synthetic third-locale tests and the bilingual corpus.
+Python generator tests were not registered (Python unavailable). One isolated
+vocabulary visual pass confirmed bilingual result/preview rendering. The desktop
+harness completed editor/state checks but Windows denied foreground activation;
+actual insertion was skipped.
+
+## Existing behavior
+
 Search English and Norwegian Bokmål together, without a language switch or runtime
 network access. Exact personal aliases rank first, then exact English/localized
 names or a pasted known emoji, exact curated intent phrases, name prefixes,

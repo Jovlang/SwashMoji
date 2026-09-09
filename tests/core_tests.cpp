@@ -8,6 +8,40 @@
 
 using namespace SwashMoji;
 
+void LocalizedNames() {
+    Emoji emoji;
+    CHECK(FormatEmojiDisplayName(emoji).empty());
+    SetEmojiLocalization(emoji, "en", L"smiling face", L"smiles | happy");
+    CHECK(FormatEmojiDisplayName(emoji, "en", "") == L"smiling face");
+    CHECK(FormatEmojiDisplayName(emoji) == L"smiling face");
+    SetEmojiLocalization(emoji, "nb", L"smiler litt", L"glad");
+    CHECK(FormatEmojiDisplayName(emoji) == L"smiling face · smiler litt");
+    CHECK(FormatEmojiDisplayName(emoji, "fr", "nb") == L"smiler litt");
+    CHECK(FormatEmojiDisplayName(emoji, "fr", "de") == L"smiling face");
+    CHECK(FormatEmojiDisplayName(emoji, "nb", "nb") == L"smiler litt");
+    CHECK(GetBestEmojiName(emoji, {"fr", "nb"}) == L"smiler litt");
+    CHECK(LexicalScore(emoji, SplitWords(L"smiling face")).tier == 8);
+    CHECK(LexicalScore(emoji, SplitWords(L"smiler litt")).tier == 8);
+    SetEmojiLocalization(emoji, "de", L"lächelndes Gesicht", L"fröhlich");
+    CHECK(FormatEmojiDisplayName(emoji, "de", "nb") == L"lächelndes Gesicht · smiler litt");
+    CHECK(LexicalScore(emoji, SplitWords(NormalizePhrase(L"lächelndes Gesicht")), {"de"}).tier == 8);
+    CHECK(LexicalScore(emoji, SplitWords(L"fröhlich"), {"en", "nb", "de"}).tier == 4);
+    CHECK(LexicalScore(emoji, SplitWords(L"fröhlich"), {"en", "nb"}).tier == 0);
+    CHECK(FuzzyScore(emoji, SplitWords(L"fröhlih"), {"de"}) >= 0);
+    CHECK(FuzzyScore(emoji, SplitWords(L"fröhlih"), {"en"}) == -1);
+    SetEmojiLocalization(emoji, "de", L"smiling face");
+    CHECK(FormatEmojiDisplayName(emoji, "en", "de") == L"smiling face");
+    CHECK(LexicalScore(emoji, SplitWords(L"fröhlich"), {"de"}).tier == 0); // caches replaced
+
+    Catalog catalog;
+    std::istringstream input("🙂\tsmiling face\tsmile\tsmiler litt\tglad\n🚀\t\t\trakett\tromskip\n");
+    CHECK(catalog.Load(input));
+    CHECK(GetEmojiName(*catalog.Find(L"🙂"), "nb") == L"smiler litt");
+    CHECK(FormatEmojiDisplayName(*catalog.Find(L"🚀")) == L"rakett");
+    CHECK(Search(catalog, Profile{}, L"smiler litt").front().label == L"smiling face · smiler litt");
+    CHECK(Search(catalog, Profile{}, L"smiler litt", nullptr, {"en"}).empty());
+}
+
 Catalog Fixture() {
     std::istringstream input(
         "😀\tgrinning face\tsmile | happy | joy\n"
@@ -122,7 +156,7 @@ void BundledCatalog(const std::filesystem::path& path) {
 
 int main(int argc, char** argv) {
     try {
-        SearchBehavior(); CatalogIdentity(); Personalization();
+        LocalizedNames(); SearchBehavior(); CatalogIdentity(); Personalization();
         CHECK(argc == 2);
         BundledCatalog(std::filesystem::u8path(argv[1]));
         std::cout << "Catalog, search, stable identity and history checks passed.\n";

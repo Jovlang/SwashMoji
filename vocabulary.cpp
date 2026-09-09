@@ -91,7 +91,7 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
                 NativeEmoji::DrawLine(item->hDC,glyph,text.substr(0,split),static_cast<float>(VocabularyStyle::Px(dialog,item->CtlID==IDC_TARGET_PREVIEW ? 32 : 26)),color,false,!NativeTheme::HighContrast(),true);
                 r.left = glyph.right + VocabularyStyle::Px(dialog,8);
                 text = text.substr(split+2);
-                const auto translation = text.find(L" / ");
+                const auto translation = text.find(kEmojiNameSeparator);
                 const int blockHeight = VocabularyStyle::Px(dialog,40);
                 r.top += std::max(0L,(r.bottom-r.top-blockHeight)/2); r.bottom = r.top+blockHeight;
                 auto title = r; title.bottom = title.top + blockHeight/2;
@@ -198,8 +198,7 @@ void RefreshAliases(HWND dialog, Editor& editor) {
 void Preview(HWND dialog, Editor& editor) {
     SearchResult result;
     const bool valid = ResolveResult(editor.catalog, editor.profile, editor.target, result);
-    const auto* emoji = valid && result.id.kind == ResultKind::Emoji ? editor.catalog.FindFamily({result.id.value}) : nullptr;
-    const auto label = valid ? result.payload + L"  " + result.label + (emoji && !emoji->nbName.empty() ? L" / " + emoji->nbName : L"") :
+    const auto label = valid ? result.payload + L"  " + result.label :
         (editor.target.value.empty() ? L"Choose an emoji above." : L"Unavailable target. Choose a replacement emoji.");
     SetDlgItemTextW(dialog, IDC_TARGET_PREVIEW, label.c_str());
     EnableWindow(GetDlgItem(dialog, IDC_PIN_TARGET), valid);
@@ -220,9 +219,7 @@ void FindTargets(HWND dialog, Editor& editor) {
     const auto previous = font && dc ? SelectObject(dc, font) : nullptr;
     int textWidth = 0;
     for (const auto& result : editor.results) {
-        const auto* emoji = editor.catalog.FindFamily({result.id.value});
-        const auto label = result.payload + L"  " + result.label +
-            (emoji && !emoji->nbName.empty() ? L" / " + emoji->nbName : L"");
+        const auto label = result.payload + L"  " + result.label;
         const auto index = SendMessageW(list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
         if (result.id == editor.target) SendMessageW(list, LB_SETCURSEL, index, 0);
         SIZE extent{};
@@ -245,7 +242,7 @@ void LoadDraft(HWND dialog, Editor& editor, const std::wstring& phrase, const Re
     SetDlgItemTextW(dialog, IDC_PHRASE, phrase.c_str());
     const auto* emoji = target.kind == ResultKind::Emoji ? editor.catalog.FindFamily({target.value}) : nullptr;
     const auto combination = target.kind == ResultKind::Combination ? editor.profile.combinations.find(target.value) : editor.profile.combinations.end();
-    SetDlgItemTextW(dialog, IDC_TARGET_QUERY, emoji ? emoji->name.c_str() :
+    SetDlgItemTextW(dialog, IDC_TARGET_QUERY, emoji ? GetBestEmojiName(*emoji).c_str() :
         combination != editor.profile.combinations.end() ? combination->second.name.c_str() : L"");
     FindTargets(dialog, editor);
     RefreshAliases(dialog, editor);
@@ -397,7 +394,7 @@ void Sequence(HWND dialog, const Catalog& catalog, const Combination& c, int sel
     for (size_t i = 0; i < c.entries.size(); ++i) {
         const auto& entry = c.entries[i];
         const auto* emoji = catalog.Find(entry.payload);
-        const auto label = std::to_wstring(i + 1) + L". " + entry.payload + (emoji ? L"  " + emoji->name : L"");
+        const auto label = std::to_wstring(i + 1) + L". " + entry.payload + (emoji ? L"  " + FormatEmojiDisplayName(*emoji) : L"");
         SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
     SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETCURSEL, selection, 0);
@@ -429,7 +426,7 @@ void ComboVariants(HWND dialog, CombinationEditor& e) {
         e.variants = CatalogVariants(e.parent.catalog, e.results[selected].id);
         int choice = 0;
         for (size_t i = 0; i < e.variants.size(); ++i) {
-            const auto label = e.variants[i]->glyph + L"  " + e.variants[i]->name;
+            const auto label = e.variants[i]->glyph + L"  " + FormatEmojiDisplayName(*e.variants[i]);
             SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
             if (e.variants[i]->glyph == e.results[selected].payload) choice = static_cast<int>(i);
         }
@@ -443,8 +440,7 @@ void ComboSearch(HWND dialog, CombinationEditor& e) {
     if (e.results.size() > 200) e.results.resize(200);
     SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_RESETCONTENT, 0, 0);
     for (const auto& result : e.results) {
-        const auto* emoji=e.parent.catalog.FindFamily({result.id.value});
-        const auto label = result.payload + L"  " + result.label + (emoji && !emoji->nbName.empty() ? L" / " + emoji->nbName : L"");
+        const auto label = result.payload + L"  " + result.label;
         SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
 

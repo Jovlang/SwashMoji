@@ -109,7 +109,7 @@ void Corpus(const Catalog& catalog, const std::filesystem::path& root) {
     // Every exact catalog name must retain its matching family in the exact-name tier.
     for (const auto& emoji : catalog.Entries()) {
         if (SkinToneIndex(emoji.glyph)) continue;
-        for (const auto& name : {emoji.name, emoji.nbName}) {
+        for (const auto& name : {GetEmojiName(emoji, "en"), GetEmojiName(emoji, "nb")}) {
             if (name.empty()) continue;
             const auto results = Search(catalog, Profile{}, name);
             bool exact = false;

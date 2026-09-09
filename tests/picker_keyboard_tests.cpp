@@ -14,7 +14,7 @@ void CheckSelectedStatus() {
     const auto index=SendMessageW(g_list,LB_GETCURSEL,0,0);
     const auto* emoji=g_catalog.Find(g_displayVisible.at(index).payload);
     CHECK(emoji);
-    CHECK(StatusText()==EmojiStatusName(emoji->name,emoji->nbName));
+    CHECK(StatusText()==FormatEmojiDisplayName(*emoji));
 }
 
 struct CombinationInput : InputPlatform {
@@ -82,17 +82,13 @@ int main() {
         g_window = CreateWindowExW(0, type.lpszClassName, L"Keyboard test", WS_POPUP,
             0, 0, kPickerWidth, PickerHeight(), nullptr, nullptr, type.hInstance, nullptr);
         CHECK(g_window);
-        CHECK(EmojiStatusName(L"English",L"Norsk")==L"English · Norsk");
-        CHECK(EmojiStatusName(L"English",L"")==L"English");
-        CHECK(EmojiStatusName(L"",L"Norsk")==L"Norsk");
-        CHECK(EmojiStatusName(L"",L"").empty());
         CHECK((GetWindowLongPtrW(g_status,GWL_STYLE)&SS_ENDELLIPSIS)==SS_ENDELLIPSIS);
         BeginPickerSession();
         SetWindowTextW(g_edit,L"slightly smiling face");
         CHECK(StatusText()==L"slightly smiling face · smiler litt");
         const auto statusStyle=GetWindowLongPtrW(g_status,GWL_STYLE);
         RECT statusBounds{}; GetWindowRect(g_status,&statusBounds);
-        SetWindowTextW(g_status,EmojiStatusName(std::wstring(400,L'E'),std::wstring(400,L'N')).c_str());
+        SetWindowTextW(g_status,(std::wstring(400,L'E') + L" · " + std::wstring(400,L'N')).c_str());
         RECT longBounds{}; GetWindowRect(g_status,&longBounds);
         CHECK(EqualRect(&statusBounds,&longBounds) && GetWindowLongPtrW(g_status,GWL_STYLE)==statusStyle);
         SetWindowTextW(g_edit,L"");

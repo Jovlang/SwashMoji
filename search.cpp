@@ -11,49 +11,56 @@ struct TokenMatch {
     bool fromName{};
 };
 
-TokenMatch ScoreToken(const Emoji& emoji, const std::wstring& token) {
+TokenMatch ScoreToken(const LocalizedEmojiName& emoji, const std::wstring& token) {
     for (const auto& word : emoji.nameWords) if (word == token) return {5, 100, true};
-    for (const auto& word : emoji.nbNameWords) if (word == token) return {5, 100, true};
     const std::wstring normalizedToken = NormalizeSearchWord(token);
     for (const auto& word : emoji.normalizedNameWords) {
         if (word == normalizedToken) return {5, 90, true};
     }
     for (const auto& word : emoji.keywordWords) if (word == token) return {4, 100, false};
-    for (const auto& word : emoji.nbKeywordWords) if (word == token) return {4, 100, false};
     for (const auto& word : emoji.normalizedKeywordWords) {
         if (word == normalizedToken) return {4, 90, false};
     }
     for (const auto& word : emoji.nameWords) if (StartsWith(word, token)) return {3, 80, true};
-    for (const auto& word : emoji.nbNameWords) if (StartsWith(word, token)) return {3, 80, true};
     for (const auto& word : emoji.keywordWords) if (StartsWith(word, token)) return {2, 70, false};
-    for (const auto& word : emoji.nbKeywordWords) if (StartsWith(word, token)) return {2, 70, false};
     if (emoji.lowerName.find(token) != std::wstring::npos) return {2, 60, true};
-    if (emoji.lowerNbName.find(token) != std::wstring::npos) return {2, 60, true};
     if (emoji.lowerKeywords.find(token) != std::wstring::npos) return {1, 50, false};
-    if (emoji.lowerNbKeywords.find(token) != std::wstring::npos) return {1, 50, false};
     return {};
 }
 
-MatchScore LexicalScore(const Emoji& emoji, const std::vector<std::wstring>& queryWords) {
+bool IncludesLocale(const std::vector<std::string>& locales, const std::string& locale) {
+    return locales.empty() || std::find(locales.begin(), locales.end(), locale) != locales.end();
+}
+
+MatchScore LexicalScore(const Emoji& emoji, const std::vector<std::wstring>& queryWords,
+                        const std::vector<std::string>& locales) {
     if (queryWords.empty()) return {};
     const std::wstring phrase = JoinWords(queryWords);
-    if (emoji.lowerName == phrase || emoji.lowerNbName == phrase) return {8, 1000};
-    if (StartsWith(emoji.lowerName, phrase) || StartsWith(emoji.lowerNbName, phrase)) return {6, 800};
-
-    int weakestTier = 5;
-    int detail = 0;
-    int nameMatches = 0;
+    bool prefix = false;
+    for (const auto& item : emoji.names) {
+        if (!IncludesLocale(locales, item.first)) continue;
+        if (item.second.lowerName == phrase) return {8, 1000};
+        prefix = prefix || StartsWith(item.second.lowerName, phrase);
+    }
+    if (prefix) return {6, 800};
+    int weakestTier = 5, detail = 0, nameMatches = 0;
     for (const auto& token : queryWords) {
-        const TokenMatch match = ScoreToken(emoji, token);
+        TokenMatch match;
+        for (const auto& item : emoji.names) {
+            if (!IncludesLocale(locales, item.first)) continue;
+            const auto candidate = ScoreToken(item.second, token);
+            if (candidate.tier > match.tier || (candidate.tier == match.tier && candidate.detail > match.detail)) match = candidate;
+        }
         if (!match.tier) return {};
         weakestTier = std::min(weakestTier, match.tier);
         detail += match.detail;
         if (match.fromName) ++nameMatches;
     }
-    const int extraNameWords = std::max(0, static_cast<int>(emoji.nameWords.size()) - nameMatches);
-    return {weakestTier, detail - std::min(40, extraNameWords * 4)};
+    // Retain the established English-name length tie-break independently of search locales.
+    const auto english = emoji.names.find("en");
+    const int count = english == emoji.names.end() ? 0 : static_cast<int>(english->second.nameWords.size());
+    return {weakestTier, detail - std::min(40, std::max(0, count - nameMatches) * 4)};
 }
-
 size_t EditDistanceAtMost(const std::wstring& left, const std::wstring& right, size_t limit) {
     const size_t lengthDifference = left.size() > right.size()
         ? left.size() - right.size() : right.size() - left.size();
@@ -89,16 +96,19 @@ size_t EditDistanceAtMost(const std::wstring& left, const std::wstring& right, s
     return previous[right.size()];
 }
 
-int FuzzyScore(const Emoji& emoji, const std::vector<std::wstring>& queryWords) {
+int FuzzyScore(const Emoji& emoji, const std::vector<std::wstring>& queryWords,
+               const std::vector<std::string>& locales) {
     if (queryWords.empty()) return -1;
     int score = 0;
     for (const auto& token : queryWords) {
         const size_t limit = token.size() < 4 ? 0 : (token.size() >= 8 ? 2 : 1);
         size_t best = limit + 1;
-        for (const auto& word : emoji.nameWords) best = std::min(best, EditDistanceAtMost(token, word, limit));
-        for (const auto& word : emoji.keywordWords) best = std::min(best, EditDistanceAtMost(token, word, limit));
-        for (const auto& word : emoji.nbNameWords) best = std::min(best, EditDistanceAtMost(token, word, limit));
-        for (const auto& word : emoji.nbKeywordWords) best = std::min(best, EditDistanceAtMost(token, word, limit));
+        for (const auto& item : emoji.names) {
+            if (!IncludesLocale(locales, item.first)) continue;
+            for (const auto& word : item.second.nameWords) best = std::min(best, EditDistanceAtMost(token, word, limit));
+            for (const auto& word : item.second.keywordWords) best = std::min(best, EditDistanceAtMost(token, word, limit));
+        }
+
         if (best > limit) return -1;
         score += 50 - static_cast<int>(best * 15);
     }
@@ -144,21 +154,21 @@ int PopularityPrior(const std::wstring& glyph) {
 }
 
 std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile, const std::wstring& query,
-                                 const RankingPreferences* snapshot) {
+                                 const RankingPreferences* snapshot, const std::vector<std::string>& locales) {
     const auto& preferences = snapshot ? *snapshot : static_cast<const RankingPreferences&>(profile);
     const auto normalized = Lower(query);
     const auto first = normalized.find_first_not_of(L" \t\r\n");
     const auto last = normalized.find_last_not_of(L" \t\r\n");
     const auto glyph = first == std::wstring::npos ? std::wstring{} : normalized.substr(first, last - first + 1);
     if (const auto* exact = catalog.Find(glyph)) {
-        return {{{ResultKind::Emoji, exact->family.value}, exact->name, exact->glyph, {8, 1000}, L"Exact emoji"}};
+        return {{{ResultKind::Emoji, exact->family.value}, FormatEmojiDisplayName(*exact), exact->glyph, {8, 1000}, L"Exact emoji"}};
     }
     const auto words = SplitWords(normalized);
     if (words.empty() && !glyph.empty()) return {};
     std::vector<SearchResult> candidates;
     const auto addEmoji = [&](const Emoji& emoji, MatchScore match, const std::wstring& why, bool exact = false) {
         const auto* variant = exact ? &emoji : catalog.PreferredVariant(emoji, profile.settings.skinTone);
-        candidates.push_back({{ResultKind::Emoji, emoji.family.value}, variant->name, variant->glyph, match, why});
+        candidates.push_back({{ResultKind::Emoji, emoji.family.value}, FormatEmojiDisplayName(*variant), variant->glyph, match, why});
     };
     const auto addPersonal = [&](bool fuzzy) {
         for (const auto& item : profile.combinations) {
@@ -173,7 +183,7 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
             if (match.tier && ResolveResult(catalog, profile, entry.second.target, result)) {
                 if (result.id.kind == ResultKind::Emoji) {
                     const auto* variant = catalog.PreferredVariant(*catalog.FindFamily({result.id.value}), profile.settings.skinTone);
-                    result.payload = variant->glyph; result.label = variant->name;
+                    result.payload = variant->glyph; result.label = FormatEmojiDisplayName(*variant);
                 }
                 result.match = match; result.explanation = L"Alias: " + entry.second.phrase;
                 candidates.push_back(result);
@@ -185,7 +195,7 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
         addPersonal(false);
     } else {
         for (const auto& emoji : catalog.Entries()) {
-            auto match = LexicalScore(emoji, words);
+            auto match = LexicalScore(emoji, words, locales);
             const bool toned = SkinToneIndex(emoji.glyph) != 0;
             if (toned && match.tier != 8) continue;
             std::wstring explanation;
@@ -199,7 +209,7 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
         if (candidates.empty()) {
             for (const auto& emoji : catalog.Entries()) {
                 if (SkinToneIndex(emoji.glyph)) continue;
-                int score = FuzzyScore(emoji, words);
+                int score = FuzzyScore(emoji, words, locales);
                 for (const auto& phrase : emoji.intents) {
                     const auto match = PhraseMatch(phrase, words, false, true);
                     if (match.tier) score = std::max(score, match.detail);
@@ -241,7 +251,7 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
             if (!ResolveResult(catalog, profile, id, result)) continue;
             if (id.kind == ResultKind::Emoji) {
                 const auto* variant = catalog.PreferredVariant(*catalog.FindFamily({id.value}), profile.settings.skinTone);
-                result.payload = variant->glyph; result.label = variant->name;
+                result.payload = variant->glyph; result.label = FormatEmojiDisplayName(*variant);
             }
             result.explanation = L"Favorite"; pinned.push_back(result);
         }

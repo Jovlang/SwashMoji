@@ -252,7 +252,7 @@ void SelectionIntegration() {
     const auto variant = chosenVariant;
     wchar_t label[512]{};
     SendMessageW(g_list, LB_GETTEXT, SendMessageW(g_list, LB_GETCURSEL, 0, 0), reinterpret_cast<LPARAM>(label));
-    CHECK(std::wstring(label) == g_catalog.Find(variant)->name);
+    CHECK(std::wstring(label) == FormatEmojiDisplayName(*g_catalog.Find(variant)));
     StubInput failed; failed.accept = 0;
     InsertSelection(true, &failed);
     CHECK(g_variantPayload == variant && EncodeProfile(g_profile) == profile);
