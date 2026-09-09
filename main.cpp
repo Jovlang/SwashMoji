@@ -485,6 +485,12 @@ void CenterOnActiveMonitor() {
     SendMessageW(g_edit, EM_SETSEL, 0, -1);
 }
 
+std::wstring EmojiStatusName(const std::wstring& english, const std::wstring& norwegian) {
+    if (english.empty()) return norwegian;
+    if (norwegian.empty()) return english;
+    return english + L" · " + norwegian;
+}
+
 void UpdateStatusLine() {
     if (!g_status) return;
     if (!g_storageDiagnostic.empty()) { SetWindowTextW(g_status, g_storageDiagnostic.c_str()); return; }
@@ -493,7 +499,8 @@ void UpdateStatusLine() {
     if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size()) {
         const auto& result = g_displayVisible[index];
         const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
-        label = exact ? exact->name : result.label;
+        label = exact && result.id.kind == ResultKind::Emoji
+            ? EmojiStatusName(exact->name, exact->nbName) : result.label;
         if (result.id == g_variantTarget && !g_variantPayload.empty()) label += L" (once)";
     }
     SetWindowTextW(g_status, label.c_str());
@@ -736,13 +743,14 @@ const wchar_t* HelpText() {
         L"My vocabulary: Create named combinations of 2–8 emoji, with explicit variants and insertion order. Global tone does not change a saved combination.\r\n"
         L"Details (Alt+D or right-click): Larger preview and valid catalog variants. Use once applies to the next successful insertion or copy; Cancel discards the draft. Your global tone stays unchanged.\r\n"
         L"Hover briefly over a result for a preview without changing keyboard selection.\r\n\r\n"
+        L"Selected emoji text shows English and Norwegian names; long names are shortened visually. Combination sequence tiles show the authored order. Save combination saves; Close discards the draft.\r\n\r\n"
         L"Alt+F: Cycle emoji fonts (formerly Tab).\r\nAlt+I: Cycle global skin tone.\r\n"
         L"Alt+1 / 2 / 3: One, two or three rows.\r\nAlt+T: Recent / most-used sorting.\r\n"
         L"Alt+S: Show/hide selected-result text. F1: This guide.\r\n\r\n"
         L"Alt+A: Add alias, or teach an unmatched phrase.\r\nAlt+P: Pin/unpin favorite.\r\n"
         L"My vocabulary in the tray edits aliases and orders up to ten favorites. Save alias saves; Close discards drafts.\r\n\r\n"
         L"Failures preserve your query and choice. Alt+C: Copy instead. Partial input is never automatically retried; check the destination. Direct insertion leaves the clipboard untouched.\r\n\r\n"
-        L"Learning changes future sessions; repeated insertion keeps results stable. Learn from searches toggles query learning. Clear learned history retains aliases, favorites and appearance.\r\n\r\n"
+        L"Learning changes future sessions; repeated insertion keeps results stable. Learn from searches toggles query learning. Clear learned history retains aliases, combinations, favorites and appearance.\r\n\r\n"
         L"Preferences stay locally in %LOCALAPPDATA%\\SwashMoji. No runtime network access.";
 }
 

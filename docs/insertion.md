@@ -74,6 +74,13 @@ clipboard. [Microsoft SetClipboardData documentation](https://learn.microsoft.co
 
 ## Verification
 
+M6 update (2026-09-09): all 13 CTest suites pass, including offline Python and
+integrated package/profile checks. Both separate native harnesses returned 77
+in this session because foreground activation was unavailable. The picker harness
+now checks foreground ownership before calling the real insertion path, retaining
+failures for actual insertion errors after successful setup. See the current
+[release evidence](release-validation.md); earlier passes below are historical.
+
 `.\build.cmd test build-m1` builds the application and runs four CTest suites.
 The insertion suite uses fake platform adapters to verify missing/destroyed
 targets, denied or changed focus, invalid Unicode, full submission, every partial

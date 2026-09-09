@@ -11,6 +11,9 @@ RECT ControlRect(HWND dialog, int id) {
     MapWindowPoints(nullptr, dialog, reinterpret_cast<POINT*>(&value), 2);
     return value;
 }
+std::wstring DraftPayload(const Combination& draft) {
+    std::wstring payload; for (const auto& entry : draft.entries) payload += entry.payload; return payload;
+}
 int Height(const RECT& value) { return value.bottom - value.top; }
 int main(int argc, char** argv) {
     HWND dialog{};
@@ -24,26 +27,22 @@ int main(int argc, char** argv) {
         const auto variants = ControlRect(dialog, IDC_COMBO_VARIANTS);
         const auto entries = ControlRect(dialog, IDC_COMBO_ENTRIES);
         const auto remove = ControlRect(dialog, IDC_COMBO_REMOVE);
-        const auto preview = ControlRect(dialog, IDC_COMBO_PREVIEW);
         const auto save = ControlRect(dialog, IDOK);
         const auto close = ControlRect(dialog, IDCANCEL);
         const auto status = ControlRect(dialog, IDC_COMBO_STATUS);
         CHECK(results.bottom < variants.top && variants.bottom < entries.top && entries.bottom < remove.top);
-        CHECK(preview.top == save.top && preview.right < save.left && save.bottom < close.top);
+        CHECK(remove.bottom < save.top && save.bottom < close.top);
         CHECK(Height(remove) == Height(close) && save.bottom < status.top && status.bottom < close.top);
         wchar_t saveText[32]{}; GetWindowTextW(GetDlgItem(dialog, IDOK), saveText, 32);
         CHECK(std::wstring(saveText) == L"&Save combination");
-        LOGFONTW resultFont{}, previewFont{};
+        LOGFONTW resultFont{};
         CHECK(GetObjectW(reinterpret_cast<HFONT>(SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, WM_GETFONT, 0, 0)),
                          sizeof(resultFont), &resultFont));
-        CHECK(GetObjectW(reinterpret_cast<HFONT>(SendDlgItemMessageW(dialog, IDC_COMBO_PREVIEW, WM_GETFONT, 0, 0)),
-                         sizeof(previewFont), &previewFont));
         CHECK(std::wstring(resultFont.lfFaceName) == L"Segoe UI Emoji");
-        CHECK(std::wstring(previewFont.lfFaceName) == L"Segoe UI Emoji" &&
-              std::abs(previewFont.lfHeight) > std::abs(resultFont.lfHeight));
         CHECK((GetWindowLongPtrW(GetDlgItem(dialog, IDC_COMBO_RESULTS), GWL_STYLE) & LBS_OWNERDRAWFIXED) != 0);
         CHECK((GetWindowLongPtrW(GetDlgItem(dialog, IDC_COMBO_VARIANTS), GWL_STYLE) & CBS_OWNERDRAWFIXED) != 0);
-        CHECK((GetWindowLongPtrW(GetDlgItem(dialog, IDC_COMBO_PREVIEW), GWL_STYLE) & SS_OWNERDRAW) != 0);
+        CHECK(GetDlgItem(dialog, IDC_COMBO_DETAILS_PAYLOAD) == nullptr);
+        CHECK(GetNextDlgTabItem(dialog,GetDlgItem(dialog,IDC_COMBO_REMOVE),FALSE)==GetDlgItem(dialog,IDOK));
         CHECK((GetWindowLongPtrW(GetDlgItem(dialog, IDC_COMBO_ENTRIES), GWL_STYLE) & LBS_MULTICOLUMN) != 0);
         CHECK(!IsWindowEnabled(GetDlgItem(dialog,IDC_COMBO_LEFT)) && !IsWindowEnabled(GetDlgItem(dialog,IDC_COMBO_RIGHT)));
         SetDlgItemTextW(dialog,IDC_COMBO_QUERY,L"zzzznoresultzzzz");
@@ -55,9 +54,9 @@ int main(int argc, char** argv) {
         CHECK(state.draft.entries.size() == 1 && state.draft.entries[0].payload == L"🚀");
         Command(dialog, IDOK); CHECK(profile.combinations.empty());
         SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"✨"); Command(dialog, IDC_COMBO_ADD);
-        CHECK(Text(dialog, IDC_COMBO_PREVIEW) == L"🚀✨");
-        Command(dialog, IDC_COMBO_LEFT); CHECK(Text(dialog, IDC_COMBO_PREVIEW) == L"✨🚀");
-        Command(dialog, IDC_COMBO_RIGHT); CHECK(Text(dialog, IDC_COMBO_PREVIEW) == L"🚀✨");
+        CHECK(DraftPayload(state.draft) == L"🚀✨");
+        Command(dialog, IDC_COMBO_LEFT); CHECK(DraftPayload(state.draft) == L"✨🚀");
+        Command(dialog, IDC_COMBO_RIGHT); CHECK(DraftPayload(state.draft) == L"🚀✨");
         Command(dialog, IDOK); CHECK(saves == 1 && profile.combinations.size() == 1);
         const auto id = state.draft.id;
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, L"lift off"); Command(dialog, IDOK);

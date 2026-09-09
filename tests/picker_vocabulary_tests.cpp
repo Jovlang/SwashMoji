@@ -384,9 +384,21 @@ int wmain(int argc, wchar_t** argv) {
         SetWindowTextW(g_edit, L"rocket");
 
         const auto clipboard = GetClipboardSequenceNumber();
-        CHECK(g_inputPlatform.HeldModifiers().empty());
+        if (!g_inputPlatform.HeldModifiers().empty()) {
+            report("SKIPPED: editor/state checks completed; release modifier keys before real input verification.");
+            DestroyWindow(g_window);
+            return 77;
+        }
         ShowWindow(g_window, SW_SHOW);
         SetForegroundWindow(g_window);
+        // The driver must own foreground, as the real picker would after a user
+        // hotkey/click. A background shell may be denied that permission. Do not
+        // report its synthetic setup as an application insertion regression.
+        if (GetForegroundWindow() != g_window) {
+            report("SKIPPED: editor/state checks completed; desktop did not grant picker foreground activation. Actual insertion remains unverified.");
+            DestroyWindow(g_window);
+            return 77;
+        }
         // Uses the exact destination captured before all editor visits and learning checks.
         InsertSelection();
         CHECK(g_recoveryMessage.empty());

@@ -20,7 +20,7 @@ bool EmojiControl(int id) {
     case IDC_COMBO_RESULTS:
     case IDC_COMBO_VARIANTS:
     case IDC_COMBO_ENTRIES:
-    case IDC_COMBO_PREVIEW:
+    case IDC_COMBO_DETAILS_PAYLOAD:
         return true;
     default:
         return false;
@@ -54,10 +54,10 @@ std::wstring DrawItemText(const DRAWITEMSTRUCT& item) {
 bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
     auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
     if (!EmojiControl(item->CtlID)) return false;
-    if (GetDlgItem(dialog,IDC_COMBO_EDITOR) && (item->CtlID == IDC_COMBO_ENTRIES || item->CtlID == IDC_COMBO_PREVIEW)) {
+    if (GetDlgItem(dialog,IDC_COMBO_EDITOR) && item->CtlID == IDC_COMBO_ENTRIES) {
         auto r=item->rcItem; FillRect(item->hDC,&r,VocabularyStyle::InputBrush());
         auto text=DrawItemText(*item);
-        if(item->CtlID==IDC_COMBO_ENTRIES && item->itemID!=static_cast<UINT>(-1)) {
+        if(item->itemID!=static_cast<UINT>(-1)) {
             auto start=text.find(L". ");
             if(start!=std::wstring::npos) text=text.substr(start+2);
             auto end=text.find(L"  "); if(end!=std::wstring::npos) text.resize(end);
@@ -68,8 +68,7 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
                 selected ? RGB(48,65,88) : hot ? RGB(53,58,66) : RGB(45,48,54),VocabularyStyle::Px(dialog,8));
         }
         auto color=NativeTheme::HighContrast() && (item->itemState&ODS_SELECTED) ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
-        if(text.empty()) NativeEmoji::DrawLine(item->hDC,r,L"Your combination preview",static_cast<float>(VocabularyStyle::Px(dialog,13)),NativeTheme::SecondaryText(),false,false,true);
-        else NativeEmoji::DrawLine(item->hDC,r,text,static_cast<float>(VocabularyStyle::Px(dialog,30)),color,item->CtlID==IDC_COMBO_ENTRIES,!NativeTheme::HighContrast(),true);
+        NativeEmoji::DrawLine(item->hDC,r,text,static_cast<float>(VocabularyStyle::Px(dialog,30)),color,true,!NativeTheme::HighContrast(),true);
         if(item->itemState&ODS_FOCUS) { InflateRect(&r,-2,-2); DrawFocusRect(item->hDC,&r); }
         return true;
     }
@@ -113,7 +112,7 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
     if (selected) DeleteObject(fill);
     const auto color = selected && NativeTheme::HighContrast()
         ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
-    const bool preview = item->CtlID == IDC_COMBO_PREVIEW || item->CtlID == IDC_TARGET_PREVIEW;
+    const bool preview = item->CtlID == IDC_COMBO_DETAILS_PAYLOAD || item->CtlID == IDC_TARGET_PREVIEW;
     const float size = static_cast<float>(MulDiv(preview ? 22 : 14, GetDpiForWindow(dialog), 96));
     NativeEmoji::DrawLine(item->hDC, item->rcItem, DrawItemText(*item), size, color, preview,
                           !NativeTheme::HighContrast());
@@ -136,23 +135,6 @@ void StyleHeading(HWND dialog, int id) {
 void ReleaseHeading(HWND dialog, int id) {
     const auto control = GetDlgItem(dialog, id);
     if (const auto font = RemovePropW(control, L"SwashMojiHeadingFont")) DeleteObject(font);
-}
-
-void StylePreview(HWND dialog, int id) {
-    const auto control = GetDlgItem(dialog, id);
-    const auto base = reinterpret_cast<HFONT>(SendMessageW(control, WM_GETFONT, 0, 0));
-    LOGFONTW description{};
-    if (!base || !GetObjectW(base, sizeof(description), &description)) return;
-    description.lfHeight = MulDiv(description.lfHeight, 15, 10);
-    const auto font = CreateFontIndirectW(&description);
-    if (!font) return;
-    SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
-    SetPropW(control, L"SwashMojiPreviewFont", font);
-}
-
-void ReleasePreview(HWND dialog, int id) {
-    const auto control = GetDlgItem(dialog, id);
-    if (const auto font = RemovePropW(control, L"SwashMojiPreviewFont")) DeleteObject(font);
 }
 
 struct Editor {
@@ -412,17 +394,14 @@ struct CombinationEditor {
 void ComboStatus(HWND dialog, const std::wstring& text) { SetDlgItemTextW(dialog, IDC_COMBO_STATUS, text.c_str()); }
 void Sequence(HWND dialog, const Catalog& catalog, const Combination& c, int selection = 0) {
     SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_RESETCONTENT, 0, 0);
-    std::wstring payload;
     for (size_t i = 0; i < c.entries.size(); ++i) {
         const auto& entry = c.entries[i];
         const auto* emoji = catalog.Find(entry.payload);
         const auto label = std::to_wstring(i + 1) + L". " + entry.payload + (emoji ? L"  " + emoji->name : L"");
         SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
-        payload += entry.payload;
     }
     SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETCURSEL, selection, 0);
     if (!GetDlgItem(dialog,IDC_COMBO_EDITOR)) SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETHORIZONTALEXTENT, 1000, 0);
-    SetDlgItemTextW(dialog, IDC_COMBO_PREVIEW, payload.c_str());
 }
 void ComboButtons(HWND dialog, const CombinationEditor& e) {
     const auto selected = SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_GETCURSEL, 0, 0);
@@ -477,7 +456,7 @@ INT_PTR CALLBACK ConfirmCombinationDelete(HWND dialog, UINT message, WPARAM wPar
     if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
     if (message == WM_INITDIALOG) {
         NativeTheme::Apply(dialog);
-        SetDlgItemTextW(dialog, IDC_COMBO_PREVIEW, reinterpret_cast<const wchar_t*>(lParam));
+        SetDlgItemTextW(dialog, IDC_COMBO_DEPENDENTS, reinterpret_cast<const wchar_t*>(lParam));
         SetFocus(GetDlgItem(dialog, IDCANCEL)); return FALSE;
     }
     if (message == WM_COMMAND && (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)) {
@@ -505,8 +484,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         StyleHeading(dialog, IDC_COMBO_ADD_HEADING);
         StyleHeading(dialog, IDC_COMBO_SEQUENCE_HEADING);
         NativeTheme::ApplyEmojiFont(dialog, {IDC_COMBO_QUERY, IDC_COMBO_RESULTS, IDC_COMBO_VARIANTS,
-                                             IDC_COMBO_ENTRIES, IDC_COMBO_PREVIEW});
-        StylePreview(dialog, IDC_COMBO_PREVIEW);
+                                             IDC_COMBO_ENTRIES});
         CombinationStyle::Apply(dialog);
         NativeTheme::MarkMuted(GetDlgItem(dialog,IDC_COMBO_INTRO));
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_SAVED_HINT));
@@ -525,7 +503,6 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         ReleaseHeading(dialog, IDC_COMBO_EDITOR);
         ReleaseHeading(dialog, IDC_COMBO_ADD_HEADING);
         ReleaseHeading(dialog, IDC_COMBO_SEQUENCE_HEADING);
-        ReleasePreview(dialog, IDC_COMBO_PREVIEW);
         NativeTheme::ReleaseEmojiFont(dialog);
         return FALSE;
     }
@@ -599,10 +576,13 @@ INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam
     if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
     if (message == WM_INITDIALOG) {
         NativeTheme::Apply(dialog);
-        NativeTheme::ApplyEmojiFont(dialog, {IDC_COMBO_PREVIEW, IDC_COMBO_ENTRIES});
+        NativeTheme::ApplyEmojiFont(dialog, {IDC_COMBO_DETAILS_PAYLOAD, IDC_COMBO_ENTRIES});
         const auto& state = *reinterpret_cast<CombinationDetails*>(lParam);
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, state.combination.name.c_str());
         Sequence(dialog, state.catalog, state.combination);
+        std::wstring payload;
+        for (const auto& entry : state.combination.entries) payload += entry.payload;
+        SetDlgItemTextW(dialog, IDC_COMBO_DETAILS_PAYLOAD, payload.c_str());
         return TRUE;
     }
     if (message == WM_MEASUREITEM && MeasureEmojiControl(dialog, lParam)) return TRUE;

@@ -32,7 +32,7 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - **Details** (`Alt+D` eller treffmenyen) viser en større forhåndsvisning og gyldige varianter fra katalogen, også blandede hudtoner. **Use once** velger varianten for neste vellykkede innsetting eller kopiering uten å endre global hudtone. **Cancel** forkaster utkastet.
 - Hold pekeren rolig over et treff i omtrent 350 ms for en forhåndsvisning uten å flytte tastaturmarkeringen.
 - `Alt+I` bytter global hudtone for alle kompatible emojier.
-- Under treffene vises bare navnet på valgt variant. Søket er uten etikett eller plassholder, og hurtigtastene vises ikke fast i velgeren. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
+- Under treffene vises engelsk og norsk navn på valgt variant, atskilt med «·». Manglende navn utelates, og lange navn forkortes visuelt. Søket er uten etikett eller plassholder, og hurtigtastene vises ikke fast i velgeren. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
 - `Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
 - Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
 - Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.
@@ -55,6 +55,11 @@ og [teststatus for M4](docs/selection.md). Den siste native innsettingstesten fi
 avslag på fokusbytte til målprogrammet; M4 er ennå ikke ferdig godkjent.
 
 Bygg og kjør automatiske tester med `.\build.cmd test`.
+M6 har en egen kontroll for utgivelseskandidater: sett `SWASHMOJI_PYTHON` til
+Python 3.10+ og kjør `.\tools\verify_release.ps1`. Den bygger, kjører alle
+testene, måler responstid og lager en portabel ZIP med kontrollsummer i en ny
+undermappe i `build-m6`. Skrivebords- og brukertesting gjenstår; se
+[M6-testprotokollen](docs/release-validation.md).
 Hvis programfilen i `build` allerede kjører, bruk en separat
 byggemappe: `.\build.cmd test build-m1`. Testene bruker egne midlertidige mapper
 i byggemappen og berører ikke din lokale brukshistorikk.

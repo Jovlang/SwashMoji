@@ -1,21 +1,61 @@
 # SwashMoji: implementation plan for all five improvements
 
-Status updated 2026-09-08: M0–M3 implemented. M4 implementation is present with
-desktop acceptance still open; M5 is implemented with interactive acceptance still open; M6 remains planned. See
-[M4 verification and remaining checks](docs/selection.md). Nine CTest suites pass.
-The native harness passes its new Details/grid/DPI checks but its final external
-insertion fails foreground verification. Computer Use was stopped with physical
-Escape before completing picker/Details/favorites visual and accessibility review.
-The M3 implementation and Ctrl+Backspace support are committed and pushed in
-[`4dba231`](https://github.com/Jovlang/SwashMoji/commit/4dba2318e3fab21761f93a0b2a93bf1953eaecf1).
-Automated and controlled native checks pass; the final M3 favorites visual review
-was interrupted when Computer Use was stopped and remains outstanding for M4.
+M6 update 2026-09-09: repeatable release tooling, an integrated package/profile
+smoke suite and populated-profile performance runner are implemented. The fresh
+`build-m6` Release build passes all 13 CTest suites, including offline Python.
+Staged/extracted package data checks pass; both native delivery harnesses skip
+with exit 77 because this session cannot acquire foreground. F1/release notes
+are reconciled with the final UI. See [M6 evidence and remaining acceptance](docs/release-validation.md).
+The older baseline and closeout below are retained as historical context.
+
+Status finalized 2026-09-09: M0–M5 implementation is complete, including the native
+editor redesigns and final narrow UX polish. M6 automated verification and feature
+documentation are substantially delivered; release acceptance remains open for
+the explicitly listed manual, compatibility, packaging and performance checks.
+This is an implementation closeout, not a claim of release readiness.
+
+Latest verified build: `build-ux-polish/SwashMoji.exe`, produced by
+`.\build.cmd test build-ux-polish`. All 11 registered CTest suites passed:
+combination_editor, combinations, picker_keyboard, picker, ranking, core, storage,
+insertion, vocabulary, learning and edit_controls. The optional Python catalog
+generator suite was not registered in this environment; older successful Python
+runs below are historical evidence, not a fresh check of this build.
+
+Delivered UI closeout:
+
+- My vocabulary uses a resizable Library and Alias editor layout, bilingual
+  result rows, a selected-emoji card, explicit empty/focus states, and separate
+  editor and global actions. Native controls and offline operation are retained.
+- Combinations uses the same native styling with a stable library, bilingual
+  results, integrated variant selection and eight horizontal sequence tiles.
+  Sequence now serves as both editor and visual preview. The redundant editor
+  Preview section and its dead styling paths were removed; Save combination and
+  status moved upward. Combination Details retains its full payload display.
+- The picker status shows `English name · Norwegian name` using the selected
+  catalog variant's existing annotations. Missing names omit the separator;
+  combination labels and one-use suffixes are preserved. The existing single-line
+  ellipsis layout and complete accessible text remain in place.
+
+The redesigned editors were built and visually inspected, including populated
+Combinations at normal/maximized sizes and its native variant popup. The final
+preview-removal change was visually verified once. Picker visual verification of
+the bilingual status was interrupted when the user stopped Computer Use with
+physical Escape; its formatting, selection updates and long-text geometry passed
+automated regression tests. No further visual passes are claimed.
+
+The separate picker/vocabulary harness most recently reached external insertion
+and failed with **Could not focus the original app** after its preceding editor
+and layout checks. Prior controlled insertion successes do not close the current
+target-app acceptance gap. See [selection](docs/selection.md),
+[search](docs/search.md), [combinations](docs/combinations.md), and the M6 checklist
+below for remaining work. Implementation and verification below describe the
+current design; dated milestone results are retained as historical records.
 
 M0 delivery: shared catalog/text/search/personalization/storage modules, stable
 family/result identities and picker-session state, version 1 profile migration,
 atomic replacement with backup recovery, and three passing CTest suites via
 `.\build.cmd test build-m0`. Existing insertion and shortcut handlers remain in
-`main.cpp` for their later milestones; the proposed file table below describes
+`main.cpp` at that milestone; the file table below describes
 the eventual module boundaries. Profile v1 deliberately retains exact-glyph
 history at that milestone; M3 subsequently migrated it to family IDs in profile v3.
 The catalog now uses existing valid bases rather than fabricating an empty or
@@ -51,14 +91,14 @@ previous whitespace-delimited word in search and vocabulary text fields, with
 native undo support. Tests cover caret positions, selections, whitespace,
 Norwegian text, emoji sequences, surrogate pairs, repeated deletion and undo.
 
-Latest verification: `.\build.cmd test build-m3-edit` passes all eight CTest
+Historical M3 verification: `.\build.cmd test build-m3-edit` passes all eight CTest
 suites: ranking, core, storage, insertion, vocabulary, learning, edit controls,
 and the offline catalog generator. The corpus passes 111/111 cases, including
 51/51 intent cases. The M3 native picker/editor test separately passed favorite
 editing/persistence, no learning on failures, once-per-success insertion/copy
 learning, stable session order/selection, next-session ranking, and actual
 delivery to the original external Win32 edit without changing the clipboard.
-The latest full build includes Ctrl+Backspace; the broader app/DPI/accessibility
+That M3 build includes Ctrl+Backspace; the broader app/DPI/accessibility
 matrix and interrupted favorites visual review are not claimed as completed.
 
 Product goal: make the intended emoji or saved combination easy to find, predictable to select, and reliable to insert. Preserve the native C++17/Win32 application, portable distribution, offline runtime, and local personalization.
@@ -75,7 +115,7 @@ The five product steps are covered below; implementation starts with shared foun
 | M3 | Implemented; visual follow-up noted above | Step 2: query learning, stable favorites, tone-family history | M2 | Deterministic ranking, migration, and session stability pass |
 | M4 | Implemented; acceptance incomplete | Step 3 plus remaining step 4: selection UI, variants, DPI, accessibility | M1, M3 | Keyboard, pointer, screen-reader, and monitor matrix pass |
 | M5 | Implemented; interactive acceptance open | Step 5: saved combinations | M4 | Create, edit, search, pin, insert, and copy sequences end to end |
-| M6 | Planned | Integrated release verification and documentation | M1–M5 | All automated checks and documented manual acceptance pass |
+| M6 | Partially complete; release acceptance open | Integrated release verification and documentation | M1–M5 | All automated checks and documented manual acceptance pass |
 
 Each milestone should be a reviewable change or a small series of changes. Keep the application buildable throughout. These are dependency boundaries, not calendar estimates; target-app compatibility and accessibility are the largest uncertainty.
 
@@ -83,7 +123,7 @@ Each milestone should be a reviewable change or a small series of changes. Keep 
 
 Extract responsibilities incrementally from `main.cpp`, rather than redesigning the whole application first:
 
-| Proposed files | Responsibility |
+| Implemented files | Responsibility |
 | --- | --- |
 | `catalog.h/.cpp` | Catalog loading, localized annotations, family and variant indexes |
 | `search.h/.cpp`, `ranking.h` | Query normalization, matching, deterministic ordering |
@@ -91,7 +131,7 @@ Extract responsibilities incrementally from `main.cpp`, rather than redesigning 
 | `storage.h/.cpp` | Versioned local data, validation, atomic replacement, migration |
 | `insertion.h/.cpp` | Target capture, insertion attempt state, clipboard operations |
 | `picker.h/.cpp` | Result selection, preview, keyboard navigation, layout |
-| `vocabulary.h/.cpp`, `vocabulary.rc` | Implemented native alias/favorites editor; combinations extend it in M5 |
+| `vocabulary.h/.cpp`, `vocabulary.rc`, `vocabulary_style.h`, `combination_style.h` | Native alias/favorites and combination editors with shared styling |
 | `edit_controls.h/.cpp` | Shared Ctrl+Backspace behavior for native text fields |
 | `main.cpp` | Process lifecycle, tray integration, dispatch and coordination |
 
@@ -171,7 +211,7 @@ Acceptance: repeated `nice` → 👌 choices improve its position within the eli
 Implementation added: named result footer, deliberate-hover preview, native
 Details with catalog-only one-use variants, logical grid mapping, revised click
 and focus shortcuts, PMv2 manifest and scaled picker/help, native named result
-strings and system high-contrast rendering. Nine CTest suites pass. Resume the
+strings and system high-contrast rendering. The latest 11-suite baseline is recorded above. Resume the
 interrupted visual/keyboard review and native foreground-insertion investigation;
 the screen-reader, monitor and target-app acceptance matrix is not yet complete.
 Preserve M3's learning boundaries, family IDs, ordered pins, session snapshots,
@@ -179,13 +219,13 @@ and the delivered Ctrl+Backspace behavior throughout.
 
 ### Visible behavior
 
-- Replace the default font-heavy footer with the selected result's name and the relevant insertion/copy hints. Keep full text accessible when visual space requires ellipsis. Font and tone changes still show short temporary status messages.
-- Show a larger preview after approximately 350 ms of deliberate hover. Keyboard selection updates the label immediately; a Details button/context-menu command opens the same preview explicitly. A hover preview does not steal focus or change the committed keyboard selection.
+- Show a compact single-line selected-name footer: English · Norwegian for emoji, or the saved name for combinations. Omit missing names without a dangling separator and retain full accessible text when ellipsized. Insertion/copy help is available through F1 and recovery controls rather than permanent footer hints. Font and tone changes still show short temporary status messages.
+- Show a larger preview after approximately 350 ms of deliberate hover. Keyboard selection updates the label immediately; Alt+D or the result context menu opens Details explicitly. A hover preview does not steal focus or change the committed keyboard selection.
 - Provide a keyboard-accessible variant chooser inside Details. A one-use variant selection overrides the global tone for that insertion; the global setting remains available through Alt+I.
 - Offer only valid catalog variants, including mixed-tone sequences when available. Show supported full sequences rather than synthesizing arbitrary combinations.
 - Keep empty-state actions, preview controls, and vocabulary editing within a predictable focus order.
 
-### Proposed interaction changes
+### Implemented interactions
 
 | Action | Behavior |
 | --- | --- |
@@ -231,7 +271,7 @@ Acceptance: automated state tests cover missing/destroyed targets, foreground de
 
 ## Step 5 / M5: saved combinations
 
-Add a **New combination** action to My vocabulary. The native editor accepts a name/trigger and a sequence of 2–8 catalog emoji entries, with an ordered preview, Add, Remove, Move left, and Move right controls. Users choose explicit variants for each entry. Saving resolves and stores the exact emitted Unicode payload plus catalog references; global tone changes do not silently rewrite an authored combination.
+Add a **New combination** action to My vocabulary. The native editor accepts a name/trigger and a sequence of 2–8 catalog emoji entries, with horizontal sequence tiles serving as the visual preview, plus Add, Remove, Move left, and Move right controls. Save combination and inline status follow the sequence actions; Close remains in the global footer. Users choose explicit variants for each entry. Saving resolves and stores the exact emitted Unicode payload plus catalog references; global tone changes do not silently rewrite an authored combination.
 
 Use a persistent generated combination ID so renaming does not lose history, pins, or aliases. Keep trigger uniqueness consistent with personal aliases. Reject empty names, invalid sequences, and over-limit entries with inline errors. The editor must remain usable with the keyboard and screen reader.
 
@@ -242,25 +282,65 @@ Deleting a combination removes its dependent pins, aliases, and learned counts i
 Acceptance: `launch` → 🚀✨ and `please` → 🥺🙏 can be created, found, renamed, pinned, inserted, copied, and deleted. Ordering, tone variants, joiners, variation selectors, and surrogate pairs survive save/reload. A failed insertion preserves the entire combination and never automatically sends a second copy.
 
 M5 implementation and verification: see [combinations.md](docs/combinations.md).
-Core, native control and injected picker tests are implemented. The editor was
-visually inspected, but the user stopped Computer Use before the interactive
-walkthrough and populated picker/Details review. M5 desktop acceptance remains open.
+Core, native control and injected picker tests pass. The redesigned editor was
+visually inspected with empty and populated states, eight tiles, resize behavior,
+scrollbars, variant popup and focus indicators. The final duplicate-preview
+removal was also visually verified. Real target delivery, Narrator and the full
+monitor/high-contrast matrix remain release acceptance items under M6.
 
 ## M6: integrated validation and release
 
-Existing baseline: eight passing suites, 111 corpus cases with 51 intent cases,
-and controlled native insertion/editor checks. Extend this coverage for M4/M5;
-do not treat it as completion of the release, application, monitor, accessibility,
-or performance acceptance work below.
+The current automated baseline is the 13-suite `build-m6` run described in
+[release-validation.md](docs/release-validation.md), including the offline Python
+suite and the new integrated package/profile smoke test.
+Implementation completion does not substitute for the remaining release checks.
 
-- Add focused CTest executables for search ranking, family mapping, personalization/storage migration, logical grid navigation, combinations, and insertion state transitions. Use injected platform-operation seams for deterministic failures and a small native target harness for real input delivery. Retain existing ranking tests.
-- Add Python standard-library tests for deterministic catalog generation using local source fixtures, locale fallback, and curated phrase merging. Tests should not depend on a network download.
-- Check a curated corpus of at least 100 queries spanning both languages, intent phrases, exact names, aliases, typos, and deliberate no-match cases. Label acceptable results explicitly. Require all exact-name/alias invariants and target at least 90% top-three coverage on the intent subset, reporting subset sizes.
-- Establish a local baseline before tuning. Proposed budgets on a documented reference machine: p95 warm opening to interactive under 100 ms and query-to-results under 20 ms using the bundled catalog and populated bounded profile. These are targets, not claims about current speed.
-- In scripted user trials, compare time from opening to accepted insertion, intended-result rank, and abandonment against the baseline. Define abandonment as dismissal without insertion/copy; inspect reasons so accidental openings do not distort the conclusion. Use test fixtures and consented trial notes rather than adding production telemetry.
-- Update Norwegian README, F1 help, release notes, and catalog attribution together. Document changed click/Tab behavior, aliases, learning controls, pins, combinations, copy recovery, migration, and known target limitations. Ensure profile reset and recovery instructions are accurate.
-- Build the portable release and verify it from a clean directory with bundled catalog resources, both fresh-profile and migrated-profile runs. Run CTest with failure output and the catalog tests. Record manual app/monitor/accessibility results separately from automated passes.
+Completed:
+
+- [x] Core/native regression suites for ranking, family identities, personalization,
+  storage/migration, grid navigation, combinations and insertion/copy outcomes.
+  Injected failure tests and separate native desktop harnesses are available.
+- [x] Offline Python catalog-generator fixture tests implemented, including
+  deterministic generation, locale fallback and curated phrase handling.
+- [x] Bilingual acceptance corpus implemented: 111 cases, including 51 intent
+  cases, with exact-name/alias invariants. See `docs/search.md` for recorded results.
+- [x] Native editor redesign and narrow UX polish delivered without a new runtime
+  dependency or data-model change. Sequence order, missing-name status fallbacks,
+  keyboard/native selection updates and long-status layout have regression coverage.
+- [x] Norwegian README and feature documentation updated for the delivered behavior.
+  Build and CTest completed; isolated picker, vocabulary and combination previews
+  are available for manual verification.
+
+Remaining release acceptance (do not mark complete without recorded evidence):
+
+- [x] Run the optional Python generator suite against the final build/source state
+  with Python 3.10+ available; retain the offline/no-network test requirements.
+- [ ] Finish the picker bilingual-footer visual check and the remaining Details,
+  favorites and keyboard-only walkthroughs. Respect the user's limit of one visual
+  verification pass for the latest narrow polish task; these are future acceptance
+  work, not authorization to resume desktop automation now.
+- [ ] Investigate the current native harness foreground failure, then verify actual
+  insertion/copy into a controlled Win32 edit, Notepad, browser input/contenteditable,
+  a Chromium desktop editor/chat app and a terminal. Record application versions,
+  focus behavior, payload receipt and elevated-target limitations. Injected success
+  alone does not prove delivery.
+- [ ] Verify 100%, 125%, 150% and 200% scaling, mixed-DPI monitor transitions and
+  screen edges across picker, editors and Details; check high contrast, visible
+  focus, Inspect/Narrator names, selection semantics and recovery announcements.
+- [ ] Measure performance on a documented reference machine. Original targets:
+  p95 warm opening under 100 ms and query-to-results under 20 ms with a populated
+  bounded profile. No measurements establishing these targets are recorded here.
+- [ ] Complete the planned consented user trials comparing opening-to-insertion
+  time, intended-result rank and abandonment against a baseline. Keep production
+  telemetry out of scope; record trial conditions and interpretation.
+- [x] Reconcile F1 help and release notes with the final UI, including removal of
+  obsolete numbered stages, permanent footer hints and the duplicate combination
+  preview. Review attribution, profile reset/recovery and compatibility notes.
+- [ ] Verify the portable executable from a clean directory with `emojis.txt`,
+  `intent_phrases.tsv` and `UNICODE_LICENSE.txt`; exercise fresh and migrated profiles,
+  backup recovery and unsupported-version protection. Record the release artifact
+  and final automated/manual acceptance results separately.
 
 ## Completion definition
 
-All five steps are complete when the full path works together: open over an external text field, find by English/Norwegian intent or personal phrase, choose a stable favorite or learned result, inspect/select a variant or saved combination, insert/copy with predictable focus and recoverable failures, and retain the intended preferences after restart. Release only after each milestone's acceptance gate has evidence; simulated insertion success alone does not establish target-app compatibility.
+Release acceptance for all five implemented steps is complete when the full path is verified together: open over an external text field, find by English/Norwegian intent or personal phrase, choose a stable favorite or learned result, inspect/select a variant or saved combination, insert/copy with predictable focus and recoverable failures, and retain the intended preferences after restart. Release only after each milestone's acceptance gate has evidence; simulated insertion success alone does not establish target-app compatibility.

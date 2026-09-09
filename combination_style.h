@@ -30,8 +30,7 @@ inline void Layout(HWND dialog) {
     place(IDC_COMBO_SEQUENCE_HEADING,228,282+dy,100,12); place(IDC_COMBO_SEQUENCE_HINT,350,282+dy,214+dx,12);
     place(IDC_COMBO_ENTRIES,228,298+dy,336+dx,34);
     place(IDC_COMBO_LEFT,228,340+dy,28,22); place(IDC_COMBO_RIGHT,264,340+dy,28,22); place(IDC_COMBO_REMOVE,504+dx,340+dy,60,22);
-    place(IDC_COMBO_PREVIEW_LABEL,228,372+dy,336+dx,12); place(IDC_COMBO_PREVIEW,228,388+dy,204+dx,24);
-    place(IDOK,440+dx,388+dy,124,24); place(IDC_COMBO_STATUS,228,414+dy,336+dx,16); place(IDCANCEL,488+dx,434+dy,88,22);
+    place(IDOK,440+dx,372+dy,124,24); place(IDC_COMBO_STATUS,228,400+dy,336+dx,16); place(IDCANCEL,488+dx,434+dy,88,22);
     for (int id : {IDC_COMBO_NAME,IDC_COMBO_QUERY}) {
         auto control=GetDlgItem(dialog,id); auto r=Bounds(dialog,id);
         auto dc=GetDC(control); auto old=SelectObject(dc,reinterpret_cast<HFONT>(SendMessageW(control,WM_GETFONT,0,0)));
@@ -39,7 +38,7 @@ inline void Layout(HWND dialog) {
         const int h=metrics.tmHeight+Px(dialog,4);
         MoveWindow(control,r.left,r.top+(r.bottom-r.top-h)/2,r.right-r.left,h,TRUE);
     }
-    for (int id : {IDC_COMBO_SAVED,IDC_COMBO_RESULTS,IDC_COMBO_ENTRIES,IDC_COMBO_PREVIEW}) {
+    for (int id : {IDC_COMBO_SAVED,IDC_COMBO_RESULTS,IDC_COMBO_ENTRIES}) {
         auto control=GetDlgItem(dialog,id); RECT r{}; GetWindowRect(control,&r);
         SetWindowRgn(control,CreateRoundRectRgn(0,0,r.right-r.left+1,r.bottom-r.top+1,Px(dialog,16),Px(dialog,16)),TRUE);
     }
@@ -60,7 +59,7 @@ inline void Paint(HWND dialog) {
         InflateRect(&r,Px(dialog,18),0); r.top-=Px(dialog,16);
         Round(dc,r,Panel(),Px(dialog,12));
     }
-    for (int id : {IDC_COMBO_NAME,IDC_COMBO_QUERY,IDC_COMBO_VARIANTS,IDC_COMBO_SAVED,IDC_COMBO_RESULTS,IDC_COMBO_ENTRIES,IDC_COMBO_PREVIEW}) {
+    for (int id : {IDC_COMBO_NAME,IDC_COMBO_QUERY,IDC_COMBO_VARIANTS,IDC_COMBO_SAVED,IDC_COMBO_RESULTS,IDC_COMBO_ENTRIES}) {
         auto r=Bounds(dialog,id);
         const bool edit=id==IDC_COMBO_NAME||id==IDC_COMBO_QUERY;
         if(edit) InflateRect(&r,Px(dialog,8),Px(dialog,4));

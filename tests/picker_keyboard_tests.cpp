@@ -5,6 +5,18 @@
 #undef wWinMain
 #include "test_support.h"
 
+std::wstring StatusText() {
+    std::wstring text(GetWindowTextLengthW(g_status)+1,L'\0');
+    text.resize(GetWindowTextW(g_status,text.data(),static_cast<int>(text.size())));
+    return text;
+}
+void CheckSelectedStatus() {
+    const auto index=SendMessageW(g_list,LB_GETCURSEL,0,0);
+    const auto* emoji=g_catalog.Find(g_displayVisible.at(index).payload);
+    CHECK(emoji);
+    CHECK(StatusText()==EmojiStatusName(emoji->name,emoji->nbName));
+}
+
 struct CombinationInput : InputPlatform {
     bool valid{true}; size_t accepted{SIZE_MAX}; WindowToken foreground{};
     std::vector<std::vector<KeyEvent>> batches;
@@ -33,6 +45,7 @@ void CombinationInsertion() {
     const ResultId id{ResultKind::Combination, c.id};
     BeginPickerSession(); SetWindowTextW(g_edit, L"launch");
     CHECK(g_displayVisible[0].id == id && g_displayVisible[0].payload == c.payload);
+    CHECK(StatusText()==L"launch");
     const auto before = EncodeProfile(g_profile);
     CombinationInput partial; partial.accepted = 1;
     InsertSelection(true, &partial);
@@ -69,6 +82,20 @@ int main() {
         g_window = CreateWindowExW(0, type.lpszClassName, L"Keyboard test", WS_POPUP,
             0, 0, kPickerWidth, PickerHeight(), nullptr, nullptr, type.hInstance, nullptr);
         CHECK(g_window);
+        CHECK(EmojiStatusName(L"English",L"Norsk")==L"English · Norsk");
+        CHECK(EmojiStatusName(L"English",L"")==L"English");
+        CHECK(EmojiStatusName(L"",L"Norsk")==L"Norsk");
+        CHECK(EmojiStatusName(L"",L"").empty());
+        CHECK((GetWindowLongPtrW(g_status,GWL_STYLE)&SS_ENDELLIPSIS)==SS_ENDELLIPSIS);
+        BeginPickerSession();
+        SetWindowTextW(g_edit,L"slightly smiling face");
+        CHECK(StatusText()==L"slightly smiling face · smiler litt");
+        const auto statusStyle=GetWindowLongPtrW(g_status,GWL_STYLE);
+        RECT statusBounds{}; GetWindowRect(g_status,&statusBounds);
+        SetWindowTextW(g_status,EmojiStatusName(std::wstring(400,L'E'),std::wstring(400,L'N')).c_str());
+        RECT longBounds{}; GetWindowRect(g_status,&longBounds);
+        CHECK(EqualRect(&statusBounds,&longBounds) && GetWindowLongPtrW(g_status,GWL_STYLE)==statusStyle);
+        SetWindowTextW(g_edit,L"");
         for (int rows = 1; rows <= 3; ++rows) {
             g_emojiRows = rows;
             BeginPickerSession();
@@ -77,6 +104,7 @@ int main() {
             // Launch focuses search: no preliminary Tab or Down is required.
             SendMessageW(g_edit, WM_KEYDOWN, VK_RIGHT, 0);
             CHECK(SendMessageW(g_list, LB_GETCURSEL, 0, 0) == rows);
+            CheckSelectedStatus();
             SendMessageW(g_edit, WM_KEYDOWN, VK_LEFT, 0);
             CHECK(SendMessageW(g_list, LB_GETCURSEL, 0, 0) == 0);
             SendMessageW(g_edit, WM_KEYDOWN, VK_DOWN, 0);
@@ -84,6 +112,10 @@ int main() {
             SendMessageW(g_edit, WM_KEYDOWN, VK_UP, 0);
             CHECK(SendMessageW(g_list, LB_GETCURSEL, 0, 0) == 0);
             CHECK(g_session.selected == g_displayVisible[0].id);
+            // Native list selection notification is also used by pointer selection.
+            SendMessageW(g_list,LB_SETCURSEL,1,0);
+            SendMessageW(g_window,WM_COMMAND,MAKEWPARAM(kListId,LBN_SELCHANGE),reinterpret_cast<LPARAM>(g_list));
+            CheckSelectedStatus();
             // After typing, every plain arrow still navigates the same grid.
             SetWindowTextW(g_edit, L"face");
             CHECK(g_visible.size() > 30);

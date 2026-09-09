@@ -1,8 +1,39 @@
-# M4 preview — selection and display changes
+# M6 release candidate — verification and final UI
 
-This build is pending desktop acceptance; see [verification limits](selection.md).
+This build is pending release acceptance; see the [M6 evidence and checklist](release-validation.md).
 
-## Native editor visual polish — 2026-09-08
+## Final editor and picker layout — 2026-09-09
+
+- My vocabulary has a resizable Library and Alias editor, bilingual results and
+  a selected-emoji card. Save alias saves; Close discards an unfinished draft.
+- Combinations uses a saved library, bilingual search, integrated variant selection
+  and eight horizontal sequence tiles. The tiles are the editor preview. Save
+  combination and status sit below sequence actions; Close is in the global footer.
+  The previous numbered stages and separate editor Preview section were removed.
+- The selected-result footer shows English · Norwegian, with missing names omitted
+  and long names visually shortened. It does not show permanent shortcut hints.
+  F1 contains the shortcut guide; Details still displays the complete payload.
+- Release tooling requires the offline Python suite, stages only the executable
+  and three runtime data/license files, verifies ZIP contents and records hashes,
+  source state, machine details and populated-profile latency samples.
+
+## Selection shortcuts
+
+- **Click now inserts and closes.** Use Ctrl+click to keep the picker open.
+- **Tab now moves focus.** Use Alt+F to cycle emoji fonts.
+- Enter inserts; Ctrl+Enter keeps the picker open; Shift+Enter explicitly copies.
+  Direct insertion leaves the clipboard untouched. Failures preserve the query and
+  selection; Alt+C copies instead. Partial input is never automatically retried.
+- Details (Alt+D) offers catalog variants for one successful insertion/copy.
+  Plain arrows and Ctrl+arrows navigate results while search retains focus;
+  Shift+arrows and Home/End edit the query. Ctrl+Backspace retains native undo.
+
+Profiles remain local and offline. Clear learned history retains aliases,
+combinations, pins and appearance. See [backup recovery and deliberate profile
+reset](profile-format.md#migration-and-persistence), [insertion limitations](insertion.md)
+and [Unicode source attribution](search.md#catalog-provenance-and-regeneration).
+
+## Historical native editor polish — 2026-09-08 (superseded layout)
 
 - My vocabulary now separates its two management lists from a compact, aligned
   alias workflow: Phrase, Find emoji, Matching emoji, preview, and actions.
@@ -34,15 +65,13 @@ This build is pending desktop acceptance; see [verification limits](selection.md
   emoji's searchable name instead of its glyph. This avoids the final monochrome
   GDI rendering site while preserving the native edit control, caret and undo.
 
-No product behavior, profile data, interactive control order,
-accessibility implementation, or custom rendering changed in this pass. The
-native layout regression test now checks workflow ordering, action alignment,
-button sizing, status separation, and the Save label. See the verification
-records in [selection.md](selection.md) and [combinations.md](combinations.md).
+These are historical intermediate layouts. The final layout is described above.
+See the verification records in [selection.md](selection.md) and
+[combinations.md](combinations.md).
 
 - **Click now inserts and closes.** Use Ctrl+click to keep the picker open.
 - **Tab now moves focus.** Use Alt+F to cycle emoji fonts.
-- The footer shows the selected emoji name and insertion/copy shortcuts.
+- The footer shows the selected emoji name; F1 documents insertion/copy shortcuts.
 - Short result sets collapse to one row; the picker expands up to the preferred
   row count as more results appear. Arrow navigation follows the displayed layout.
 - Details (Alt+D) previews full catalog variants and offers a one-use selection.

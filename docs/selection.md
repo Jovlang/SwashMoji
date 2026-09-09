@@ -27,7 +27,9 @@ dialog or help first; otherwise it dismisses the picker and requests focus for
 the still-valid original target. Vocabulary uses Save alias as its default button.
 
 The picker shows only an unlabelled, empty search control, the grid, and a
-compact selected-name line. The name identifies the exact variant and retains its
+compact selected-name line: English name · Norwegian name, using the existing
+catalog names for the exact variant. Missing names are omitted without a separator.
+Combination names are unchanged. The line retains its
 full accessible text when ellipsized. Alt+S can hide it. Font/tone messages and
 failure recovery remain available, but there are no permanent shortcut hints or
 Details button. Right-click a result or press Alt+D for Details; F1 retains help.

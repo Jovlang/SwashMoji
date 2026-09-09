@@ -3,7 +3,7 @@
 Open **My vocabulary → New combination / edit...**. Enter a name/trigger, search
 for a catalog emoji, choose its explicit variant, and select **Add**. Build a
 sequence of 2–8 entries with **Remove**, **Move left**, and **Move right**. The
-ordered tiles and preview show insertion order. **Save combination** applies the draft;
+ordered tiles serve as both editor and visual preview. **Save combination** applies the draft;
 **Close**/Escape, **New**, or selecting another saved item discards unsaved edits.
 All controls use native Tab navigation and label mnemonics.
 
@@ -11,7 +11,7 @@ The resizable editor shares the vocabulary window's dark surfaces, rounded
 controls and focus outlines. The library remains a stable width while results
 expand. Sequence tiles retain native list selection and full accessible names;
 the arrow buttons move the selected emoji. Close sits in the global footer.
-Empty lists and the read-only preview have explicit empty states. Validation and
+Empty lists have explicit empty states. Validation and
 save failures remain inline, and draft edits show a muted unsaved status.
 
 For example, save `launch` as 🚀✨ or `please` as 🥺🙏. Search their names in the
