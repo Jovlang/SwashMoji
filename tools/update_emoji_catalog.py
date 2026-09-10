@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the bilingual catalog from pinned CLDR. Runtime stays offline.
+"""Generate the multilingual catalog from pinned CLDR. Runtime stays offline.
 
 First run: --download --cldr-dir build/cldr. Subsequent runs need only the cache.
 Missing locale files are accepted only when CLDR returns HTTP 404.
@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 
 CLDR_TAG = "release-48-2"
 CLDR_BASE = f"https://raw.githubusercontent.com/unicode-org/cldr/{CLDR_TAG}/common"
+EXTRA_LOCALES = ("de", "it")
 
 
 def normalized_glyph(value: str) -> str:
@@ -86,6 +87,7 @@ def generate(catalog: str, sources: Sources) -> str:
     supplemental = sources.read("supplemental/supplementalData.xml")
     en_names, en_keywords = load_locale(sources, "en", supplemental)
     nb_names, nb_keywords = load_locale(sources, "nb", supplemental)
+    translations = {locale: load_locale(sources, locale, supplemental) for locale in EXTRA_LOCALES}
     output = []
     for line in catalog.splitlines():
         if not line.strip():
@@ -101,7 +103,17 @@ def generate(catalog: str, sources: Sources) -> str:
         nb_name = nb_names.get(key, name)
         nb_words = set(nb_keywords.get(key, en_keywords.get(key, ()))) | {nb_name}
         join = lambda values: " | ".join(sorted(values, key=lambda value: (value.casefold(), value)))
-        output.append("\t".join((glyph, name, join(words), nb_name, join(nb_words))))
+        row = [glyph, name, join(words), nb_name, join(nb_words)]
+        # Keep the legacy columns stable; further languages are explicit locale/name/keywords triples.
+        # Missing translations stay missing, so display fallback does not masquerade as translation.
+        for locale, (names, keywords) in translations.items():
+            local_name = names.get(key, "")
+            local_words = set(keywords.get(key, ()))
+            if local_name:
+                local_words.add(local_name)
+            if local_name or local_words:
+                row.extend((locale, local_name, join(local_words)))
+        output.append("\t".join(row))
     return "\n".join(output) + "\n"
 
 
@@ -117,9 +129,9 @@ def main():
     args.catalog.write_text(result, encoding="utf-8", newline="\n")
     args.manifest.parent.mkdir(parents=True, exist_ok=True)
     args.manifest.write_text(json.dumps({"cldr_tag": CLDR_TAG, "base_url": CLDR_BASE,
-        "locale": "nb", "fallback": "en", "files_sha256": sources.hashes},
+        "locales": ["en", "nb", *EXTRA_LOCALES], "fallback": "en", "files_sha256": sources.hashes},
         indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
-    print(f"Generated {len(result.splitlines())} bilingual entries from {CLDR_TAG}.")
+    print(f"Generated {len(result.splitlines())} multilingual entries from {CLDR_TAG}.")
 
 
 if __name__ == "__main__":

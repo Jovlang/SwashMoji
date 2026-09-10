@@ -1,19 +1,25 @@
-# Bilingual search and personal vocabulary (M2)
+# Multilingual search and personal vocabulary
 
-## Locale model (I18N foundation)
+## Locale model and display preferences
 
 The catalog now stores names, keywords and their normalized search caches by
 locale code in `Emoji::names`. `SetEmojiLocalization` builds/replaces one locale's
 data; `SupportedLocales` registers display metadata and English inflection policy.
 The existing three/five-column files are still accepted and map to `en`/`nb`.
-No additional translation dataset or runtime dependency is included.
+The bundled dataset also includes German (`de`) and Italian (`it`) names and
+keywords from the same pinned CLDR release. No runtime dependency is added.
 
 `GetEmojiName`, `GetBestEmojiName` and `FormatEmojiDisplayName` provide shared
 lookup/fallback and formatting. The formatter accepts primary and optional
 secondary locales, omits missing/duplicate names and falls back to English when
-neither selected translation exists. Current UI callers use English + Norwegian;
-persisted language selection is the next I18N phase. Vocabulary results retain
-their two-line presentation using the shared name separator.
+neither selected translation exists. **Languages...** in the tray opens a
+compact native dialog with primary and optional secondary dropdowns. Secondary
+excludes the primary language; selecting its current language as primary clears
+secondary to None. Save applies and persists; Close/Escape discards unapplied
+changes. A save failure keeps the applied preference in memory and offers retry.
+English + Norwegian remains the default for existing users. Picker labels,
+variant details, vocabulary and combination editors share these preferences.
+Vocabulary results retain their two-line presentation using the shared separator.
 
 Search accepts an independent locale filter of any length. An empty filter uses
 all available localizations; aliases and curated intents remain available. Exact,
@@ -28,9 +34,20 @@ vocabulary visual pass confirmed bilingual result/preview rendering. The desktop
 harness completed editor/state checks but Windows denied foreground activation;
 actual insertion was skipped.
 
+Settings verification on 2026-09-10: `build-i18n-settings` passed all 13 CTest
+suites, including the Python catalog generator, profile migration and language
+selection tests. One visual pass confirmed the native language dialog and its
+accessible dropdown/button names. The desktop harness completed editor/state
+checks but actual insertion was skipped because Windows denied foreground focus.
+DPI transitions, high contrast and Narrator remain manual acceptance checks.
+
+`build-i18n-settings\SwashMojiLanguagePreview.exe` opens settings against an
+isolated `vocabulary-preview-profile` beside the executable. Open
+`SwashMojiVocabularyPreview.exe` to inspect vocabulary using those preferences.
+
 ## Existing behavior
 
-Search English and Norwegian Bokmål together, without a language switch or runtime
+Search English, Norwegian Bokmål, German and Italian together, without a language switch or runtime
 network access. Exact personal aliases rank first, then exact English/localized
 names or a pasted known emoji, exact curated intent phrases, name prefixes,
 all-token lexical matches, and finally fuzzy matches only when ordinary results
@@ -65,9 +82,12 @@ be alias targets. Their authored payload is independent of global tone. See
 
 ## Catalog provenance and regeneration
 
-`emojis.txt` has five tab-separated UTF-8 columns: glyph, English name, English
-keywords, Bokmål name, Bokmål keywords. The loader still accepts older three-column
-catalogs. `intent_phrases.tsv` holds 51 separately maintained intent mappings (50 phrases).
+`emojis.txt` starts with five tab-separated UTF-8 columns: glyph, English name,
+English keywords, Bokmål name, Bokmål keywords. Additional languages use repeated
+triples of locale code, localized name and localized keywords. The current catalog
+appends `de` and `it` triples. The loader accepts arbitrary locale triples and older
+three/five-column catalogs; incomplete triples or duplicate locale codes invalidate
+the row. `intent_phrases.tsv` holds 51 separately maintained intent mappings (50 phrases).
 Both files and `UNICODE_LICENSE.txt` must be distributed beside the executable;
 CMake copies them.
 
@@ -78,6 +98,22 @@ supplemental parent-locale data resolves `nb` to `no`; the pinned release has no
 separate `nb` annotation files. Names/keywords inherit from `no` with English
 fallback. Hand-authored annotations override derived annotations. Inheritance
 markers are respected. Existing English keyword vocabulary is preserved.
+
+Italian/German expansion (2026-09-10): both languages provide names for all 3,598
+catalog variants. The original five columns and original source hashes remain
+unchanged. Newly downloaded annotation/derived-annotation hashes and all four
+locale codes are recorded in the manifest. Offline regeneration is byte-identical.
+Missing additional translations are omitted rather than replaced with English in
+the catalog; the shared display formatter supplies fallback when needed.
+
+`.\build.cmd test build-i18n-translations` passes all 13 suites, including the
+111-case existing search corpus, exact-name checks for all four locales, Italian/
+German preference round-trips, generic catalog-triple parsing, and offline Python
+generator fixtures. A vocabulary preview with Italian primary/German secondary
+confirmed translated results and selected-name rendering. The compact-grid test
+uses three fixed aliases so language additions cannot change its result-count
+assumption. English/Norwegian defaults and authored combination payloads remain
+unchanged.
 
 ```powershell
 python tools/update_emoji_catalog.py --download --cldr-dir build/cldr

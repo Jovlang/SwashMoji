@@ -35,6 +35,7 @@ std::wstring GetBestEmojiName(const Emoji& emoji, const std::vector<std::string>
 // Duplicate locales and duplicate translated text are rendered only once.
 std::wstring FormatEmojiDisplayName(const Emoji& emoji, const std::string& primary = "en",
                                     const std::string& secondary = "nb");
+std::wstring FormatEmojiDisplayName(const Emoji& emoji, const DisplayLanguages& languages);
 
 int SkinToneIndex(const std::wstring& glyph);
 bool UsesOnlySkinTone(const std::wstring& glyph, int tone);

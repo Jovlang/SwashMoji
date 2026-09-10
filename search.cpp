@@ -161,14 +161,14 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
     const auto last = normalized.find_last_not_of(L" \t\r\n");
     const auto glyph = first == std::wstring::npos ? std::wstring{} : normalized.substr(first, last - first + 1);
     if (const auto* exact = catalog.Find(glyph)) {
-        return {{{ResultKind::Emoji, exact->family.value}, FormatEmojiDisplayName(*exact), exact->glyph, {8, 1000}, L"Exact emoji"}};
+        return {{{ResultKind::Emoji, exact->family.value}, FormatEmojiDisplayName(*exact, profile.settings.displayLanguages), exact->glyph, {8, 1000}, L"Exact emoji"}};
     }
     const auto words = SplitWords(normalized);
     if (words.empty() && !glyph.empty()) return {};
     std::vector<SearchResult> candidates;
     const auto addEmoji = [&](const Emoji& emoji, MatchScore match, const std::wstring& why, bool exact = false) {
         const auto* variant = exact ? &emoji : catalog.PreferredVariant(emoji, profile.settings.skinTone);
-        candidates.push_back({{ResultKind::Emoji, emoji.family.value}, FormatEmojiDisplayName(*variant), variant->glyph, match, why});
+        candidates.push_back({{ResultKind::Emoji, emoji.family.value}, FormatEmojiDisplayName(*variant, profile.settings.displayLanguages), variant->glyph, match, why});
     };
     const auto addPersonal = [&](bool fuzzy) {
         for (const auto& item : profile.combinations) {
@@ -183,7 +183,7 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
             if (match.tier && ResolveResult(catalog, profile, entry.second.target, result)) {
                 if (result.id.kind == ResultKind::Emoji) {
                     const auto* variant = catalog.PreferredVariant(*catalog.FindFamily({result.id.value}), profile.settings.skinTone);
-                    result.payload = variant->glyph; result.label = FormatEmojiDisplayName(*variant);
+                    result.payload = variant->glyph; result.label = FormatEmojiDisplayName(*variant, profile.settings.displayLanguages);
                 }
                 result.match = match; result.explanation = L"Alias: " + entry.second.phrase;
                 candidates.push_back(result);
@@ -251,7 +251,7 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
             if (!ResolveResult(catalog, profile, id, result)) continue;
             if (id.kind == ResultKind::Emoji) {
                 const auto* variant = catalog.PreferredVariant(*catalog.FindFamily({id.value}), profile.settings.skinTone);
-                result.payload = variant->glyph; result.label = FormatEmojiDisplayName(*variant);
+                result.payload = variant->glyph; result.label = FormatEmojiDisplayName(*variant, profile.settings.displayLanguages);
             }
             result.explanation = L"Favorite"; pinned.push_back(result);
         }

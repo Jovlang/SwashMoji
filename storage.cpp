@@ -14,7 +14,7 @@ namespace {
 constexpr size_t kMaxFileBytes = 4 * 1024 * 1024;
 constexpr size_t kMaxRecordBytes = 16384;
 constexpr size_t kMaxRecords = 50000;
-constexpr unsigned int kVersion = 4;
+constexpr unsigned int kVersion = 5;
 
 bool Number(const std::string& text, unsigned int& result) {
     if (text.empty()) return false;
@@ -162,6 +162,9 @@ std::string EncodeProfile(const Profile& profile) {
         "setting\tskin_tone\t" + std::to_string(profile.settings.skinTone),
         "setting\tlearn_queries\t" + std::to_string(profile.settings.learnQueries)
     };
+    std::string languages = "display_languages";
+    for (const auto& locale : profile.settings.displayLanguages.Locales()) languages += '\t' + locale;
+    records.push_back(languages);
     const auto targetFields = [](const ResultId& id) {
         return std::string(id.kind == ResultKind::Emoji ? "emoji\t" : "combination\t") + Escape(id.value);
     };
@@ -204,6 +207,7 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
     if (firstLine == std::string::npos || bytes.back() != '\n') return result;
     size_t position = firstLine + 1;
     size_t recordCount = 0;
+    bool haveDisplayLanguages = false;
     std::set<std::pair<std::wstring, ResultId>> queryKeys;
     while (position < bytes.size()) {
         const size_t end = bytes.find('\n', position);
@@ -234,6 +238,10 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
         };
         if (valid && fields[0] == "setting") {
             valid = fields.size() == 3 && SetSetting(result.profile.settings, fields[1], fields[2]);
+        } else if (valid && fields[0] == "display_languages" && version >= 5) {
+            valid = !haveDisplayLanguages && (fields.size() == 2 || fields.size() == 3) &&
+                result.profile.settings.displayLanguages.Set(std::vector<std::string>(fields.begin() + 1, fields.end()));
+            if (valid) haveDisplayLanguages = true;
         } else if (valid && fields[0] == "recent") {
             ResultId id;
             valid = version < 3 ? (fields.size() == 2 && Unescape(fields[1], id.value) && !id.value.empty()) :

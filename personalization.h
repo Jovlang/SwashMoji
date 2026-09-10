@@ -21,6 +21,7 @@ struct Settings {
     int emojiRows{1};
     int skinTone{};
     bool learnQueries{true};
+    DisplayLanguages displayLanguages;
 };
 
 struct QueryChoice {

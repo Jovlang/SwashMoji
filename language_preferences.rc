@@ -1,0 +1,17 @@
+#include <windows.h>
+
+600 DIALOGEX 0, 0, 260, 176
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Languages - SwashMoji"
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT "Choose one or two languages for emoji names.", -1, 12, 12, 236, 14
+    LTEXT "&Primary:", -1, 12, 36, 66, 12
+    COMBOBOX 601, 82, 32, 166, 90, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT "&Secondary:", -1, 12, 62, 66, 12
+    COMBOBOX 602, 82, 58, 166, 90, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT "Search continues to use all available languages.", -1, 12, 88, 236, 14
+    LTEXT "", 603, 12, 108, 236, 28
+    DEFPUSHBUTTON "&Save", IDOK, 112, 144, 64, 20
+    PUSHBUTTON "&Close", IDCANCEL, 184, 144, 64, 20
+END

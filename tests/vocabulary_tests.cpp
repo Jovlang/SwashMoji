@@ -109,7 +109,8 @@ void Corpus(const Catalog& catalog, const std::filesystem::path& root) {
     // Every exact catalog name must retain its matching family in the exact-name tier.
     for (const auto& emoji : catalog.Entries()) {
         if (SkinToneIndex(emoji.glyph)) continue;
-        for (const auto& name : {GetEmojiName(emoji, "en"), GetEmojiName(emoji, "nb")}) {
+        for (const auto& locale : SupportedLocales()) {
+            const auto name = GetEmojiName(emoji, locale.code);
             if (name.empty()) continue;
             const auto results = Search(catalog, Profile{}, name);
             bool exact = false;
@@ -119,6 +120,27 @@ void Corpus(const Catalog& catalog, const std::filesystem::path& root) {
     }
 }
 
+void ItalianAndGerman(const Catalog& catalog) {
+    for (const auto& emoji : catalog.Entries()) {
+        CHECK(!GetEmojiName(emoji, "de").empty());
+        CHECK(!GetEmojiName(emoji, "it").empty());
+    }
+    Profile profile;
+    CHECK(profile.settings.displayLanguages.Set({"it", "de"}));
+    for (const auto* query : {L"razzo", L"Rakete"}) {
+        const auto results = Search(catalog, profile, query);
+        CHECK(!results.empty() && results.front().payload == L"🚀");
+        CHECK(results.front().label == L"razzo · Rakete" && results.front().match.tier == 8);
+    }
+    for (const auto* query : {L"Heißgetränk", L"bevanda calda"})
+        CHECK(Search(catalog, profile, query).front().payload == L"☕");
+    const auto results = Search(catalog, profile, L"leicht lächelndes Gesicht");
+    CHECK(results.front().payload == L"🙂");
+    CHECK(results.front().label == L"faccina con sorriso accennato · leicht lächelndes Gesicht");
+    CHECK(profile.settings.displayLanguages.Set({"en"}));
+    CHECK(Search(catalog, profile, L"razzo").front().label == L"rocket");
+}
+
 int main(int argc, char** argv) {
     try {
         CHECK(argc == 2);
@@ -126,7 +148,7 @@ int main(int argc, char** argv) {
         std::ifstream data(root / "emojis.txt", std::ios::binary), intents(root / "intent_phrases.tsv", std::ios::binary);
         Catalog catalog;
         CHECK(catalog.Load(data) && catalog.LoadIntents(intents));
-        Aliases(catalog); NormalizationAndRanking(); Corpus(catalog, root);
+        Aliases(catalog); NormalizationAndRanking(); Corpus(catalog, root); ItalianAndGerman(catalog);
         std::cout << "Bilingual names, Unicode normalization, alias CRUD/restart and ranking invariants passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
 }

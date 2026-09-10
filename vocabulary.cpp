@@ -208,6 +208,7 @@ void Preview(HWND dialog, Editor& editor) {
 void FindTargets(HWND dialog, Editor& editor) {
     Profile neutral;
     neutral.combinations = editor.profile.combinations;
+    neutral.settings.displayLanguages = editor.profile.settings.displayLanguages;
     editor.results = Search(editor.catalog, neutral, Text(dialog, IDC_TARGET_QUERY));
     // Keep the native list responsive; a more specific query exposes the rest.
     if (editor.results.size() > 200) editor.results.resize(200);
@@ -389,12 +390,12 @@ struct CombinationEditor {
     bool loading{};
 };
 void ComboStatus(HWND dialog, const std::wstring& text) { SetDlgItemTextW(dialog, IDC_COMBO_STATUS, text.c_str()); }
-void Sequence(HWND dialog, const Catalog& catalog, const Combination& c, int selection = 0) {
+void Sequence(HWND dialog, const Catalog& catalog, const Combination& c, int selection = 0, const DisplayLanguages& languages = {}) {
     SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_RESETCONTENT, 0, 0);
     for (size_t i = 0; i < c.entries.size(); ++i) {
         const auto& entry = c.entries[i];
         const auto* emoji = catalog.Find(entry.payload);
-        const auto label = std::to_wstring(i + 1) + L". " + entry.payload + (emoji ? L"  " + FormatEmojiDisplayName(*emoji) : L"");
+        const auto label = std::to_wstring(i + 1) + L". " + entry.payload + (emoji ? L"  " + FormatEmojiDisplayName(*emoji, languages) : L"");
         SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
     SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETCURSEL, selection, 0);
@@ -426,7 +427,7 @@ void ComboVariants(HWND dialog, CombinationEditor& e) {
         e.variants = CatalogVariants(e.parent.catalog, e.results[selected].id);
         int choice = 0;
         for (size_t i = 0; i < e.variants.size(); ++i) {
-            const auto label = e.variants[i]->glyph + L"  " + FormatEmojiDisplayName(*e.variants[i]);
+            const auto label = e.variants[i]->glyph + L"  " + FormatEmojiDisplayName(*e.variants[i], e.parent.profile.settings.displayLanguages);
             SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
             if (e.variants[i]->glyph == e.results[selected].payload) choice = static_cast<int>(i);
         }
@@ -436,7 +437,9 @@ void ComboVariants(HWND dialog, CombinationEditor& e) {
     ComboButtons(dialog, e);
 }
 void ComboSearch(HWND dialog, CombinationEditor& e) {
-    e.results = Search(e.parent.catalog, Profile{}, Text(dialog, IDC_COMBO_QUERY));
+    Profile neutral;
+    neutral.settings.displayLanguages = e.parent.profile.settings.displayLanguages;
+    e.results = Search(e.parent.catalog, neutral, Text(dialog, IDC_COMBO_QUERY));
     if (e.results.size() > 200) e.results.resize(200);
     SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_RESETCONTENT, 0, 0);
     for (const auto& result : e.results) {
@@ -521,7 +524,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         e->draft = draft; e->loading = true;
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, draft.name.c_str());
         e->loading = false;
-        Sequence(dialog, e->parent.catalog, draft); ComboSaved(dialog, *e);
+        Sequence(dialog, e->parent.catalog, draft, 0, e->parent.profile.settings.displayLanguages); ComboSaved(dialog, *e);
         ComboStatus(dialog, L"");
         if (id == IDC_COMBO_NEW) SetFocus(GetDlgItem(dialog, IDC_COMBO_NAME));
     } else if (id == IDC_COMBO_ADD) {
@@ -529,7 +532,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         if (index < 0 || static_cast<size_t>(index) >= e->variants.size() || e->draft.entries.size() >= 8) return TRUE;
         const auto* emoji = e->variants[index];
         e->draft.entries.push_back({emoji->family.value, emoji->glyph});
-        Sequence(dialog, e->parent.catalog, e->draft, static_cast<int>(e->draft.entries.size() - 1)); ComboButtons(dialog, *e);
+        Sequence(dialog, e->parent.catalog, e->draft, static_cast<int>(e->draft.entries.size() - 1), e->parent.profile.settings.displayLanguages); ComboButtons(dialog, *e);
         ComboStatus(dialog,L"Unsaved changes");
     } else if (id == IDC_COMBO_REMOVE || id == IDC_COMBO_LEFT || id == IDC_COMBO_RIGHT) {
         auto index = static_cast<int>(SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_GETCURSEL, 0, 0));
@@ -540,7 +543,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
             if (next < 0 || static_cast<size_t>(next) >= e->draft.entries.size()) return TRUE;
             std::swap(e->draft.entries[index], e->draft.entries[next]); index = next;
         }
-        Sequence(dialog, e->parent.catalog, e->draft, index); ComboButtons(dialog, *e);
+        Sequence(dialog, e->parent.catalog, e->draft, index, e->parent.profile.settings.displayLanguages); ComboButtons(dialog, *e);
         ComboStatus(dialog,L"Unsaved changes");
     } else if (id == IDOK) {
         e->draft.name = Text(dialog, IDC_COMBO_NAME);
@@ -556,7 +559,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         if (DialogBoxParamW(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE)),
             MAKEINTRESOURCEW(IDD_COMBO_DELETE), dialog, ConfirmCombinationDelete, reinterpret_cast<LPARAM>(text.c_str())) != IDOK) return TRUE;
         DeleteCombination(e->parent.profile, e->draft.id); e->draft = {};
-        SetDlgItemTextW(dialog, IDC_COMBO_NAME, L""); Sequence(dialog, e->parent.catalog, e->draft); ComboSaved(dialog, *e);
+        SetDlgItemTextW(dialog, IDC_COMBO_NAME, L""); Sequence(dialog, e->parent.catalog, e->draft, 0, e->parent.profile.settings.displayLanguages); ComboSaved(dialog, *e);
         ComboStatus(dialog, e->parent.persist() ? L"Combination deleted." : L"Deletion not saved to disk. Changes remain in this session.");
     } else return FALSE;
     return TRUE;
@@ -566,7 +569,7 @@ void EditCombinations(HWND dialog, Editor& editor) {
     DialogBoxParamW(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE)), MAKEINTRESOURCEW(IDD_COMBINATIONS),
         dialog, CombinationProc, reinterpret_cast<LPARAM>(&state));
 }
-struct CombinationDetails { const Catalog& catalog; const Combination& combination; };
+struct CombinationDetails { const Catalog& catalog; const Combination& combination; const DisplayLanguages& languages; };
 INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
     INT_PTR themeResult{};
     if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
@@ -575,7 +578,7 @@ INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam
         NativeTheme::ApplyEmojiFont(dialog, {IDC_COMBO_DETAILS_PAYLOAD, IDC_COMBO_ENTRIES});
         const auto& state = *reinterpret_cast<CombinationDetails*>(lParam);
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, state.combination.name.c_str());
-        Sequence(dialog, state.catalog, state.combination);
+        Sequence(dialog, state.catalog, state.combination, 0, state.languages);
         std::wstring payload;
         for (const auto& entry : state.combination.entries) payload += entry.payload;
         SetDlgItemTextW(dialog, IDC_COMBO_DETAILS_PAYLOAD, payload.c_str());
@@ -588,8 +591,8 @@ INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam
     return FALSE;
 }
 }
-void ShowCombinationDetails(HWND owner, HINSTANCE instance, const Catalog& catalog, const Combination& combination) {
-    CombinationDetails state{catalog, combination};
+void ShowCombinationDetails(HWND owner, HINSTANCE instance, const Catalog& catalog, const Combination& combination, const DisplayLanguages& languages) {
+    CombinationDetails state{catalog, combination, languages};
     DialogBoxParamW(instance, MAKEINTRESOURCEW(IDD_COMBO_DETAILS), owner, CombinationDetailsProc, reinterpret_cast<LPARAM>(&state));
 }
 

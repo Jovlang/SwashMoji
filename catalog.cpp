@@ -5,8 +5,25 @@
 
 namespace SwashMoji {
 const std::vector<LocaleMetadata>& SupportedLocales() {
-    static const std::vector<LocaleMetadata> locales{{"en", L"English", true}, {"nb", L"Norwegian Bokmål", false}};
+    static const std::vector<LocaleMetadata> locales{
+        {"en", L"English", true}, {"nb", L"Norwegian Bokmål", false},
+        {"de", L"German", false}, {"it", L"Italian", false}};
     return locales;
+}
+
+bool DisplayLanguages::Set(const std::vector<std::string>& locales) {
+    if (locales.empty() || locales.size() > 2 || (locales.size() == 2 && locales[0] == locales[1])) return false;
+    for (const auto& locale : locales) {
+        const auto& supported = SupportedLocales();
+        if (std::none_of(supported.begin(), supported.end(), [&](const auto& entry) { return locale == entry.code; })) return false;
+    }
+    locales_ = locales;
+    return true;
+}
+
+std::wstring FormatEmojiDisplayName(const Emoji& emoji, const DisplayLanguages& languages) {
+    const auto& locales = languages.Locales();
+    return FormatEmojiDisplayName(emoji, locales[0], locales.size() == 2 ? locales[1] : "");
 }
 
 void SetEmojiLocalization(Emoji& emoji, const std::string& locale,
@@ -100,17 +117,31 @@ bool Catalog::Load(std::istream& input) {
         const size_t first = line.find('\t');
         const size_t separator = first == std::string::npos ? line.find(' ') : first;
         if (separator == std::string::npos) continue;
-        const size_t second = first == std::string::npos ? std::string::npos : line.find('\t', first + 1);
-        const size_t third = second == std::string::npos ? std::string::npos : line.find('\t', second + 1);
-        const size_t fourth = third == std::string::npos ? std::string::npos : line.find('\t', third + 1);
+        std::vector<std::string> fields{line.substr(0, separator)};
+        size_t start = separator + 1;
+        for (;;) {
+            const auto end = first == std::string::npos ? std::string::npos : line.find('\t', start);
+            fields.push_back(line.substr(start, end == std::string::npos ? end : end - start));
+            if (end == std::string::npos) break;
+            start = end + 1;
+        }
+        if (fields.size() > 5 && (fields.size() - 5) % 3 != 0) continue;
         Emoji emoji;
-        emoji.glyph = Utf8ToWide(line.substr(0, separator));
+        emoji.glyph = Utf8ToWide(fields[0]);
         if (emoji.glyph.empty() || glyphIndex_.count(emoji.glyph)) continue;
-        SetEmojiLocalization(emoji, "en", Utf8ToWide(line.substr(separator + 1, second - separator - 1)),
-            second == std::string::npos ? L"" : Utf8ToWide(line.substr(second + 1, third - second - 1)));
-        if (third != std::string::npos) SetEmojiLocalization(emoji, "nb",
-            Utf8ToWide(line.substr(third + 1, fourth - third - 1)),
-            fourth == std::string::npos ? L"" : Utf8ToWide(line.substr(fourth + 1)));
+        SetEmojiLocalization(emoji, "en", Utf8ToWide(fields[1]), fields.size() > 2 ? Utf8ToWide(fields[2]) : L"");
+        if (fields.size() > 3) SetEmojiLocalization(emoji, "nb", Utf8ToWide(fields[3]),
+            fields.size() > 4 ? Utf8ToWide(fields[4]) : L"");
+        bool valid = true;
+        for (size_t i = 5; i < fields.size(); i += 3) {
+            const auto& locale = fields[i];
+            if (locale.empty() || locale.size() > 32 || emoji.names.count(locale) ||
+                !std::all_of(locale.begin(), locale.end(), [](char c) {
+                    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-';
+                })) { valid = false; break; }
+            SetEmojiLocalization(emoji, locale, Utf8ToWide(fields[i + 1]), Utf8ToWide(fields[i + 2]));
+        }
+        if (!valid) continue;
         glyphIndex_.emplace(emoji.glyph, entries_.size());
         entries_.push_back(std::move(emoji));
     }

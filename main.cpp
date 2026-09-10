@@ -18,6 +18,7 @@
 #include "edit_controls.h"
 #include "native_emoji.h"
 #include "native_theme.h"
+#include "language_preferences.h"
 #include "picker.h"
 #include <oleacc.h>
 #include <windowsx.h>
@@ -55,6 +56,7 @@ constexpr UINT_PTR kHoverTimerId = 2;
 constexpr int kVocabularyId = 205;
 constexpr int kPinId = 206;
 constexpr int kLearnQueriesId = 207;
+constexpr int kDisplayLanguagesId = 208;
 constexpr int kRecoveryHeight = 68;
 constexpr int kExitId = 200;
 constexpr int kPositionAboveTextFieldId = 201;
@@ -224,7 +226,7 @@ void RefreshList() {
         g_displayVisible.push_back(g_visible[index]);
     for (const auto& result : g_displayVisible) {
         const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
-        const auto label = exact ? FormatEmojiDisplayName(*exact) : result.label;
+        const auto label = exact ? FormatEmojiDisplayName(*exact, g_profile.settings.displayLanguages) : result.label;
         SendMessageW(g_list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
     if (!g_displayVisible.empty()) {
@@ -495,7 +497,7 @@ void UpdateStatusLine() {
         const auto& result = g_displayVisible[index];
         const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
         label = exact && result.id.kind == ResultKind::Emoji
-            ? FormatEmojiDisplayName(*exact) : result.label;
+            ? FormatEmojiDisplayName(*exact, g_profile.settings.displayLanguages) : result.label;
         if (result.id == g_variantTarget && !g_variantPayload.empty()) label += L" (once)";
     }
     SetWindowTextW(g_status, label.c_str());
@@ -727,7 +729,7 @@ void ConfirmAndClearUsageHistory() {
 
 const wchar_t* HelpText() {
     return L"SwashMoji — keyboard guide\r\n\r\n"
-        L"Alt+E: Open from any app. Search English or Norwegian names, phrases and aliases.\r\n\r\n"
+        L"Alt+E: Open from any app. Search English, Norwegian, German or Italian names, phrases and aliases.\r\n\r\n"
         L"Click or Enter: Insert and close.\r\nCtrl+click or Ctrl+Enter: Insert and keep open.\r\n"
         L"Shift+Enter: Copy and close after success.\r\n"
         L"Tab / Shift+Tab: Move between search, results and available recovery actions.\r\n"
@@ -738,7 +740,7 @@ const wchar_t* HelpText() {
         L"My vocabulary: Create named combinations of 2–8 emoji, with explicit variants and insertion order. Global tone does not change a saved combination.\r\n"
         L"Details (Alt+D or right-click): Larger preview and valid catalog variants. Use once applies to the next successful insertion or copy; Cancel discards the draft. Your global tone stays unchanged.\r\n"
         L"Hover briefly over a result for a preview without changing keyboard selection.\r\n\r\n"
-        L"Selected emoji text shows English and Norwegian names; long names are shortened visually. Combination sequence tiles show the authored order. Save combination saves; Close discards the draft.\r\n\r\n"
+        L"Languages in the tray selects one or two languages for emoji names. Search still uses all available languages. Long names are shortened visually. Combination sequence tiles show the authored order. Save combination saves; Close discards the draft.\r\n\r\n"
         L"Alt+F: Cycle emoji fonts (formerly Tab).\r\nAlt+I: Cycle global skin tone.\r\n"
         L"Alt+1 / 2 / 3: One, two or three rows.\r\nAlt+T: Recent / most-used sorting.\r\n"
         L"Alt+S: Show/hide selected-result text. F1: This guide.\r\n\r\n"
@@ -831,6 +833,7 @@ void ShowTrayMenu() {
                        g_sortByUsage ? kSortMostUsedId : kSortRecentId, MF_BYCOMMAND);
     AppendMenuW(menu, MF_STRING, kClearUsageHistoryId, L"Clear learned history...");
     AppendMenuW(menu, MF_STRING, kVocabularyId, L"My vocabulary...");
+    AppendMenuW(menu, MF_STRING, kDisplayLanguagesId, L"Languages...");
     AppendMenuW(menu, MF_STRING | (g_profile.settings.learnQueries ? MF_CHECKED : MF_UNCHECKED),
         kLearnQueriesId, L"Learn from searches");
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
@@ -854,6 +857,23 @@ void ShowTrayMenu() {
         ConfirmAndClearUsageHistory();
     } else if (command == kVocabularyId) {
         OpenVocabulary(false);
+    } else if (command == kDisplayLanguagesId) {
+        if (g_vocabularyOpen || g_detailsOpen) return;
+        CloseHover();
+        const auto selected = g_session.selected;
+        g_vocabularyOpen = true;
+        const bool opened = ShowLanguagePreferences(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)),
+            g_profile, [] { SaveProfile(); return !g_profileUnsaved; });
+        g_vocabularyOpen = false;
+        if (!opened) MessageBoxW(g_window, L"Could not open language preferences.", L"SwashMoji", MB_ICONERROR);
+        RefreshList();
+        for (size_t i = 0; i < g_displayVisible.size(); ++i) if (g_displayVisible[i].id == selected) {
+            SendMessageW(g_list, LB_SETCURSEL, i, 0);
+            g_session.selected = selected;
+            break;
+        }
+        UpdateStatusLine();
+        if (IsWindowVisible(g_window)) SetFocus(g_edit);
     } else if (command == kLearnQueriesId) {
         g_profile.settings.learnQueries = !g_profile.settings.learnQueries;
         SaveProfile();
@@ -1024,7 +1044,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         HDC dc = GetDC(dialog);
         auto font = SelectObject(dc, reinterpret_cast<HFONT>(SendDlgItemMessageW(dialog, 403, WM_GETFONT, 0, 0)));
         for (const auto* emoji : state->variants) {
-            const auto label = emoji->glyph + L"  " + FormatEmojiDisplayName(*emoji);
+            const auto label = emoji->glyph + L"  " + FormatEmojiDisplayName(*emoji, g_profile.settings.displayLanguages);
             SendDlgItemMessageW(dialog, 403, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
             SIZE extent{};
             GetTextExtentPoint32W(dc, label.c_str(), static_cast<int>(label.size()), &extent);
@@ -1033,7 +1053,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         SelectObject(dc, font); ReleaseDC(dialog, dc);
         SendDlgItemMessageW(dialog, 403, LB_SETHORIZONTALEXTENT, width + 16, 0);
         SendDlgItemMessageW(dialog, 403, LB_SETCURSEL, state->selected, 0);
-        SetDlgItemTextW(dialog, 402, FormatEmojiDisplayName(*state->variants[state->selected]).c_str());
+        SetDlgItemTextW(dialog, 402, FormatEmojiDisplayName(*state->variants[state->selected], g_profile.settings.displayLanguages).c_str());
         ClampWindow(dialog);
         SetFocus(GetDlgItem(dialog, 403));
         return FALSE;
@@ -1046,7 +1066,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         if (LOWORD(wParam) == 403 && HIWORD(wParam) == LBN_SELCHANGE) {
             const auto selection = SendDlgItemMessageW(dialog, 403, LB_GETCURSEL, 0, 0);
             if (selection >= 0 && static_cast<size_t>(selection) < state->variants.size()) state->selected = selection;
-            SetDlgItemTextW(dialog, 402, FormatEmojiDisplayName(*state->variants[state->selected]).c_str());
+            SetDlgItemTextW(dialog, 402, FormatEmojiDisplayName(*state->variants[state->selected], g_profile.settings.displayLanguages).c_str());
             InvalidateRect(GetDlgItem(dialog, 401), nullptr, TRUE);
             return TRUE;
         }
@@ -1071,7 +1091,7 @@ void OpenDetails() {
         if (found == g_profile.combinations.end()) return;
         CloseHover(); CancelPendingReturn();
         HWND focus = GetFocus(); g_detailsOpen = true;
-        ShowCombinationDetails(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), g_catalog, found->second);
+        ShowCombinationDetails(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), g_catalog, found->second, g_profile.settings.displayLanguages);
         g_detailsOpen = false;
         if (IsWindowVisible(g_window)) SetFocus(IsWindow(focus) ? focus : g_list);
         return;
@@ -1113,7 +1133,7 @@ LRESULT CALLBACK HoverProc(HWND window, UINT message, WPARAM wParam, LPARAM lPar
             const auto* exact = g_catalog.Find(payload);
             auto old = SelectObject(dc, g_statusFont);
             SetTextColor(dc, GetSysColor(COLOR_INFOTEXT));
-            DrawTextW(dc, exact ? FormatEmojiDisplayName(*exact).c_str() : result.label.c_str(), -1, &label, DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
+            DrawTextW(dc, exact ? FormatEmojiDisplayName(*exact, g_profile.settings.displayLanguages).c_str() : result.label.c_str(), -1, &label, DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
             SelectObject(dc, old);
         }
         EndPaint(window, &paint); return 0;

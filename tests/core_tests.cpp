@@ -40,6 +40,17 @@ void LocalizedNames() {
     CHECK(FormatEmojiDisplayName(*catalog.Find(L"🚀")) == L"rakett");
     CHECK(Search(catalog, Profile{}, L"smiler litt").front().label == L"smiling face · smiler litt");
     CHECK(Search(catalog, Profile{}, L"smiler litt", nullptr, {"en"}).empty());
+    Profile profile;
+    CHECK(profile.settings.displayLanguages.Set({"nb"}));
+    const auto result = Search(catalog, profile, L"smiling face").front();
+    CHECK(result.label == L"smiler litt" && result.match.tier == 8);
+    CHECK(Search(catalog, profile, L"🙂").front().label == L"smiler litt");
+    CHECK(SetAlias(profile, catalog, L"my smile", result.id) == AliasResult::Saved);
+    CHECK(Search(catalog, profile, L"my smile").front().label == L"smiler litt");
+    CHECK(Pin(profile, catalog, result.id) == PinResult::Pinned);
+    CHECK(Search(catalog, profile, L"").front().label == L"smiler litt");
+    CHECK(profile.settings.displayLanguages.Set({"en"}));
+    CHECK(Search(catalog, profile, L"smiler litt").front().label == L"smiling face");
 }
 
 Catalog Fixture() {
@@ -110,6 +121,15 @@ void CatalogIdentity() {
     CHECK(catalog.Find(L"🚀")->family == id);
     std::istringstream bad("\xff\tbad\n");
     CHECK(!catalog.Load(bad));
+    std::istringstream multilingual("🚀\trocket\tlaunch\trakett\tromskip\tde\tRakete\tWeltraum\tit\trazzo\tspazio\tfr\tfusée\tespace\n"
+        "🙂\tsmile\t\t\t\tde\tbroken\n" // Incomplete locale triple.
+        "☕\tcoffee\t\t\t\ten\toverwrite\tbad\n"); // Duplicate canonical locale.
+    CHECK(catalog.Load(multilingual));
+    CHECK(catalog.Entries().size() == 1);
+    CHECK(GetEmojiName(*catalog.Find(L"🚀"), "de") == L"Rakete");
+    CHECK(GetEmojiName(*catalog.Find(L"🚀"), "it") == L"razzo");
+    CHECK(GetEmojiName(*catalog.Find(L"🚀"), "fr") == L"fusée");
+    CHECK(Search(catalog, Profile{}, L"espace").front().payload == L"🚀");
 }
 
 void Personalization() {

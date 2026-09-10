@@ -59,8 +59,8 @@ void Codec() {
     CHECK(EncodeProfile(decoded.profile) == bytes);
     for (size_t size = 0; size < bytes.size(); ++size) CHECK(DecodeProfile(bytes.substr(0, size)).format != ProfileFormat::Valid);
     CHECK(decoded.profile.aliases.at(L"på vei").target.value == L"🚶");
-    CHECK(DecodeProfile("SwashMoji\t5\nend\t0\n").format == ProfileFormat::Unsupported);
-    CHECK(DecodeProfile("SwashMoji\t5").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t6\nend\t0\n").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t6").format == ProfileFormat::Unsupported);
     CHECK(DecodeProfile("\xEF\xBB\xBF" "SwashMoji\t1\r\nsetting\temoji_rows\t2\r\nend\t1\r\n").profile.settings.emojiRows == 2);
     decoded = DecodeProfile("SwashMoji\t1\nusage\trocket\t4294967296\nrecent\tbad\\q\nsetting\temoji_rows\t99\nusage\tgood\t2\nend\t4\n");
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 3);
@@ -94,7 +94,7 @@ void FamilyMigration(const fs::path& root) {
     CHECK(UsageCount(loaded.profile, L"👍") == 15);
     CHECK(loaded.profile.aliases.at(L"launch").target.value == L"🚀");
     CHECK(Read(directory / L"profile.tsv.bak") == v2);
-    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 4);
+    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 5);
     loaded = store.Load(&catalog);
     CHECK(!loaded.migrated && UsageCount(loaded.profile, L"👍") == 15);
     RecordChoice(loaded.profile, {ResultKind::Emoji, L"👍"}, L"good");
@@ -116,6 +116,51 @@ void FamilyMigration(const fs::path& root) {
     CHECK(!blocked.Load(&catalog).migrated && UsageCount(blocked.Load(&catalog).profile, L"👍") == 15);
 }
 
+void LanguageSettings(const fs::path& root) {
+    Profile profile;
+    const std::vector<std::string> defaults{"en", "nb"};
+    CHECK(profile.settings.displayLanguages.Locales() == defaults);
+    for (const auto& invalid : std::vector<std::vector<std::string>>{{}, {"en", "en"}, {"en", "nb", "de"}, {"zz"}, {"en", ""}}) {
+        CHECK(!profile.settings.displayLanguages.Set(invalid));
+        CHECK(profile.settings.displayLanguages.Locales() == defaults);
+    }
+    for (const auto& selection : std::vector<std::vector<std::string>>{{"en"}, {"nb"}, {"nb", "en"}, {"en", "nb"}, {"it"}, {"de"}, {"it", "de"}, {"de", "it"}}) {
+        CHECK(profile.settings.displayLanguages.Set(selection));
+        const auto decoded = DecodeProfile(EncodeProfile(profile));
+        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 5 && !decoded.skippedRecords);
+        CHECK(decoded.profile.settings.displayLanguages.Locales() == selection);
+        ClearHistory(profile);
+        CHECK(profile.settings.displayLanguages.Locales() == selection);
+    }
+    for (const auto& record : {"display_languages", "display_languages\ten\ten", "display_languages\ten\tnb\tde", "display_languages\tzz", "display_languages\ten\t"}) {
+        const auto decoded = DecodeProfile(std::string("SwashMoji\t5\n") + record + "\nend\t1\n");
+        CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 1);
+        CHECK(decoded.profile.settings.displayLanguages.Locales() == defaults);
+    }
+    const auto duplicate = DecodeProfile("SwashMoji\t5\ndisplay_languages\tnb\ndisplay_languages\ten\nend\t2\n");
+    CHECK(duplicate.skippedRecords == 1 && duplicate.profile.settings.displayLanguages.Locales() == std::vector<std::string>{"nb"});
+    const std::string v4 = "SwashMoji\t4\nsetting\tskin_tone\t3\nrecent\tcombination\tcombo-1\nalias\tlaunch\tcombination\tcombo-1\ncombination\tcombo-1\tLift off\t🚀✨\t🚀\t🚀\t✨\t✨\nend\t4\n";
+    const auto path = root / L"languages";
+    Write(path / L"profile.tsv", v4);
+    ProfileStorage storage(path);
+    auto loaded = storage.Load();
+    CHECK(loaded.migrated && !loaded.unsaved);
+    CHECK(loaded.profile.settings.displayLanguages.Locales() == defaults);
+    CHECK(loaded.profile.settings.skinTone == 3 && loaded.profile.combinations.at(L"combo-1").payload == L"🚀✨");
+    CHECK(loaded.profile.aliases.at(L"launch").target.value == L"combo-1");
+    CHECK(Read(path / L"profile.tsv.bak") == v4);
+    CHECK(DecodeProfile(Read(path / L"profile.tsv")).version == 5);
+    CHECK(!storage.Load().migrated);
+    CHECK(loaded.profile.settings.displayLanguages.Set({"nb"}));
+    std::wstring diagnostic;
+    CHECK(storage.Save(loaded.profile, diagnostic));
+    CHECK(storage.Load().profile.settings.displayLanguages.Locales() == std::vector<std::string>{"nb"});
+    CHECK(storage.Save(loaded.profile, diagnostic));
+    Write(path / L"profile.tsv", "SwashMoji\t5\n");
+    const auto recovered = storage.Load();
+    CHECK(recovered.recovered && recovered.profile.settings.displayLanguages.Locales() == std::vector<std::string>{"nb"});
+}
+
 void Migration(const fs::path& root) {
     const auto v1Directory = root / L"version-one";
     const std::string v1 = "SwashMoji\t1\nsetting\tskin_tone\t3\nusage\t👍🏽\t8\nrecent\t👍🏽\nend\t3\n";
@@ -126,7 +171,7 @@ void Migration(const fs::path& root) {
     CHECK(upgraded.profile.settings.skinTone == 3 && UsageCount(upgraded.profile, L"👍🏽") == 8);
     CHECK(upgraded.profile.history == (std::vector<ResultId>{{ResultKind::Emoji, L"👍🏽"}}));
     CHECK(Read(v1Directory / L"profile.tsv.bak") == v1);
-    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 4);
+    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 5);
     CHECK(!oldStore.Load().migrated);
     const auto directory = root / L"migration";
     const auto fallback = root / L"WinMoji";
@@ -229,7 +274,7 @@ void FailedWrites(const fs::path& root) {
 int main() {
     try {
         TestDirectory directory;
-        Codec(); Migration(directory.path); FamilyMigration(directory.path); Recovery(directory.path);
+        Codec(); Migration(directory.path); FamilyMigration(directory.path); LanguageSettings(directory.path); Recovery(directory.path);
         ProtectFutureAndCorrupt(directory.path); FailedWrites(directory.path);
         std::cout << "Profile codec, migration, recovery and write-failure checks passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

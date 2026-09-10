@@ -22,6 +22,10 @@ class CatalogGeneration(unittest.TestCase):
                 "annotations/no.xml": '<ldml><annotations><annotation cp="🚀">verdensrommet</annotation></annotations></ldml>',
                 "annotations/nb.xml": '<ldml><annotations><annotation cp="🚀" type="tts">↑↑↑</annotation></annotations></ldml>',
                 "annotationsDerived/nb.missing": "404",
+                "annotationsDerived/de.xml": '<ldml><annotations><annotation cp="🚀" type="tts">Rakete</annotation></annotations></ldml>',
+                "annotations/de.xml": '<ldml><annotations><annotation cp="🚀">Weltraum | Rakete</annotation></annotations></ldml>',
+                "annotationsDerived/it.xml": '<ldml><annotations/></ldml>',
+                "annotations/it.xml": '<ldml><annotations><annotation cp="🚀" type="tts">razzo</annotation><annotation cp="🚀">spazio</annotation></annotations></ldml>',
             }
             for name, text in files.items():
                 path = cache / name
@@ -37,6 +41,11 @@ class CatalogGeneration(unittest.TestCase):
             self.assertIn("ship", rows[0][2])
             self.assertEqual(rows[1][3], "hot beverage")
             self.assertIn("coffee", rows[1][4])
+            self.assertEqual(rows[0][5:7], ["de", "Rakete"])
+            self.assertIn("Weltraum", rows[0][7])
+            self.assertEqual(rows[0][8:10], ["it", "razzo"])
+            self.assertIn("spazio", rows[0][10])
+            self.assertEqual(len(rows[1]), 5)  # Missing de/it data is not invented from English.
             self.assertEqual(generator.generate(result, generator.Sources(cache)), result)
             self.assertIsNone(sources.hashes["annotationsDerived/nb.xml"])
             self.assertEqual(len(sources.hashes["annotations/en.xml"]), 64)

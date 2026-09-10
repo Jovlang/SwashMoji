@@ -7,6 +7,15 @@
 
 namespace SwashMoji {
 
+class DisplayLanguages {
+public:
+    const std::vector<std::string>& Locales() const { return locales_; }
+    // Reject unsupported, duplicate or more than two locales without changing state.
+    bool Set(const std::vector<std::string>& locales);
+private:
+    std::vector<std::string> locales_{"en", "nb"};
+};
+
 struct EmojiFamilyId {
     std::wstring value;
     bool operator==(const EmojiFamilyId& other) const { return value == other.value; }

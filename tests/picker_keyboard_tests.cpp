@@ -14,7 +14,36 @@ void CheckSelectedStatus() {
     const auto index=SendMessageW(g_list,LB_GETCURSEL,0,0);
     const auto* emoji=g_catalog.Find(g_displayVisible.at(index).payload);
     CHECK(emoji);
-    CHECK(StatusText()==FormatEmojiDisplayName(*emoji));
+    CHECK(StatusText()==FormatEmojiDisplayName(*emoji, g_profile.settings.displayLanguages));
+}
+
+void LanguageDialogControls() {
+    Profile profile;
+    unsigned saves{};
+    bool canSave = false;
+    LanguagePreferencesState state{profile, [&] { ++saves; return canSave; }};
+    const auto dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(kLanguageDialog), nullptr,
+        LanguagePreferencesProc, reinterpret_cast<LPARAM>(&state));
+    CHECK(dialog);
+    CHECK(SelectedLocale(dialog, kPrimaryLanguage) == 0 && SelectedLocale(dialog, kSecondaryLanguage) == 1);
+    CHECK(SendDlgItemMessageW(dialog, kPrimaryLanguage, CB_GETCOUNT, 0, 0) == SupportedLocales().size());
+    // Selecting the old secondary as primary removes it from secondary choices.
+    SendDlgItemMessageW(dialog, kPrimaryLanguage, CB_SETCURSEL, 1, 0);
+    SendMessageW(dialog, WM_COMMAND, MAKEWPARAM(kPrimaryLanguage, CBN_SELCHANGE), 0);
+    CHECK(SelectedLocale(dialog, kSecondaryLanguage) == -1);
+    CHECK(profile.settings.displayLanguages.Locales() == (std::vector<std::string>{"en", "nb"})); // draft only
+    for (int i = 0; i < SendDlgItemMessageW(dialog, kSecondaryLanguage, CB_GETCOUNT, 0, 0); ++i)
+        CHECK(SendDlgItemMessageW(dialog, kSecondaryLanguage, CB_GETITEMDATA, i, 0) != 1);
+    CHECK(!ApplyLanguageChoices(dialog, state));
+    CHECK(saves == 1 && profile.settings.displayLanguages.Locales() == std::vector<std::string>{"nb"});
+    CHECK(GetWindowTextLengthW(GetDlgItem(dialog, kLanguageStatus)) > 0);
+    canSave = true;
+    CHECK(ApplyLanguageChoices(dialog, state) && saves == 2);
+    DestroyWindow(dialog);
+    const auto reopened = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(kLanguageDialog), nullptr,
+        LanguagePreferencesProc, reinterpret_cast<LPARAM>(&state));
+    CHECK(reopened && SelectedLocale(reopened, kPrimaryLanguage) == 1 && SelectedLocale(reopened, kSecondaryLanguage) == -1);
+    DestroyWindow(reopened);
 }
 
 struct CombinationInput : InputPlatform {
@@ -70,6 +99,12 @@ void CombinationInsertion() {
 
 int main() {
     try {
+        // Synthetic messages must not inherit modifiers held on the user's desktop.
+        struct KeyboardState {
+            BYTE saved[256]{};
+            KeyboardState() { BYTE released[256]{}; CHECK(GetKeyboardState(saved)); CHECK(SetKeyboardState(released)); }
+            ~KeyboardState() { SetKeyboardState(saved); }
+        } keyboardState;
         CHECK(LoadEmojis());
         g_uiFont = g_statusFont = g_emojiFont = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
         g_backgroundBrush = CreateSolidBrush(kBackground);
@@ -86,6 +121,13 @@ int main() {
         BeginPickerSession();
         SetWindowTextW(g_edit,L"slightly smiling face");
         CHECK(StatusText()==L"slightly smiling face · smiler litt");
+        CHECK(g_profile.settings.displayLanguages.Set({"nb"}));
+        RefreshList();
+        CHECK(StatusText()==L"smiler litt");
+        CHECK(g_session.query == L"slightly smiling face");
+        CHECK(g_profile.settings.displayLanguages.Set({"en", "nb"}));
+        RefreshList();
+        LanguageDialogControls();
         const auto statusStyle=GetWindowLongPtrW(g_status,GWL_STYLE);
         RECT statusBounds{}; GetWindowRect(g_status,&statusBounds);
         SetWindowTextW(g_status,(std::wstring(400,L'E') + L" · " + std::wstring(400,L'N')).c_str());
@@ -157,8 +199,12 @@ int main() {
             SetWindowTextW(g_edit, L"");
         }
         g_emojiRows = 3;
-        SetWindowTextW(g_edit, L"stone");
-        CHECK(g_visible.size() > 1 && g_visible.size() <= 10);
+        // Fixed alias fixtures keep this layout check independent of catalog languages.
+        CHECK(SetAlias(g_profile, g_catalog, L"compact regression one", {ResultKind::Emoji, L"🚀"}) == AliasResult::Saved);
+        CHECK(SetAlias(g_profile, g_catalog, L"compact regression two", {ResultKind::Emoji, L"✨"}) == AliasResult::Saved);
+        CHECK(SetAlias(g_profile, g_catalog, L"compact regression three", {ResultKind::Emoji, L"🙂"}) == AliasResult::Saved);
+        SetWindowTextW(g_edit, L"compact regression");
+        CHECK(g_visible.size() == 3);
         RECT compact{}, expanded{}, first{}, second{}, list{};
         GetWindowRect(g_window, &compact);
         GetClientRect(g_list, &list);
@@ -174,6 +220,9 @@ int main() {
         const auto compactSelection = g_session.selected;
         RefreshList();
         CHECK(g_session.selected == compactSelection);
+        CHECK(DeleteAlias(g_profile, L"compact regression one"));
+        CHECK(DeleteAlias(g_profile, L"compact regression two"));
+        CHECK(DeleteAlias(g_profile, L"compact regression three"));
         SetWindowTextW(g_edit, L"face");
         GetWindowRect(g_window, &expanded);
         GetClientRect(g_list, &list);

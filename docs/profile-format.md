@@ -3,14 +3,15 @@
 The runtime uses `%LOCALAPPDATA%\SwashMoji\profile.tsv`. All profile tests pass an
 isolated directory explicitly; they never resolve or change the user's profile.
 
-## Version 4
+## Version 5
 
 Files are UTF-8 with LF line endings. The reader also accepts a UTF-8 BOM and CRLF.
-The header is `SwashMoji<TAB>4`. Following lines contain typed records:
+The header is `SwashMoji<TAB>5`. Following lines contain typed records:
 
 | Record | Fields after the record type |
 | --- | --- |
 | `setting` | setting name, unsigned integer value |
+| `display_languages` | one or two registered locale codes, primary first (for example `en<TAB>nb`) |
 | `recent` | target kind, stable target ID; newest records first |
 | `usage` | target kind, stable target ID, nonzero unsigned 32-bit count |
 | `query` | normalized complete query, target kind, stable target ID, nonzero unsigned 32-bit count; most recently chosen pair first |
@@ -33,6 +34,14 @@ Counts use decimal digits without signs or suffixes; overflow is rejected.
 Settings are `position_above_text_field` and `sort_by_usage` (0–1), `emoji_rows`
 (1–3), `skin_tone` (0–5), and `learn_queries` (0–1, default 1). Font and
 status-line visibility remain session-only, as before M0.
+
+Display languages default to `en`, `nb`, including when migrating versions 1–4.
+One locale selects a single display language. Empty, duplicate, unknown or more
+than two locales invalidate the entire record; defaults remain unless an earlier
+valid record was read. The first valid record wins. Codes come from the shared
+locale registry and are written literally (currently `en`, `nb`, `de` and `it`). Search locale
+selection is independent and is not persisted by this feature. History clearing
+retains display languages. Version 5 protects this new record from older writers.
 
 History and usage now store family IDs; tone variants share counts and recency.
 Target kinds are `emoji` or `combination`. Up to ten unique pins retain
@@ -67,7 +76,7 @@ its aliases, pins, history, usage and query counts in one atomic profile save.
 
 ## Migration and persistence
 
-Version 3 profiles migrate without changing their typed targets or settings.
+Versions 3 and 4 migrate without changing their typed targets, combinations or settings.
 Versions 1 and 2 use exact-glyph `recent` and `usage` records; version 2 also has
 aliases. On load, the catalog resolves known glyphs to stable families, adds their
 usage counts with saturation, and keeps each family's newest history position.
@@ -76,7 +85,7 @@ The mapping is idempotent and also handles catalogs that later recognize an ID.
 Aliases and settings are preserved. The runtime passes its loaded catalog to
 `ProfileStorage::Load`; codec-only consumers may omit that catalog.
 
-Migration atomically writes version 4 and backs up the previous complete file.
+Migration atomically writes version 5 and backs up the previous complete file.
 A failed write leaves the previous format on disk, retains the migrated values
 in memory, and reports unsaved state. Retrying does not double counts. Unsupported
 future versions remain read-only.

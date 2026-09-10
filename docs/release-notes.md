@@ -2,6 +2,26 @@
 
 This build is pending release acceptance; see the [M6 evidence and checklist](release-validation.md).
 
+## Languages — 2026-09-10
+
+- Italian and German CLDR names and keywords now cover all 3,598 catalog variants.
+  Choose **Italian** or **German** in Languages, or search directly in
+  either language. Existing English/Norwegian catalog data is unchanged.
+  All 13 suites pass in `build-i18n-translations`, including exact-name coverage
+  for all four languages; Italian/German vocabulary rendering was inspected.
+
+- The tray's **Languages...** dialog selects a primary and optional
+  secondary language. Names across picker, vocabulary and combinations share this
+  preference; search still uses all available languages. Defaults remain English
+  + Norwegian, with missing/duplicate translations omitted and English fallback.
+- Profile version 5 persists the selection and migrates earlier profiles with
+  backups, preserving vocabulary and combination payloads. Older builds treat
+  version 5 as read-only.
+- All 13 CTest suites passed in `build-i18n-settings`, including Python generator
+  tests. The native preferences dialog was visually inspected. Desktop editor
+  checks passed, but Windows denied foreground focus for real insertion; DPI,
+  high contrast and Narrator acceptance remain outstanding.
+
 ## Final editor and picker layout — 2026-09-09
 
 - My vocabulary has a resizable Library and Alias editor, bilingual results and

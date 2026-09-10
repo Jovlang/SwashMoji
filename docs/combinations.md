@@ -7,6 +7,10 @@ ordered tiles serve as both editor and visual preview. **Save combination** appl
 **Close**/Escape, **New**, or selecting another saved item discards unsaved edits.
 All controls use native Tab navigation and label mnemonics.
 
+Emoji names in results, variant choices and component details follow the tray's
+**Languages...** preference. Authored combination names and exact payloads
+are preserved; searching still uses all available languages.
+
 The resizable editor shares the vocabulary window's dark surfaces, rounded
 controls and focus outlines. The library remains a stable width while results
 expand. Sequence tiles retain native list selection and full accessible names;

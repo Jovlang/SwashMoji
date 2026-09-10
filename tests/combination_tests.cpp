@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
             CHECK(Search(catalog, p, L"please")[0].payload == L"🥺🙏🏽");
         }
         auto decoded = DecodeProfile(EncodeProfile(p));
-        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 4 && decoded.skippedRecords == 0);
+        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 5 && decoded.skippedRecords == 0);
         CHECK(EncodeProfile(decoded.profile) == EncodeProfile(p));
         Catalog missing; CHECK(Search(missing, decoded.profile, L"på vei")[0].payload == exact);
         auto renamed = decoded.profile.combinations.at(complex.id); renamed.name = L"retained";
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
         CHECK(DecodeProfile(EncodeProfile(badProfile)).skippedRecords == 1);
         const auto v3 = DecodeProfile("SwashMoji\t3\nsetting\tskin_tone\t5\nend\t1\n");
         CHECK(v3.format == ProfileFormat::Valid && v3.profile.settings.skinTone == 5);
-        CHECK(DecodeProfile(EncodeProfile(v3.profile)).version == 4);
+        CHECK(DecodeProfile(EncodeProfile(v3.profile)).version == 5);
         const auto directory = std::filesystem::current_path() / (L"combination-storage-test-" + std::to_wstring(GetCurrentProcessId()));
         CHECK(!std::filesystem::exists(directory)); CHECK(std::filesystem::create_directory(directory));
         const std::string legacy = "SwashMoji\t3\nsetting\tskin_tone\t5\nend\t1\n";

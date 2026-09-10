@@ -135,7 +135,7 @@ bool ResolveResult(const Catalog& catalog, const Profile& profile, const ResultI
     }
     const auto* emoji = catalog.FindFamily({id.value});
     if (!emoji) return false;
-    result = {id, FormatEmojiDisplayName(*emoji), emoji->glyph}; return true;
+    result = {id, FormatEmojiDisplayName(*emoji, profile.settings.displayLanguages), emoji->glyph}; return true;
 }
 bool ValidCombination(const Combination& c) {
     if (c.id.empty() || c.id.size() > 96 || c.name.size() > kMaxAliasLength || NormalizePhrase(c.name).empty() ||

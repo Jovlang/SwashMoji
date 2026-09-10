@@ -4,11 +4,11 @@ En liten, avhengighetsfri Win32 emoji-velger.
 
 - `Alt+E` åpner velgeren på skjermen til det aktive vinduet.
 - Høyreklikk systemstatusikonet for plassering, sortering og sletting av lokal brukshistorikk.
-- Søk på engelsk og norsk bokmål samtidig: navn, Unicode-nøkkelord og uttrykk som `bra jobbet`, `på vei` og `thank you`. Skrivefeil tolereres når det ikke finnes vanlige treff.
+- Søk på engelsk, norsk bokmål, tysk og italiensk samtidig: navn, Unicode-nøkkelord og uttrykk som `bra jobbet`, `på vei` og `thank you`. Prøv også `Rakete` eller `razzo` for 🚀. Skrivefeil tolereres når det ikke finnes vanlige treff.
 - `Ctrl+Backspace` sletter forrige ord eller markert tekst i søkefeltet og tekstfeltene i **My vocabulary**. `Ctrl+Z` kan angre slettingen.
 - Høyreklikk et treff og velg **Add alias**, eller bruk `Alt+A`. Søket fylles inn som forslag til din egen frase. Uten treff kan du velge **Teach this phrase** og finne ønsket emoji.
 - **My vocabulary** i systemstatusmenyen lar deg opprette, endre og slette aliaser. **Save alias** lagrer; **Close** forkaster utkastet. Lagrede aliaser beholdes når brukshistorikken slettes.
-- Vokabularvinduet kan endre størrelse. **Library** samler aliaser og festede favoritter, mens **Alias editor** viser søketreff og valgt emoji med engelsk og norsk navn. **Close** og kombinasjonsredigering ligger nederst i vinduet.
+- Vokabularvinduet kan endre størrelse. **Library** samler aliaser og festede favoritter, mens **Alias editor** viser søketreff og valgt emoji med navn på valgte språk. **Close** og kombinasjonsredigering ligger nederst i vinduet.
 - **New combination / edit...** i **My vocabulary** lagrer sekvenser av 2–8 emojier med eget navn, for eksempel `launch` → 🚀✨. Velg hudtone per emoji og rekkefølge før **Save**. Lagrede sekvenser påvirkes ikke av global hudtone. Se [kombinasjoner og teststatus](docs/combinations.md).
 - Kombinasjonsredigeringen viser sekvensen som vannrette emoji-fliser. Pilknappene flytter valgt emoji, **Save combination** lagrer, og **Close** nederst lukker vinduet. Bibliotek og treffliste tilpasser seg vindusstørrelsen.
 - `Alt+P` eller **Pin favorite** i treffmenyen fester valgt emoji som favoritt. Opptil ti favoritter vises først uten søketekst; **My vocabulary** lar deg flytte dem opp/ned eller fjerne dem.
@@ -32,8 +32,10 @@ En liten, avhengighetsfri Win32 emoji-velger.
 - **Details** (`Alt+D` eller treffmenyen) viser en større forhåndsvisning og gyldige varianter fra katalogen, også blandede hudtoner. **Use once** velger varianten for neste vellykkede innsetting eller kopiering uten å endre global hudtone. **Cancel** forkaster utkastet.
 - Hold pekeren rolig over et treff i omtrent 350 ms for en forhåndsvisning uten å flytte tastaturmarkeringen.
 - `Alt+I` bytter global hudtone for alle kompatible emojier.
-- Under treffene vises engelsk og norsk navn på valgt variant, atskilt med «·». Manglende navn utelates, og lange navn forkortes visuelt. Søket er uten etikett eller plassholder, og hurtigtastene vises ikke fast i velgeren. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
-- Navn i treff, forhåndsvisning og variantvalg bruker samme språkdata. Like oversettelser vises bare én gang. Engelsk og norsk er fortsatt standard; valg av visningsspråk kommer i neste fase av [I18N-planen](I18N.md).
+- Under treffene vises navn på valgt variant på de valgte språkene (engelsk og norsk som standard), atskilt med «·». Manglende navn utelates, og lange navn forkortes visuelt. Søket er uten etikett eller plassholder, og hurtigtastene vises ikke fast i velgeren. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
+- **Languages...** i systemstatusmenyen lar deg velge ett eller to språk for emojinavn. **Primary** vises først; **Secondary** kan settes til **None**. **Save** lagrer valget; **Close** forkaster utkastet. Engelsk og norsk er standard for eksisterende brukere. Søket bruker fortsatt alle tilgjengelige språk.
+- Italiensk (**Italian**) og tysk (**German**) kan også velges som visningsspråk. Begge har oversatte navn for alle 3598 emojivariantene i katalogen.
+- Navn i treff, forhåndsvisning og variantvalg bruker samme språkdata og språkvalg. Like oversettelser vises bare én gang; manglende oversettelser utelates, med engelsk som reservespråk.
 - `Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
 - Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
 - Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.
