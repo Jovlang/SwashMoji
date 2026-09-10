@@ -434,6 +434,10 @@ void ComboVariants(HWND dialog, CombinationEditor& e) {
         SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_SETCURSEL, choice, 0);
         SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_SETDROPPEDWIDTH, 600, 0);
     }
+    const int variantVisibility = e.variants.size() > 1 ? SW_SHOW : SW_HIDE;
+    ShowWindow(GetDlgItem(dialog, IDC_COMBO_VARIANT_LABEL), variantVisibility);
+    ShowWindow(GetDlgItem(dialog, IDC_COMBO_VARIANTS), variantVisibility);
+    InvalidateRect(dialog, nullptr, TRUE);
     ComboButtons(dialog, e);
 }
 void ComboSearch(HWND dialog, CombinationEditor& e) {

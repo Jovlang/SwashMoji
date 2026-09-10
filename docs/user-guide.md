@@ -133,6 +133,8 @@ dem opp/ned eller fjerne dem.
 **New combination / edit...** i **My vocabulary** lagrer sekvenser av 2–8 emojier
 med eget navn, for eksempel `launch` → 🚀✨. Velg hudtone per emoji og rekkefølge
 før du lagrer. Lagrede sekvenser påvirkes ikke av global hudtone.
+Variantfeltet vises bare når valgt emoji har flere varianter. Ellers bruker
+**Add** automatisk den eneste varianten.
 
 Kombinasjonsredigeringen viser sekvensen som vannrette emoji-fliser. Pilknappene
 flytter valgt emoji, **Save combination** lagrer, og **Close** nederst lukker

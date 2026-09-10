@@ -60,6 +60,7 @@ inline void Paint(HWND dialog) {
         Round(dc,r,Panel(),Px(dialog,12));
     }
     for (int id : {IDC_COMBO_NAME,IDC_COMBO_QUERY,IDC_COMBO_VARIANTS,IDC_COMBO_SAVED,IDC_COMBO_RESULTS,IDC_COMBO_ENTRIES}) {
+        if (!(GetWindowLongPtrW(GetDlgItem(dialog,id),GWL_STYLE) & WS_VISIBLE)) continue;
         auto r=Bounds(dialog,id);
         const bool edit=id==IDC_COMBO_NAME||id==IDC_COMBO_QUERY;
         if(edit) InflateRect(&r,Px(dialog,8),Px(dialog,4));

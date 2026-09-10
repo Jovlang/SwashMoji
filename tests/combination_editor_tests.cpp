@@ -23,6 +23,10 @@ int main(int argc, char** argv) {
         Editor parent{catalog, profile, {}, {}, persist}; CombinationEditor state{parent};
         dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDD_COMBINATIONS), nullptr, CombinationProc, reinterpret_cast<LPARAM>(&state));
         CHECK(dialog);
+        const auto variantsVisible = [&](bool expected) {
+            for (const int id : {IDC_COMBO_VARIANT_LABEL, IDC_COMBO_VARIANTS})
+                CHECK(((GetWindowLongPtrW(GetDlgItem(dialog, id), GWL_STYLE) & WS_VISIBLE) != 0) == expected);
+        };
         const auto results = ControlRect(dialog, IDC_COMBO_RESULTS);
         const auto variants = ControlRect(dialog, IDC_COMBO_VARIANTS);
         const auto entries = ControlRect(dialog, IDC_COMBO_ENTRIES);
@@ -48,9 +52,14 @@ int main(int argc, char** argv) {
         SetDlgItemTextW(dialog,IDC_COMBO_QUERY,L"zzzznoresultzzzz");
         CHECK(SendDlgItemMessageW(dialog,IDC_COMBO_RESULTS,LB_GETCOUNT,0,0)==0);
         CHECK(!IsWindowEnabled(GetDlgItem(dialog,IDC_COMBO_ADD)));
+        variantsVisible(false);
         Command(dialog, IDOK); CHECK(profile.combinations.empty() && saves == 0);
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, L"launch");
-        SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"🚀"); Command(dialog, IDC_COMBO_ADD);
+        SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"🚀");
+        CHECK(state.variants.size() == 1);
+        variantsVisible(false);
+        CHECK(GetNextDlgTabItem(dialog, GetDlgItem(dialog, IDC_COMBO_RESULTS), FALSE) == GetDlgItem(dialog, IDC_COMBO_ADD));
+        Command(dialog, IDC_COMBO_ADD);
         CHECK(state.draft.entries.size() == 1 && state.draft.entries[0].payload == L"🚀");
         Command(dialog, IDOK); CHECK(profile.combinations.empty());
         SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"✨"); Command(dialog, IDC_COMBO_ADD);
@@ -65,6 +74,13 @@ int main(int argc, char** argv) {
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, L"please");
         SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"🥺"); Command(dialog, IDC_COMBO_ADD);
         SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"🙏");
+        CHECK(state.variants.size() > 1);
+        variantsVisible(true);
+        CHECK(GetNextDlgTabItem(dialog, GetDlgItem(dialog, IDC_COMBO_RESULTS), FALSE) == GetDlgItem(dialog, IDC_COMBO_VARIANTS));
+        SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"🚀");
+        variantsVisible(false);
+        SetDlgItemTextW(dialog, IDC_COMBO_QUERY, L"🙏");
+        variantsVisible(true);
         for (size_t i = 0; i < state.variants.size(); ++i) if (state.variants[i]->glyph == L"🙏🏽")
             SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_SETCURSEL, i, 0);
         Command(dialog, IDC_COMBO_ADD); Command(dialog, IDOK);

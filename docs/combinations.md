@@ -6,6 +6,8 @@ sequence of 2–8 entries with **Remove**, **Move left**, and **Move right**. Th
 ordered tiles serve as both editor and visual preview. **Save combination** applies the draft;
 **Close**/Escape, **New**, or selecting another saved item discards unsaved edits.
 All controls use native Tab navigation and label mnemonics.
+The variant field appears only when the selected emoji has multiple variants;
+**Add** uses the sole variant automatically otherwise.
 
 Emoji names in results, variant choices and component details follow the tray's
 **Languages...** preference. Authored combination names and exact payloads
