@@ -1,6 +1,6 @@
 # Contributing to SwashMoji
 
-For application usage, see the [Norwegian user guide](docs/user-guide.md).
+For application usage, see the [user guide](docs/user-guide.md).
 This page covers the general build and verification workflow. Agent-specific
 architecture and behavior invariants remain in [AGENTS.md](AGENTS.md).
 
@@ -87,9 +87,9 @@ acceptance work live in [release validation](docs/release-validation.md).
 
 ## Documentation changes
 
-Keep [README.md](README.md) a short Norwegian project overview. Put complete
+Keep [README.md](README.md) a short English project overview. Put complete
 user instructions in [docs/user-guide.md](docs/user-guide.md), build/development
 workflow here, and technical rules or dated evidence in the appropriate reference.
-Preserve Norwegian in the README and user guide and retain the UI's actual labels.
+Write documentation in English and retain the UI's actual labels.
 Distinguish historical test results from current verification; do not turn an
 automated pass into a claim of full desktop or release acceptance.

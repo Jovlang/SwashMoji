@@ -1,185 +1,193 @@
-# Brukerveiledning for SwashMoji
+# SwashMoji user guide
 
-[Til prosjektoversikten](../README.md) · [Bygging og utvikling](../CONTRIBUTING.md)
+[Project overview](../README.md) · [Building and contributing](../CONTRIBUTING.md)
 
-Trykk `Alt+E`, søk etter en emoji eller frase, og trykk `Enter` for å sette inn
-valgt treff direkte i programmet du kom fra. Piltastene velger et annet treff.
+Press `Alt+E`, search for an emoji or phrase, and press `Enter` to insert the
+selected result directly into the application you came from. Use the arrow keys
+to choose another result.
 
-## Start og systemstatusmeny
+## Startup and tray menu
 
-Ingen installasjon av SwashMoji er nødvendig. Start `SwashMoji.exe`; etter lokal
-bygging ligger den i `build`-mappen. Ved flytting må `emojis.txt`,
-`intent_phrases.tsv` og `UNICODE_LICENSE.txt` følge med ved siden av programfilen.
-Katalogen og uttrykkene leses fra de to UTF-8-filene, uten nettforbindelse.
-Innstillinger og historikk lagres separat i brukerprofilen, ikke ved programfilen.
+SwashMoji needs no installation. Launch `SwashMoji.exe`; after a local build,
+it is in the `build` directory. When moving it, keep `emojis.txt`,
+`intent_phrases.tsv`, and `UNICODE_LICENSE.txt` beside the executable.
+The catalog and phrases are read from the two UTF-8 files, with no network access.
+Settings and history are stored separately in your user profile.
 
-`Alt+E` åpner velgeren på skjermen til det aktive vinduet. Venstreklikk på ikonet
-i systemstatusfeltet åpner den også. Høyreklikk ikonet for plassering ved det
-aktive tekstfeltet, sortering, språkvalg, **My vocabulary**, læring og sletting
-av lokal brukshistorikk. **Exit** avslutter programmet; `Esc` lukker velgeren.
+`Alt+E` opens the picker on the active window's monitor. Left-clicking the tray
+icon also opens it. Right-click the icon to configure placement near the active
+text field, sorting, languages, **My vocabulary**, learning, and clearing local
+usage history. **Exit** quits the application; `Esc` closes the picker.
 
-## Søk og språk
+## Search and languages
 
-Søk på engelsk, norsk bokmål, tysk og italiensk samtidig. Du kan bruke navn,
-Unicode-nøkkelord og uttrykk som `bra jobbet`, `på vei` og `thank you`.
-`Rakete` og `razzo` finner begge 🚀. Skrivefeil i katalogens navn og nøkkelord
-tolereres på språkene du viser, når det ikke finnes vanlige treff.
-Egne aliaser gir deg flere måter å finne en emoji på.
+Search English, Norwegian Bokmål, German, and Italian together. You can use names,
+Unicode keywords, and phrases such as `bra jobbet` (well done), `på vei` (on my way),
+and `thank you`. Both `Rakete` and `razzo` find 🚀. Typos in catalog names and
+keywords are tolerated in your display languages when there are no regular matches.
+Your own aliases give you more ways to find an emoji.
 
-**Languages...** i systemstatusmenyen velger ett eller to språk for emojinavn:
+**Languages...** in the tray menu selects one or two languages for emoji names:
 
-- **Primary** vises først.
-- **Secondary** er valgfritt; velg **None** for bare ett språk.
-- Samme språk kan ikke velges to ganger. Hvis primærspråket settes til det
-  tidligere sekundærspråket, blir **Secondary** satt til **None**.
-- **Save** lagrer valget; **Close** forkaster endringer som ikke er brukt.
+- **Primary** appears first.
+- **Secondary** is optional; choose **None** to use only one language.
+- You cannot select the same language twice. If you change the primary language
+  to the previous secondary language, **Secondary** is set to **None**.
+- **Save** saves the selection; **Close** discards unapplied changes.
 
-Engelsk og norsk er standard. **Italian** og **German** har også oversatte navn
-for alle 3598 emojivariantene i katalogen. Søket bruker fortsatt alle tilgjengelige
-språk for vanlige treff, uansett hvilke du viser: `ragazza` finner 👧 også med
-engelsk og norsk valgt. Språkene du viser foretrekkes ved ellers like treff;
-et nøyaktig navn på et annet språk går foran et svakere treff på valgt språk.
-Egne aliaser og innebygde uttrykk beholder frasematching og toleranse for skrivefeil
-uavhengig av språkvalget. Menyer og knapper blir ikke oversatt av språkvalget.
+English and Norwegian are the defaults. **Italian** and **German** also have
+translated names for all 3598 emoji variants in the catalog. Regular matching
+still searches all available languages regardless of your display selection:
+`ragazza` finds 👧 even with English and Norwegian selected. Display languages
+are preferred when matches are otherwise equal; an exact name in another language
+ranks above a weaker match in a selected language. Personal aliases and built-in
+phrases retain phrase matching and typo tolerance regardless of the language
+selection. This setting does not translate menus or buttons.
 
-Navn i treff, forhåndsvisning og variantvalg bruker samme språkvalg. Under treffene
-vises navnene på valgt variant, atskilt med «·». Like oversettelser vises bare én
-gang. Manglende navn utelates uten et løst skilletegn; engelsk brukes som reserve
-hvis ingen av de valgte oversettelsene finnes. Lange navn forkortes visuelt.
+Names in results, previews, and variant choices use the same language preferences.
+The selected variant's names appear below the results, separated by “·”. Identical
+translations appear only once. Missing names are omitted without leaving a stray
+separator; English is used as a fallback if neither selected translation exists.
+Long names are visually truncated.
 
-Se [søkemodell, språkdata og aliasregler](search.md) for tekniske detaljer.
+See [search behavior, language data, and alias rules](search.md) for technical details.
 
-## Sett inn, kopier og håndter feil
+## Insertion, copying, and error handling
 
-| Tast eller handling | Resultat |
+| Key or action | Result |
 | --- | --- |
-| `Enter` eller klikk på en emoji | Sett inn og lukk velgeren |
-| `Ctrl+Enter` eller `Ctrl+klikk` | Sett inn og behold velgeren åpen |
-| `Shift+Enter` | Kopier til utklippstavlen og lukk etter vellykket kopiering |
-| **Copy instead** / `Alt+C` | Kopier valget etter en innsettingsfeil |
+| `Enter` or click an emoji | Insert and close the picker |
+| `Ctrl+Enter` or `Ctrl+click` | Insert and keep the picker open |
+| `Shift+Enter` | Copy to the clipboard and close after successful copying |
+| **Copy instead** / `Alt+C` | Copy the selection after an insertion failure |
 
-Direkte innsetting endrer ikke utklippstavlen. Ved innsettingsfeil beholdes søket
-og markeringen, og du kan velge **Copy instead**. Delvis innsetting prøves aldri
-automatisk på nytt. Kontroller målprogrammet før du eventuelt prøver igjen.
+Direct insertion leaves the clipboard unchanged. If insertion fails, the query
+and selection are preserved, and you can choose **Copy instead**. Partial input
+is never retried automatically. Check the target application before trying again.
 
-Ved kopieringsfeil forblir velgeren åpen. Meldingen sier fra hvis utklippstavlen
-allerede ble tømt før feilen oppstod. Bare fullført innsetting eller eksplisitt
-kopiering registrerer et valg i historikk og læring.
+If copying fails, the picker stays open. The message tells you if the clipboard
+was already cleared before the failure. Only completed insertion or explicit
+copying records a choice in history and learning.
 
-Se [innsetting og feilhåndtering](insertion.md) for begrensninger og testdekning.
+See [insertion and error handling](insertion.md) for limitations and test coverage.
 
-## Tastatur, rader og utseende
+## Keyboard navigation, rows, and appearance
 
-`Tab` og `Shift+Tab` flytter fokus mellom søk, treff og tilgjengelige handlinger.
-Piltastene og `Ctrl`+piltaster navigerer treffene direkte både før og etter at du
-skriver. Søket beholder fokus, slik at du kan fortsette å skrive. Bruk
-`Shift`+piltaster eller `Home`/`End` for å redigere søketeksten.
+`Tab` and `Shift+Tab` move focus between search, results, and available actions.
+Arrow keys and `Ctrl`+arrow keys navigate results directly, both before and after
+you type. Search keeps focus so you can continue typing. Use `Shift`+arrow keys
+or `Home`/`End` to edit the search text.
 
-| Tast | Handling |
+| Key | Action |
 | --- | --- |
-| `Ctrl+Backspace` | Slett forrige ord eller markert tekst i søk og tekstfeltene i **My vocabulary** |
-| `Ctrl+Z` | Angre tekstsletting |
-| `Alt+1`, `Alt+2`, `Alt+3` | Velg maksimalt antall emoji-rader |
-| `Alt+F` | Bytt til neste installerte fargefont eller monokrome emoji-font |
-| `Alt+I` | Bytt global hudtone |
-| `Alt+S` | Vis eller skjul teksten for valgt treff |
-| `Esc` | Lukk aktiv dialog/hjelp eller velgeren |
-| `F1` | Vis oversikt over funksjoner og hurtigtaster |
+| `Ctrl+Backspace` | Delete the previous word or selected text in search and **My vocabulary** text fields |
+| `Ctrl+Z` | Undo text deletion |
+| `Alt+1`, `Alt+2`, `Alt+3` | Choose the maximum number of emoji rows |
+| `Alt+F` | Cycle through installed color and monochrome emoji fonts |
+| `Alt+I` | Cycle the global skin tone |
+| `Alt+S` | Show or hide the selected result's text |
+| `Esc` | Close the active dialog, help, or picker |
+| `F1` | Show the feature and shortcut overview |
 
-Treffene vises i én til tre rader. Valgt radantall er en øvre grense: opptil ti
-treff samles i én rad, og vinduet krymper automatisk. Flere treff utvider vinduet
-igjen uten å endre innstillingen. Med én rad velger pil opp/ned forrige/neste
-treff; med flere rader flytter de markeringen i samme kolonne. I trefflisten
-flytter `Page Up`/`Page Down` ti kolonner og `Home`/`End` til første/siste plass.
+Results appear in one to three rows. The selected row count is an upper limit:
+up to ten results fit in one row, and the window shrinks automatically. More
+results expand the window again without changing the setting. With one row,
+Up/Down selects the previous/next result; with multiple rows, they move the
+selection within the same column. In the result list, `Page Up`/`Page Down` moves
+ten columns, and `Home`/`End` moves to the first/last position.
 
-Bytte av hudtone, font og antall rader beholder markeringen. Søket har ingen
-etikett eller plassholder, og hurtigtastene vises ikke fast i velgeren. Font- og
-hudtonebytte vises midlertidig i 0,8 sekunder. `Alt+F` har erstattet den tidligere
-fontsnarveien `Tab`; `Tab` brukes nå til fokusflytting.
+Changing the skin tone, font, or row count preserves the selection. Search has
+no label or placeholder, and shortcuts are not permanently displayed in the
+picker. Font and skin-tone changes are shown briefly for 0.8 seconds. `Alt+F`
+replaced the previous font shortcut, `Tab`; `Tab` now moves focus.
 
-Se [valg, navigasjon og skjermskalering](selection.md) for detaljene.
+See [selection, navigation, and display scaling](selection.md) for details.
 
-## Hudtoner og variantdetaljer
+## Skin tones and variant details
 
-`Alt+I` bytter global hudtone for alle kompatible emojier. Hudtonevariantene deler
-brukshistorikk, slik at de ikke lærer eller teller som separate familier.
+`Alt+I` cycles the global skin tone for all compatible emoji. Skin-tone variants
+share usage history, so they are not learned or counted as separate families.
 
-**Details** (`Alt+D` eller treffmenyen) viser en større forhåndsvisning og gyldige
-varianter fra katalogen, også blandede hudtoner. **Use once** velger varianten for
-neste vellykkede innsetting eller kopiering uten å endre global hudtone.
-**Cancel** forkaster utkastet. Hold pekeren rolig over et treff i omtrent 350 ms
-for en forhåndsvisning uten å flytte tastaturmarkeringen.
+**Details** (`Alt+D` or the result menu) shows a larger preview and valid catalog
+variants, including mixed skin tones. **Use once** selects the variant for the
+next successful insertion or copy without changing the global skin tone.
+**Cancel** discards the draft. Hold the pointer over a result for about 350 ms
+to preview it without moving the keyboard selection.
 
-## Aliaser og lærte fraser
+## Aliases and learned phrases
 
-Høyreklikk et treff og velg **Add alias**, eller bruk `Alt+A`. Søket fylles inn
-som forslag til din egen frase. Uten treff kan du velge **Teach this phrase** og
-finne ønsket emoji.
+Right-click a result and choose **Add alias**, or press `Alt+A`. The current
+query is suggested as your own phrase. With no results, choose **Teach this phrase**
+and find the emoji you want.
 
-**My vocabulary** i systemstatusmenyen lar deg opprette, endre og slette aliaser.
-**Save alias** lagrer; **Close** forkaster utkastet. Lagrede aliaser beholdes når
-brukshistorikken slettes.
+**My vocabulary** in the tray menu lets you create, edit, and delete aliases.
+**Save alias** saves; **Close** discards the draft. Saved aliases are retained
+when usage history is cleared.
 
-Vinduet kan endre størrelse. **Library** samler aliaser og festede favoritter,
-mens **Alias editor** viser søketreff og valgt emoji med navn på valgte språk.
-**Close** og kombinasjonsredigering ligger nederst i vinduet.
+The window is resizable. The left panel contains saved aliases and pinned
+favorites. In **Alias editor**, use **Search emoji** and **Choose an emoji** to
+search and select from a single list with names in your display languages.
+The selected row identifies the target for **Save alias** and **Pin favorite**.
+**Close** and the combination editor entry point are at the bottom of the window.
 
-## Favoritter og kombinasjoner
+## Favorites and combinations
 
-`Alt+P` eller **Pin favorite** i treffmenyen fester valgt emoji som favoritt.
-Opptil ti favoritter vises først uten søketekst. **My vocabulary** lar deg flytte
-dem opp/ned eller fjerne dem.
+`Alt+P` or **Pin favorite** in the result menu pins the selected emoji as a favorite.
+Up to ten favorites appear first when the query is empty. **My vocabulary** lets
+you move them up/down or remove them.
 
-**New combination / edit...** i **My vocabulary** lagrer sekvenser av 2–8 emojier
-med eget navn, for eksempel `launch` → 🚀✨. Velg hudtone per emoji og rekkefølge
-før du lagrer. Lagrede sekvenser påvirkes ikke av global hudtone.
-Variantfeltet vises bare når valgt emoji har flere varianter. Ellers bruker
-**Add** automatisk den eneste varianten.
+**New combination / edit...** in **My vocabulary** saves sequences of 2–8 emoji
+under a custom name, for example `launch` → 🚀✨. Choose each emoji's skin tone
+and the sequence order before saving. Global skin-tone changes do not affect
+saved sequences. The variant field appears only when the selected emoji has
+multiple variants. Otherwise, **Add** uses the sole variant automatically.
 
-Kombinasjonsredigeringen viser sekvensen som vannrette emoji-fliser. Pilknappene
-flytter valgt emoji, **Save combination** lagrer, og **Close** nederst lukker
-vinduet og forkaster utkastet. Bibliotek og treffliste tilpasser seg vindusstørrelsen.
+The combination editor displays the sequence as horizontal emoji tiles. Arrow
+buttons move the selected emoji, **Save combination** saves, and **Close** at the
+bottom closes the window and discards the draft. The saved-combination and result
+lists adapt to the window size.
 
-Se [kombinasjoner](combinations.md) for redigering, grenser og teststatus.
+See [combinations](combinations.md) for editing, limits, and test status.
 
-## Læring, sortering og historikk
+## Learning, sorting, and history
 
-Velgeren lærer hvilke treff du velger for hele søket. Læring kan slås av med
-**Learn from searches** i systemstatusmenyen. Nye valg påvirker rangeringen
-neste gang velgeren åpnes, slik at gjentatt innsetting ikke flytter treffene.
+The picker learns which results you choose for the complete query. Turn learning
+off with **Learn from searches** in the tray menu. New choices affect ranking
+the next time the picker opens, so repeated insertion does not move results.
 
-`Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
-Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
-Sist brukt er standard. Tidligere valg og brukstellere lagres lokalt.
+`Alt+T` switches between sorting by most recent use and total usage count.
+You can also choose sorting in the tray menu, which shows the active mode.
+Most recent use is the default. Previous choices and usage counts are stored locally.
 
-**Clear learned history** sletter nylige valg, brukstellere og lærte søk etter
-bekreftelse. Aliaser, kombinasjoner, favoritter, utseende og språkvalg beholdes.
-Se [læring, favoritter og stabile treff](learning.md) for rangeringsreglene.
+**Clear learned history** deletes recent choices, usage counts, and learned
+queries after confirmation. Aliases, combinations, favorites, appearance settings,
+and display languages are retained. See [learning, favorites, and stable results](learning.md)
+for ranking rules.
 
-## Lokale data og sikkerhetskopi
+## Local data and backups
 
-Innstillinger og brukshistorikk lagres i
-`%LOCALAPPDATA%\SwashMoji\profile.tsv`. Ved første oppstart importeres eksisterende
-`settings.txt`, `history.txt` og `usage.txt` automatisk; originalfilene beholdes.
-Manglende eldre filer kan importeres fra `%LOCALAPPDATA%\WinMoji`.
+Settings and usage history are stored in
+`%LOCALAPPDATA%\SwashMoji\profile.tsv`. On first launch, existing `settings.txt`,
+`history.txt`, and `usage.txt` are imported automatically; the originals are kept.
+Missing older files can be imported from `%LOCALAPPDATA%\WinMoji`.
 
-Programmet lagrer gjennom en midlertidig fil og beholder forrige komplette profil
-som `profile.tsv.bak`. Hvis profilen er ufullstendig, forsøkes gjenoppretting fra
-sikkerhetskopien. Lagringsfeil vises i statuslinjen og i systemstatusikonets tekst;
-valgene beholdes i minnet. Ukjente profilversjoner overskrives ikke.
+The application saves through a temporary file and keeps the previous complete
+profile as `profile.tsv.bak`. If the profile is incomplete, it attempts recovery
+from the backup. Save failures appear in the status line and tray icon text;
+your choices remain in memory. Unknown profile versions are not overwritten.
 
-Se [profilformat og migrering](profile-format.md) før du endrer filene manuelt.
-Søkenavn og nøkkelord bygger på Unicode CLDR 48.2 under
+See [profile format and migration](profile-format.md) before editing the files
+manually. Search names and keywords are based on Unicode CLDR 48.2 under the
 [Unicode License v3](../third_party/UNICODE_LICENSE.txt).
-[Katalogens kilder og oppdatering](search.md#catalog-provenance-and-regeneration)
-er dokumentert separat.
+[Catalog sources and updates](search.md#catalog-provenance-and-regeneration)
+are documented separately.
 
-## Kompatibilitet og teststatus
+## Compatibility and test status
 
-Klikk-/Tab-oppførselen og DPI-støtten er implementert, men full skrivebords-,
-skjermleser- og flerskjermtesting gjenstår. De senest dokumenterte native
-innsettingstestene fikk avslag på fokusbytte; dette er ikke en godkjent test av
-faktisk innsetting. Den samlede utgivelsesgodkjenningen er fortsatt åpen.
+Click/Tab behavior and DPI support are implemented, but full desktop, screen-reader,
+and multi-monitor testing remains. The most recently documented native insertion
+tests were denied foreground activation; this does not verify actual insertion.
+Overall release acceptance is still open.
 
-Se [valg og DPI](selection.md) og [utgivelsesprotokollen](release-validation.md) for dokumenterte resultater og
-gjenstående kontroller. Automatiske tester erstatter ikke disse kontrollene.
+See [selection and DPI](selection.md) and the [release protocol](release-validation.md)
+for documented results and remaining checks. Automated tests do not replace these checks.

@@ -16,7 +16,6 @@ bool EmojiControl(int id) {
     case IDC_ALIASES:
     case IDC_PINS:
     case IDC_TARGET_RESULTS:
-    case IDC_TARGET_PREVIEW:
     case IDC_COMBO_RESULTS:
     case IDC_COMBO_VARIANTS:
     case IDC_COMBO_ENTRIES:
@@ -72,7 +71,7 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
         if(item->itemState&ODS_FOCUS) { InflateRect(&r,-2,-2); DrawFocusRect(item->hDC,&r); }
         return true;
     }
-    if (item->CtlID == IDC_COMBO_SAVED || item->CtlID == IDC_COMBO_RESULTS || item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS || item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_TARGET_PREVIEW) {
+    if (item->CtlID == IDC_COMBO_SAVED || item->CtlID == IDC_COMBO_RESULTS || item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS || item->CtlID == IDC_TARGET_RESULTS) {
         auto r = item->rcItem;
         FillRect(item->hDC, &r, VocabularyStyle::InputBrush());
         const bool selected = (item->itemState & ODS_SELECTED) != 0;
@@ -84,11 +83,11 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
         const auto color = selected && NativeTheme::HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
         auto text = DrawItemText(*item);
         r = item->rcItem; InflateRect(&r,-VocabularyStyle::Px(dialog,10),0);
-        if (item->CtlID == IDC_COMBO_RESULTS || item->CtlID == IDC_TARGET_RESULTS || item->CtlID == IDC_TARGET_PREVIEW) {
+        if (item->CtlID == IDC_COMBO_RESULTS || item->CtlID == IDC_TARGET_RESULTS) {
             const auto split = text.find(L"  ");
             if (split != std::wstring::npos) {
                 auto glyph = r; glyph.right = glyph.left + VocabularyStyle::Px(dialog,44);
-                NativeEmoji::DrawLine(item->hDC,glyph,text.substr(0,split),static_cast<float>(VocabularyStyle::Px(dialog,item->CtlID==IDC_TARGET_PREVIEW ? 32 : 26)),color,false,!NativeTheme::HighContrast(),true);
+                NativeEmoji::DrawLine(item->hDC,glyph,text.substr(0,split),static_cast<float>(VocabularyStyle::Px(dialog,26)),color,false,!NativeTheme::HighContrast(),true);
                 r.left = glyph.right + VocabularyStyle::Px(dialog,8);
                 text = text.substr(split+2);
                 const auto translation = text.find(kEmojiNameSeparator);
@@ -112,7 +111,7 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
     if (selected) DeleteObject(fill);
     const auto color = selected && NativeTheme::HighContrast()
         ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
-    const bool preview = item->CtlID == IDC_COMBO_DETAILS_PAYLOAD || item->CtlID == IDC_TARGET_PREVIEW;
+    const bool preview = item->CtlID == IDC_COMBO_DETAILS_PAYLOAD;
     const float size = static_cast<float>(MulDiv(preview ? 22 : 14, GetDpiForWindow(dialog), 96));
     NativeEmoji::DrawLine(item->hDC, item->rcItem, DrawItemText(*item), size, color, preview,
                           !NativeTheme::HighContrast());
@@ -195,12 +194,9 @@ void RefreshAliases(HWND dialog, Editor& editor) {
     EnableWindow(GetDlgItem(dialog, IDC_DELETE_ALIAS), !editor.original.empty());
 }
 
-void Preview(HWND dialog, Editor& editor) {
+void TargetButtons(HWND dialog, Editor& editor) {
     SearchResult result;
     const bool valid = ResolveResult(editor.catalog, editor.profile, editor.target, result);
-    const auto label = valid ? result.payload + L"  " + result.label :
-        (editor.target.value.empty() ? L"Choose an emoji above." : L"Unavailable target. Choose a replacement emoji.");
-    SetDlgItemTextW(dialog, IDC_TARGET_PREVIEW, label.c_str());
     EnableWindow(GetDlgItem(dialog, IDC_PIN_TARGET), valid);
     SetDlgItemTextW(dialog, IDC_PIN_TARGET, IsPinned(editor.profile, editor.target) ? L"Unpin &favorite" : L"Pin &favorite");
 }
@@ -232,7 +228,7 @@ void FindTargets(HWND dialog, Editor& editor) {
     SendMessageW(list, LB_SETHORIZONTALEXTENT, textWidth, 0);
     SendMessageW(list, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(list, nullptr, TRUE);
-    Preview(dialog, editor);
+    TargetButtons(dialog, editor);
     if (editor.results.empty()) Status(dialog, L"No emoji matches. Try a shorter name or another phrase.");
     else Status(dialog, L"");
 }
@@ -281,14 +277,12 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         EnableWordDeletion(GetDlgItem(dialog, IDC_TARGET_QUERY));
         NativeTheme::Apply(dialog);
         VocabularyStyle::Apply(dialog);
-        StyleHeading(dialog, IDC_LIBRARY_HEADING);
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_VOCABULARY_INTRO));
-        NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_SELECTED_LABEL));
         StyleHeading(dialog, IDC_ALIAS_HEADING);
         StyleHeading(dialog, IDC_ALIASES_HEADING);
         StyleHeading(dialog, IDC_PINS_HEADING);
         NativeTheme::ApplyEmojiFont(dialog, {IDC_ALIASES, IDC_PINS, IDC_TARGET_QUERY,
-                                             IDC_TARGET_RESULTS, IDC_TARGET_PREVIEW});
+                                             IDC_TARGET_RESULTS});
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_VOCABULARY_STATUS));
         LoadDraft(dialog, *editor, editor->phrase, editor->target);
         RefreshPins(dialog, *editor);
@@ -297,7 +291,6 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
     }
     if (!editor) return FALSE;
     if (message == WM_DESTROY) {
-        ReleaseHeading(dialog, IDC_LIBRARY_HEADING);
         ReleaseHeading(dialog, IDC_ALIAS_HEADING);
         ReleaseHeading(dialog, IDC_ALIASES_HEADING);
         ReleaseHeading(dialog, IDC_PINS_HEADING);
@@ -322,7 +315,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
             if (result != PinResult::Pinned) { Status(dialog, L"Choose an emoji to pin."); return TRUE; }
         }
         RefreshPins(dialog, *editor, editor->target);
-        Preview(dialog, *editor);
+        TargetButtons(dialog, *editor);
         Status(dialog, editor->persist() ? L"Favorites saved." : L"Favorites not saved to disk. Changes remain in this session.");
     } else if (id == IDC_PIN_UP || id == IDC_PIN_DOWN || id == IDC_UNPIN) {
         const auto index = SendDlgItemMessageW(dialog, IDC_PINS, LB_GETCURSEL, 0, 0);
@@ -331,7 +324,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         const bool changed = id == IDC_UNPIN ? Unpin(editor->profile, target) : MovePin(editor->profile, target, id == IDC_PIN_UP ? -1 : 1);
         if (!changed) return TRUE;
         RefreshPins(dialog, *editor, target);
-        Preview(dialog, *editor);
+        TargetButtons(dialog, *editor);
         Status(dialog, editor->persist() ? L"Favorites saved." : L"Favorites not saved to disk. Changes remain in this session.");
     } else if (id == IDC_NEW_ALIAS) {
         editor->original.clear();
@@ -345,7 +338,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
     } else if (id == IDC_TARGET_RESULTS && notification == LBN_SELCHANGE) {
         const auto index = SendDlgItemMessageW(dialog, id, LB_GETCURSEL, 0, 0);
         if (index >= 0 && static_cast<size_t>(index) < editor->results.size()) editor->target = editor->results[index].id;
-        Preview(dialog, *editor);
+        TargetButtons(dialog, *editor);
         Status(dialog, L"Unsaved changes");
     } else if (id == IDC_ALIASES && notification == LBN_SELCHANGE) {
         const auto index = SendDlgItemMessageW(dialog, id, LB_GETCURSEL, 0, 0);
@@ -482,7 +475,6 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_NAME)); EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_QUERY));
         NativeTheme::Apply(dialog);
         StyleHeading(dialog, IDC_COMBO_SAVED_HEADING);
-        StyleHeading(dialog, IDC_COMBO_LIBRARY);
         StyleHeading(dialog, IDC_COMBO_EDITOR);
         StyleHeading(dialog, IDC_COMBO_ADD_HEADING);
         StyleHeading(dialog, IDC_COMBO_SEQUENCE_HEADING);
@@ -502,7 +494,6 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
     if (!e) return FALSE;
     if (message == WM_DESTROY) {
         ReleaseHeading(dialog, IDC_COMBO_SAVED_HEADING);
-        ReleaseHeading(dialog, IDC_COMBO_LIBRARY);
         ReleaseHeading(dialog, IDC_COMBO_EDITOR);
         ReleaseHeading(dialog, IDC_COMBO_ADD_HEADING);
         ReleaseHeading(dialog, IDC_COMBO_SEQUENCE_HEADING);

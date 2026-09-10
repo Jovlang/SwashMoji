@@ -1,6 +1,6 @@
 # Selection, Details and display scaling
 
-For the complete workflow and shortcuts, see the [Norwegian user guide](user-guide.md).
+For the complete workflow and shortcuts, see the [user guide](user-guide.md).
 This document describes selection and rendering rules; remaining desktop acceptance
 checks are tracked in [release validation](release-validation.md).
 

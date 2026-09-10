@@ -1,53 +1,70 @@
 # SwashMoji
 
-En liten, avhengighetsfri Win32 emoji-velger.
+**The fast Windows emoji picker that learns your vocabulary.**
 
-**`Alt+E` → søk etter en emoji eller frase → `Enter` setter den direkte inn.**
-Skriv for eksempel `bra jobbet`, `på vei` eller `razzo`. Bruk piltastene for å
-velge treff, uten å slippe tastaturet.
+SwashMoji is a lightweight, native emoji picker built for people who use emoji often and want to find the right one instantly.
 
-SwashMoji er et portabelt Windows-program med native Win32-grensesnitt.
-Det virker uten nett, installasjon eller ekstra kjøretidsavhengigheter.
+Press **Alt+E** and start typing. SwashMoji learns which emoji you actually use and brings your favorites to the front. Press **Alt+T** to switch between recently used and most-used emoji.
 
-## Finn og gjenbruk det du mener
+Search naturally across multiple languages — no language switching required. SwashMoji searches every supported language at once, while displaying emoji names in **one or two languages you choose**.
 
-- **Fire søkespråk samtidig:** engelsk, norsk bokmål, tysk og italiensk.
-  Naturlige fraser hjelper deg å finne riktig emoji. Språkene du viser får
-  søkepreferanse og toleranse for skrivefeil; navn på andre språk er fortsatt søkbare.
-- **Dine egne uttrykk:** lag aliaser eller lær velgeren hva en frase skal bety.
-- **Favoritter og kombinasjoner:** fest vanlige valg, eller lagre en sekvens som
-  `launch` → 🚀✨ under ett navn.
-- **Lærer av valgene dine:** tidligere bruk hjelper med å rangere treffene.
-- **Hudtoner og varianter:** velg global hudtone eller se og velg en variant i
-  **Details**. **Languages...** velger ett eller to språk for navnene som vises.
+Make the vocabulary yours with **custom aliases, pinned favorites, and reusable emoji combinations**. Turn the words you actually type into the emoji and sequences you actually want.
 
-## Viktigste hurtigtaster
+And because SwashMoji is a **native Windows app**, it launches instantly, stays tiny in the background, and doesn't bring an entire browser engine along for the ride.
 
-| Tast | Handling |
+**Fast. Personal. Multilingual. Native.**
+
+**SwashMoji — your emoji picker should know your vocabulary.** 🙂🚀
+
+## Screenshots
+
+**Your emoji, ready to use.** Browse the compact picker with names in your chosen languages.
+
+![SwashMoji picker with three rows of emoji and English and Norwegian names](docs/screenshots/emoji-picker.png)
+
+**Find the right emoji as you type.** Searching `christ` brings up Christmas-related results.
+
+![Search results for christ, with Christmas tree selected](docs/screenshots/search-christmas.png)
+
+**Search across languages.** Type the Italian `ragazza` while keeping names displayed in English and Norwegian.
+
+![Italian search for ragazza with English and Norwegian result names](docs/screenshots/search-italian.png)
+
+**Make words your own.** Create custom aliases and manage pinned favorites in **My vocabulary**.
+
+![Vocabulary editor mapping the alias fedrelandet to the Norwegian flag](docs/screenshots/vocabulary-editor.png)
+
+**Save a whole sequence.** Build reusable emoji combinations under a short name or trigger.
+
+![Combination editor with deploy selected and a moai and rocket sequence](docs/screenshots/combination-editor.png)
+
+## Essential shortcuts
+
+| Key | Action |
 | --- | --- |
-| `Alt+E` | Åpne velgeren |
-| `Enter` | Sett inn uten å endre utklippstavlen |
-| `Ctrl+Enter` | Sett inn og behold velgeren åpen |
-| `Shift+Enter` | Kopier til utklippstavlen |
-| `Esc` / `F1` | Lukk / vis hjelp |
+| `Alt+E` | Open the picker |
+| `Enter` | Insert without changing the clipboard |
+| `Ctrl+Enter` | Insert and keep the picker open |
+| `Shift+Enter` | Copy to the clipboard |
+| `Esc` / `F1` | Close / show help |
 
-## Bygg selv
+## Build it yourself
 
-Med Visual Studio 2022 C++ Build Tools installert, kjør fra prosjektmappen:
+With Visual Studio 2022 C++ Build Tools installed, run from the project directory:
 
 ```powershell
 .\build.cmd
 ```
 
-Start `build\SwashMoji.exe`. Skriptet finner verktøykjeden automatisk.
-Se [brukerveiledningen](docs/user-guide.md#start-og-systemstatusmeny) før du flytter programmet.
+Launch `build\SwashMoji.exe`. The script finds the toolchain automatically.
+See the [user guide](docs/user-guide.md#startup-and-tray-menu) before moving the application.
 
-## Dokumentasjon
+## Documentation
 
-- [Brukerveiledning](docs/user-guide.md) – alle funksjoner, hurtigtaster og innstillinger.
-- [Søk og språk](docs/search.md), [læring](docs/learning.md) og [kombinasjoner](docs/combinations.md) – detaljer og regler.
-- [Bidra og utvikle](CONTRIBUTING.md) – bygging, tester og teknisk dokumentasjon.
-- [Utgivelsesstatus](docs/release-validation.md) – verifiserte resultater og gjenstående testing.
+- [User guide](docs/user-guide.md) – all features, shortcuts, and settings.
+- [Search and languages](docs/search.md), [learning](docs/learning.md), and [combinations](docs/combinations.md) – details and rules.
+- [Contributing](CONTRIBUTING.md) – building, testing, and technical documentation.
+- [Release status](docs/release-validation.md) – verified results and remaining testing.
 
-Søkenavn og nøkkelord bygger på Unicode CLDR, under
+Search names and keywords are based on Unicode CLDR, under the
 [Unicode License v3](third_party/UNICODE_LICENSE.txt).

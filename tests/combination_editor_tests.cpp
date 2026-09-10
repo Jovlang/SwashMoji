@@ -23,6 +23,8 @@ int main(int argc, char** argv) {
         Editor parent{catalog, profile, {}, {}, persist}; CombinationEditor state{parent};
         dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDD_COMBINATIONS), nullptr, CombinationProc, reinterpret_cast<LPARAM>(&state));
         CHECK(dialog);
+        CHECK(ControlRect(dialog, IDC_COMBO_SAVED_HEADING).top == ControlRect(dialog, IDC_COMBO_EDITOR).top);
+        CHECK(ControlRect(dialog, IDC_COMBO_SAVED_HEADING).bottom < ControlRect(dialog, IDC_COMBO_SAVED).top);
         const auto variantsVisible = [&](bool expected) {
             for (const int id : {IDC_COMBO_VARIANT_LABEL, IDC_COMBO_VARIANTS})
                 CHECK(((GetWindowLongPtrW(GetDlgItem(dialog, id), GWL_STYLE) & WS_VISIBLE) != 0) == expected);
@@ -108,6 +110,8 @@ int main(int argc, char** argv) {
                                     reinterpret_cast<LPARAM>(&vocabulary));
         CHECK(dialog);
         const auto aliases = ControlRect(dialog, IDC_ALIASES);
+        CHECK(ControlRect(dialog, IDC_ALIASES_HEADING).top == ControlRect(dialog, IDC_ALIAS_HEADING).top);
+        CHECK(ControlRect(dialog, IDC_ALIASES_HEADING).bottom < aliases.top);
         const auto pins = ControlRect(dialog, IDC_PINS);
         const auto phrase = ControlRect(dialog, IDC_PHRASE);
         const auto query = ControlRect(dialog, IDC_TARGET_QUERY);
@@ -119,7 +123,7 @@ int main(int argc, char** argv) {
         CHECK(GetNextDlgTabItem(dialog, GetDlgItem(dialog, IDC_TARGET_RESULTS), FALSE) == GetDlgItem(dialog, IDC_SAVE_ALIAS));
         CHECK(ControlRect(dialog, IDCANCEL).top > saveAlias.bottom);
         CHECK(ControlRect(dialog, IDC_COMBINATIONS).top == ControlRect(dialog, IDCANCEL).top);
-        CHECK(ControlRect(dialog, IDC_SELECTED_LABEL).bottom < ControlRect(dialog, IDC_TARGET_PREVIEW).top);
+        CHECK(matches.bottom < saveAlias.top);
         CHECK(!(GetWindowLongPtrW(GetDlgItem(dialog, IDC_PHRASE), GWL_EXSTYLE) & WS_EX_CLIENTEDGE));
         RECT window{}; GetWindowRect(dialog, &window);
         SetWindowPos(dialog, nullptr, 0, 0, window.right-window.left+240, window.bottom-window.top+160, SWP_NOMOVE|SWP_NOZORDER);
@@ -127,10 +131,17 @@ int main(int argc, char** argv) {
         CHECK(expanded.right-expanded.left > matches.right-matches.left && Height(expanded) > Height(matches));
         CHECK(ControlRect(dialog, IDC_PHRASE).left == expanded.left);
         CHECK(ControlRect(dialog, IDC_SAVE_ALIAS).top == ControlRect(dialog, IDC_PIN_TARGET).top);
-        CHECK(ControlRect(dialog, IDC_TARGET_PREVIEW).bottom < ControlRect(dialog, IDC_SAVE_ALIAS).top);
+        CHECK(expanded.bottom < ControlRect(dialog, IDC_SAVE_ALIAS).top);
         SetDlgItemTextW(dialog, IDC_TARGET_QUERY, L"zzzznoresultzzzz");
         CHECK(SendDlgItemMessageW(dialog, IDC_TARGET_RESULTS, LB_GETCOUNT, 0, 0) == 0);
         CHECK(!IsWindowEnabled(GetDlgItem(dialog, IDC_PIN_TARGET)));
+        SetDlgItemTextW(dialog, IDC_TARGET_QUERY, L"🚀");
+        CHECK(vocabulary.target.value.empty());
+        CHECK(!IsWindowEnabled(GetDlgItem(dialog, IDC_PIN_TARGET)));
+        SendDlgItemMessageW(dialog, IDC_TARGET_RESULTS, LB_SETCURSEL, 0, 0);
+        Command(dialog, IDC_TARGET_RESULTS, LBN_SELCHANGE);
+        CHECK(vocabulary.target == vocabulary.results.front().id);
+        CHECK(IsWindowEnabled(GetDlgItem(dialog, IDC_PIN_TARGET)));
         SetDlgItemTextW(dialog, IDC_PHRASE, L"draft");
         CHECK(Text(dialog, IDC_VOCABULARY_STATUS) == L"Unsaved changes");
         DestroyWindow(dialog); dialog = nullptr;

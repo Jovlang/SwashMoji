@@ -147,6 +147,6 @@ Update relevant documentation when changing shortcuts, visible behavior, profile
 formats or workflow. Keep `README.md` a concise project overview; detailed user
 instructions belong in `docs/user-guide.md`, general contributor workflow in
 `CONTRIBUTING.md`, and technical rules/evidence in the corresponding `docs/` file.
-Keep this file focused on agent/developer invariants. Preserve Norwegian in the
-README and user guide and the existing language of UI strings. Keep changes
+Keep this file focused on agent/developer invariants. Write documentation in
+English and preserve the existing language of UI strings. Keep changes
 focused and preserve unrelated working-tree edits.

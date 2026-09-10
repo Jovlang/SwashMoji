@@ -18,8 +18,8 @@ inline void Layout(HWND dialog) {
         MoveWindow(GetDlgItem(dialog,id),r.left,r.top,r.right-r.left,r.bottom-r.top,TRUE);
     };
     place(IDC_COMBO_INTRO,16,12,560+dx,14);
-    place(IDC_COMBO_LIBRARY,28,40,160,16); place(IDC_COMBO_EDITOR,228,40,336+dx,16);
-    place(IDC_COMBO_SAVED_HEADING,28,66,160,12); place(IDC_COMBO_SAVED,28,84,160,294+dy);
+    place(IDC_COMBO_EDITOR,228,40,336+dx,16);
+    place(IDC_COMBO_SAVED_HEADING,28,40,160,16); place(IDC_COMBO_SAVED,28,58,160,320+dy);
     place(IDC_COMBO_NEW,28,386+dy,60,22); place(IDC_COMBO_DELETE,128,386+dy,60,22);
     place(IDC_COMBO_NAME_HEADING,228,66,336+dx,12); place(IDC_COMBO_NAME,228,82,336+dx,20);
     place(IDC_COMBO_NAME_HINT,228,106,336+dx,12);
@@ -54,7 +54,7 @@ inline void Layout(HWND dialog) {
 inline void Paint(HWND dialog) {
     PAINTSTRUCT paint{}; auto dc=BeginPaint(dialog,&paint); RECT client{}; GetClientRect(dialog,&client);
     FillRect(dc,&client,NativeTheme::BackgroundBrush());
-    for (int id : {IDC_COMBO_LIBRARY,IDC_COMBO_EDITOR}) {
+    for (int id : {IDC_COMBO_SAVED_HEADING,IDC_COMBO_EDITOR}) {
         auto r=Bounds(dialog,id); r.bottom=Bounds(dialog,IDC_COMBO_STATUS).bottom;
         InflateRect(&r,Px(dialog,18),0); r.top-=Px(dialog,16);
         Round(dc,r,Panel(),Px(dialog,12));

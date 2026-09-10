@@ -116,9 +116,8 @@ inline void Layout(HWND dialog) {
     int left = dx * 2 / 5, right = dx - left;
     auto place = [&](int id,int x,int y,int w,int h) { RECT r{x,y,x+w,y+h}; MapDialogRect(dialog,&r); MoveWindow(GetDlgItem(dialog,id),r.left,r.top,r.right-r.left,r.bottom-r.top,TRUE); };
     place(IDC_VOCABULARY_INTRO,16,14,520+dx,16);
-    place(IDC_LIBRARY_HEADING,28,48,176+left,16);
-    place(IDC_ALIASES_HEADING,28,76,176+left,12);
-    place(IDC_ALIASES,28,94,176+left,112+dy/2);
+    place(IDC_ALIASES_HEADING,28,48,176+left,16);
+    place(IDC_ALIASES,28,66,176+left,140+dy/2);
     place(IDC_NEW_ALIAS,28,214+dy/2,62,24); place(IDC_DELETE_ALIAS,142+left,214+dy/2,62,24);
     place(IDC_PINS_HEADING,28,256+dy/2,176+left,12);
     place(IDC_PINS,28,274+dy/2,176+left,66+dy-dy/2);
@@ -126,8 +125,7 @@ inline void Layout(HWND dialog) {
     place(IDC_ALIAS_HEADING,244+left,48,280+right,16);
     place(IDC_PHRASE_LABEL,244+left,76,280+right,12); place(IDC_PHRASE,244+left,94,280+right,24);
     place(IDC_SEARCH_LABEL,244+left,130,280+right,12); place(IDC_TARGET_QUERY,244+left,148,280+right,24);
-    place(IDC_RESULTS_LABEL,244+left,184,280+right,12); place(IDC_TARGET_RESULTS,244+left,202,280+right,66+dy);
-    place(IDC_SELECTED_LABEL,244+left,280+dy,280+right,12); place(IDC_TARGET_PREVIEW,244+left,298+dy,280+right,42);
+    place(IDC_RESULTS_LABEL,244+left,184,280+right,12); place(IDC_TARGET_RESULTS,244+left,202,280+right,138+dy);
     place(IDC_SAVE_ALIAS,244+left,348+dy,96,24); place(IDC_PIN_TARGET,348+left,348+dy,96,24);
     place(IDC_VOCABULARY_STATUS,244+left,376+dy,280+right,18);
     place(IDC_COMBINATIONS,16,398+dy,176,24); place(IDCANCEL,448+dx,398+dy,88,24);
@@ -138,10 +136,10 @@ inline void Layout(HWND dialog) {
         int height=metrics.tmHeight+Px(dialog,4);
         MoveWindow(control,r.left,r.top+(r.bottom-r.top-height)/2,r.right-r.left,height,TRUE);
     }
-    for (int id : {IDC_ALIASES,IDC_PINS,IDC_TARGET_RESULTS,IDC_TARGET_PREVIEW}) {
+    for (int id : {IDC_ALIASES,IDC_PINS,IDC_TARGET_RESULTS}) {
         auto control=GetDlgItem(dialog,id); RECT r{}; GetWindowRect(control,&r);
         SetWindowRgn(control,CreateRoundRectRgn(0,0,r.right-r.left+1,r.bottom-r.top+1,Px(dialog,16),Px(dialog,16)),TRUE);
-        if (id != IDC_TARGET_PREVIEW) SendMessageW(control,LB_SETITEMHEIGHT,0,Px(dialog,id==IDC_TARGET_RESULTS ? 48 : 36));
+        SendMessageW(control,LB_SETITEMHEIGHT,0,Px(dialog,id==IDC_TARGET_RESULTS ? 48 : 36));
     }
     InvalidateRect(dialog,nullptr,TRUE);
 }
@@ -149,7 +147,7 @@ inline void Paint(HWND dialog) {
     PAINTSTRUCT paint{}; auto dc=BeginPaint(dialog,&paint); RECT client{}; GetClientRect(dialog,&client);
     FillRect(dc,&client,NativeTheme::BackgroundBrush());
     auto bounds = [&](int id) { RECT r{}; GetWindowRect(GetDlgItem(dialog,id),&r); MapWindowPoints(nullptr,dialog,reinterpret_cast<POINT*>(&r),2); return r; };
-    auto library=bounds(IDC_LIBRARY_HEADING), editor=bounds(IDC_ALIAS_HEADING), bottom=bounds(IDC_VOCABULARY_STATUS);
+    auto library=bounds(IDC_ALIASES_HEADING), editor=bounds(IDC_ALIAS_HEADING), bottom=bounds(IDC_VOCABULARY_STATUS);
     library.left-=Px(dialog,18); library.top-=Px(dialog,16); library.right+=Px(dialog,18); library.bottom=bottom.bottom;
     editor.left-=Px(dialog,18); editor.top-=Px(dialog,16); editor.right+=Px(dialog,18); editor.bottom=bottom.bottom;
     Round(dc,library,Panel(),Px(dialog,12)); Round(dc,editor,Panel(),Px(dialog,12));
