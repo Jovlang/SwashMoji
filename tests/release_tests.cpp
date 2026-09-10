@@ -26,6 +26,7 @@ int wmain(int argc, wchar_t** argv) {
         const auto package = fs::path(argv[1]);
         CHECK(fs::file_size(package / "SwashMoji.exe") > 0);
         CHECK(!Read(package / "UNICODE_LICENSE.txt").empty());
+        CHECK(Read(package / "LICENSE").find("Version 3, 29 June 2007") != std::string::npos);
         Catalog catalog;
         std::ifstream emojis(package / "emojis.txt"), intents(package / "intent_phrases.tsv");
         CHECK(catalog.Load(emojis) && catalog.LoadIntents(intents));

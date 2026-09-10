@@ -15,7 +15,7 @@ bundled CMake/Ninja tools. Run PowerShell from the repository root:
 
 The script discovers the tools automatically and builds the C++17 application.
 Run `build\SwashMoji.exe`; no SwashMoji installation or separate VC runtime install
-is required. Keep `emojis.txt`, `intent_phrases.tsv` and `UNICODE_LICENSE.txt` beside
+is required. Keep `emojis.txt`, `intent_phrases.tsv`, `LICENSE` and `UNICODE_LICENSE.txt` beside
 the executable when moving it. Runtime operation is offline.
 
 ## Automated and desktop checks

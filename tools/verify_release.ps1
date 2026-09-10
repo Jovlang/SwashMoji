@@ -22,7 +22,7 @@ try {
     $package = Join-Path $run 'portable'
     & $cmake --install $build --prefix $package | Tee-Object -FilePath (Join-Path $run 'install.txt')
     if ($LASTEXITCODE -ne 0) { throw 'Portable install failed.' }
-    $expected = @('SwashMoji.exe', 'emojis.txt', 'intent_phrases.tsv', 'UNICODE_LICENSE.txt')
+    $expected = @('SwashMoji.exe', 'emojis.txt', 'intent_phrases.tsv', 'LICENSE', 'UNICODE_LICENSE.txt')
     $actual = @(Get-ChildItem -LiteralPath $package -File | Select-Object -ExpandProperty Name)
     if (Compare-Object ($expected | Sort-Object) ($actual | Sort-Object)) { throw 'Unexpected portable payload.' }
     $verification = Join-Path $run 'verification'

@@ -32,7 +32,7 @@ workflow; a partial directory without the final manifest is not a verified candi
 Nothing is published. Existing output directories and running pickers are retained.
 
 The portable payload contains only `SwashMoji.exe`, `emojis.txt`,
-`intent_phrases.tsv` and `UNICODE_LICENSE.txt`. ZIP round-trip hashes are checked,
+`intent_phrases.tsv`, `LICENSE` and `UNICODE_LICENSE.txt`. ZIP round-trip hashes are checked,
 including extraction into a path containing spaces and æøå. The smoke runner loads
 the staged catalog and intents and uses separate, unique profile roots to verify
 fresh startup data, bilingual search, a saved combination/alias/pin/choice across

@@ -126,11 +126,12 @@ endif()
 
 configure_file(emojis.txt emojis.txt COPYONLY)
 configure_file(intent_phrases.tsv intent_phrases.tsv COPYONLY)
+configure_file(LICENSE LICENSE COPYONLY)
 configure_file(third_party/UNICODE_LICENSE.txt UNICODE_LICENSE.txt COPYONLY)
 
 # Portable runtime payload only; verification tools and profiles stay outside it.
 install(TARGETS SwashMoji RUNTIME DESTINATION .)
-install(FILES emojis.txt intent_phrases.tsv third_party/UNICODE_LICENSE.txt DESTINATION .)
+install(FILES emojis.txt intent_phrases.tsv LICENSE third_party/UNICODE_LICENSE.txt DESTINATION .)
 
 # MinGW remains supported when used as a native Windows compiler.
 if(MINGW)

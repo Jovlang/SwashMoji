@@ -10,7 +10,7 @@ to choose another result.
 
 SwashMoji needs no installation. Launch `SwashMoji.exe`; after a local build,
 it is in the `build` directory. When moving it, keep `emojis.txt`,
-`intent_phrases.tsv`, and `UNICODE_LICENSE.txt` beside the executable.
+`intent_phrases.tsv`, `LICENSE`, and `UNICODE_LICENSE.txt` beside the executable.
 The catalog and phrases are read from the two UTF-8 files, with no network access.
 Settings and history are stored separately in your user profile.
 
