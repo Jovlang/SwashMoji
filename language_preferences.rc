@@ -5,7 +5,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Languages - SwashMoji"
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT "Choose one or two languages for emoji names.", -1, 12, 12, 236, 14
+    LTEXT "Choose one or two languages for displayed emoji names.", -1, 12, 12, 236, 14
     LTEXT "&Primary:", -1, 12, 36, 66, 12
     COMBOBOX 601, 82, 32, 166, 90, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT "&Secondary:", -1, 12, 62, 66, 12
