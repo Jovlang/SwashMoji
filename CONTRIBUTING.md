@@ -71,7 +71,7 @@ appropriate reference before changing behavior:
 | Saved sequences, variants and editor behavior | [Combinations](docs/combinations.md) |
 | Profile format, migration and backup recovery | [Profile format](docs/profile-format.md) |
 | Keyboard selection, Details, DPI and accessibility | [Selection](docs/selection.md) |
-| Changes and historical context | [Release notes](docs/release-notes.md) |
+| Release evidence and remaining acceptance checks | [Release validation](docs/release-validation.md) |
 
 The [catalog regeneration instructions](docs/search.md#catalog-provenance-and-regeneration)
 cover pinned CLDR downloads, offline cache reuse, source hashes, deterministic

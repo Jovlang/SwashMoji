@@ -1,4 +1,4 @@
-# Local profile format (M0–M5)
+# Local profile format
 
 The runtime uses `%LOCALAPPDATA%\SwashMoji\profile.tsv`. All profile tests pass an
 isolated directory explicitly; they never resolve or change the user's profile.
@@ -33,7 +33,7 @@ Counts use decimal digits without signs or suffixes; overflow is rejected.
 
 Settings are `position_above_text_field` and `sort_by_usage` (0–1), `emoji_rows`
 (1–3), `skin_tone` (0–5), and `learn_queries` (0–1, default 1). Font and
-status-line visibility remain session-only, as before M0.
+status-line visibility remain session-only, and are not persisted.
 
 Display languages default to `en`, `nb`, including when migrating versions 1–4.
 One locale selects a single display language. Empty, duplicate, unknown or more
@@ -51,7 +51,7 @@ units after normalization; punctuation-only queries are not learned. Reading or
 searching does not refresh LRU order. Counts saturate at UINT32_MAX. Duplicate
 history, usage, pin, and normalized query records are skipped (first valid wins).
 
-M2 introduced up to 500 aliases; phrases have
+There are up to 500 aliases; phrases have
 at most 96 UTF-16 code units and must normalize to at least one letter or digit.
 The normalized phrase is the unique lookup key; the original phrase is kept for
 display. Duplicate normalized records are skipped (first valid record wins).
@@ -119,7 +119,7 @@ clear-history command is the normal way to reset history while retaining setting
 
 ## Validation
 
-Run `.\build.cmd test`, or `.\build.cmd test build-m0` while the normal executable
+Run `.\build.cmd test`, or `.\build.cmd test build-agent` while the normal executable
 is running. CTest covers the original preference comparator, search behavior and
 catalog identity, UTF-8/escaping, legacy migration, every truncation point of a
 sample profile, backup recovery, future-format protection, malformed numeric

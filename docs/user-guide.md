@@ -22,8 +22,9 @@ av lokal brukshistorikk. **Exit** avslutter programmet; `Esc` lukker velgeren.
 
 Søk på engelsk, norsk bokmål, tysk og italiensk samtidig. Du kan bruke navn,
 Unicode-nøkkelord og uttrykk som `bra jobbet`, `på vei` og `thank you`.
-`Rakete` og `razzo` finner begge 🚀. Skrivefeil tolereres når det ikke finnes
-vanlige treff. Egne aliaser gir deg flere måter å finne en emoji på.
+`Rakete` og `razzo` finner begge 🚀. Skrivefeil i katalogens navn og nøkkelord
+tolereres på språkene du viser, når det ikke finnes vanlige treff.
+Egne aliaser gir deg flere måter å finne en emoji på.
 
 **Languages...** i systemstatusmenyen velger ett eller to språk for emojinavn:
 
@@ -35,8 +36,11 @@ vanlige treff. Egne aliaser gir deg flere måter å finne en emoji på.
 
 Engelsk og norsk er standard. **Italian** og **German** har også oversatte navn
 for alle 3598 emojivariantene i katalogen. Søket bruker fortsatt alle tilgjengelige
-språk, uansett hvilke du viser. Språkvalget gjelder emojinavn, ikke selve
-grensesnittets menyer og knapper.
+språk for vanlige treff, uansett hvilke du viser: `ragazza` finner 👧 også med
+engelsk og norsk valgt. Språkene du viser foretrekkes ved ellers like treff;
+et nøyaktig navn på et annet språk går foran et svakere treff på valgt språk.
+Egne aliaser og innebygde uttrykk beholder frasematching og toleranse for skrivefeil
+uavhengig av språkvalget. Menyer og knapper blir ikke oversatt av språkvalget.
 
 Navn i treff, forhåndsvisning og variantvalg bruker samme språkvalg. Under treffene
 vises navnene på valgt variant, atskilt med «·». Like oversettelser vises bare én
@@ -173,8 +177,7 @@ er dokumentert separat.
 Klikk-/Tab-oppførselen og DPI-støtten er implementert, men full skrivebords-,
 skjermleser- og flerskjermtesting gjenstår. De senest dokumenterte native
 innsettingstestene fikk avslag på fokusbytte; dette er ikke en godkjent test av
-faktisk innsetting. M4 og den samlede utgivelsesgodkjenningen er fortsatt åpne.
+faktisk innsetting. Den samlede utgivelsesgodkjenningen er fortsatt åpen.
 
-Se [endringsnotater](release-notes.md), [teststatus for valg og DPI](selection.md)
-og [utgivelsesprotokollen](release-validation.md) for dokumenterte resultater og
+Se [valg og DPI](selection.md) og [utgivelsesprotokollen](release-validation.md) for dokumenterte resultater og
 gjenstående kontroller. Automatiske tester erstatter ikke disse kontrollene.

@@ -1,4 +1,4 @@
-# Insertion and recovery (M1)
+# Insertion and recovery
 
 `insertion.h/.cpp` contain testable input and clipboard operations and a one-shot
 focus-return guard. `insertion_win32.h/.cpp` adapt those operations to Windows.
@@ -8,8 +8,8 @@ focus-return guard. `insertion_win32.h/.cpp` adapt those operations to Windows.
 
 Enter and clicking insert and close after full input submission. Ctrl+Enter and
 Ctrl+click insert while leaving the picker open. Shift+Enter explicitly copies and
-closes only after the entire copy operation succeeds. M4 changes click and Tab
-behavior; see [selection documentation](selection.md). Font cycling uses Alt+F.
+closes only after the entire copy operation succeeds. For click and Tab
+behavior, see [selection documentation](selection.md). Font cycling uses Alt+F.
 
 An insertion failure keeps the query, selected result, and picker available.
 The recovery area explains the outcome and offers **Copy instead**, also
@@ -74,21 +74,13 @@ clipboard. [Microsoft SetClipboardData documentation](https://learn.microsoft.co
 
 ## Verification
 
-M6 update (2026-09-09): all 13 CTest suites pass, including offline Python and
-integrated package/profile checks. Both separate native harnesses returned 77
-in this session because foreground activation was unavailable. The picker harness
-now checks foreground ownership before calling the real insertion path, retaining
-failures for actual insertion errors after successful setup. See the current
-[release evidence](release-validation.md); earlier passes below are historical.
-
-`.\build.cmd test build-m1` builds the application and runs four CTest suites.
 The insertion suite uses fake platform adapters to verify missing/destroyed
 targets, denied or changed focus, invalid Unicode, full submission, every partial
 prefix of a multi-emoji batch with modifiers, failed cleanup, stale/cancelled
 focus callbacks, switch-away-and-back behavior, and all clipboard ownership and
 failure paths. It never changes desktop focus or the real clipboard.
 
-`.\build-m1\SwashMojiNativeInputTests.exe` runs separately because it needs an
+`SwashMojiNativeInputTests.exe` runs separately because it needs an
 interactive desktop. It creates a temporary external Win32 edit target, verifies
 the exact received UTF-16 string and repeat insertion, checks that the clipboard
 sequence number did not change, and rejects internal/stale/destroyed targets.
@@ -97,10 +89,7 @@ It writes PASS, FAIL, or SKIPPED to `native-input-result.txt` beside the test
 executable. The target has a 15-second crash-safety timeout and is closed by the
 driver. No real profile data is used.
 
-Verified on 2026-09-07: all four CTest suites passed; the native test passed on the
-interactive desktop. The restricted shell session did not grant foreground
-activation; the interactive launch was needed for actual delivery verification.
-Broader application testing (Notepad, browsers, desktop chat/editor apps, terminals,
-and elevated applications), the complete picker UI walkthrough, and M4's DPI and
-accessibility matrix remain outstanding. The controlled edit test establishes
+See [contributor workflow](../CONTRIBUTING.md) for building and running the suites.
+Current automated results and remaining target-app, DPI and accessibility checks
+are in [release validation](release-validation.md). A controlled edit test establishes
 native text delivery, not universal application compatibility.

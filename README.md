@@ -12,7 +12,8 @@ Det virker uten nett, installasjon eller ekstra kjøretidsavhengigheter.
 ## Finn og gjenbruk det du mener
 
 - **Fire søkespråk samtidig:** engelsk, norsk bokmål, tysk og italiensk.
-  Naturlige fraser og toleranse for skrivefeil gjør det lettere å finne riktig emoji.
+  Naturlige fraser hjelper deg å finne riktig emoji. Språkene du viser får
+  søkepreferanse og toleranse for skrivefeil; navn på andre språk er fortsatt søkbare.
 - **Dine egne uttrykk:** lag aliaser eller lær velgeren hva en frase skal bety.
 - **Favoritter og kombinasjoner:** fest vanlige valg, eller lagre en sekvens som
   `launch` → 🚀✨ under ett navn.
@@ -46,7 +47,7 @@ Se [brukerveiledningen](docs/user-guide.md#start-og-systemstatusmeny) før du fl
 - [Brukerveiledning](docs/user-guide.md) – alle funksjoner, hurtigtaster og innstillinger.
 - [Søk og språk](docs/search.md), [læring](docs/learning.md) og [kombinasjoner](docs/combinations.md) – detaljer og regler.
 - [Bidra og utvikle](CONTRIBUTING.md) – bygging, tester og teknisk dokumentasjon.
-- [Endringsnotater](docs/release-notes.md) og [utgivelsesstatus](docs/release-validation.md) – verifiserte resultater og gjenstående testing.
+- [Utgivelsesstatus](docs/release-validation.md) – verifiserte resultater og gjenstående testing.
 
 Søkenavn og nøkkelord bygger på Unicode CLDR, under
 [Unicode License v3](third_party/UNICODE_LICENSE.txt).

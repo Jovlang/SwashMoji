@@ -1,4 +1,4 @@
-# Learning, favorites and stable picker sessions (M3)
+# Learning, favorites and stable picker sessions
 
 Successful insertion or explicit copy records one choice of a stable result ID.
 For a nonempty normalized search, it also records the `(complete query, result)`
@@ -7,7 +7,9 @@ operations do not learn. `nice` has two curated choices, 👌 and 👍, so repea
 choices can improve either within the eligible match class.
 
 Within each match class, search compares query-specific counts, the selected
-recent/most-used preference, lexical detail, default popularity, and stable ID.
+recent/most-used preference, lexical detail, preferred search language, default
+popularity, and stable ID. Search languages break otherwise equal lexical ties;
+they do not override learned choices. See [search.md](search.md).
 Learning cannot introduce an unrelated result or cross a match-class boundary.
 Exact names still lead keyword/intent matches; an explicit personal alias retains
 the highest priority. Query counts affect only the normalized whole query, not
@@ -52,14 +54,10 @@ See [profile-format.md](profile-format.md) for bounds, LRU ordering and recovery
 
 ## Verification
 
-Run `.\build.cmd test build-m3-edit`. Eight CTest suites cover the bilingual corpus,
-exact-name invariants, query-class boundaries, full-query isolation, disabled
+The learning suite covers query-class boundaries, full-query isolation, disabled
 learning, 1,000-pair LRU eviction, saturation, snapshot stability, pin limits and
-ordering, family aggregation, restart, and locked-file migration retries. The
-edit-control suite verifies Ctrl+Backspace deletion, selection/caret handling,
-Unicode safety, repeat behavior and undo in native text fields. All eight suites
-passed on 2026-09-08. The corpus passes 111/111 top-three/no-match cases, including
-51/51 intent cases.
+ordering, family aggregation and restart. Storage tests cover migration/retry;
+edit-control tests cover Ctrl+Backspace, Unicode safety, repetition and undo.
 
 The separate `SwashMojiPickerVocabularyTests.exe` uses an isolated profile and
 the real picker/editor code. It verifies favorite ordering and persistence,
@@ -70,9 +68,7 @@ the system clipboard. A final real insertion into a temporary external Win32 edi
 checks the original target and unchanged clipboard sequence number. The executable
 writes `picker-vocabulary-result.txt` next to itself and then exits.
 
-`SwashMojiVocabularyPreview.exe` opens a separate test profile for keyboard and
-visual checks. These native tools need an interactive desktop; ordinary CTest does
-not change focus or submit input. The final M3 favorites visual review was
-interrupted when Computer Use was stopped and remains outstanding for M4.
-Broader application compatibility, DPI/monitor and screen-reader verification
-remains in M4/M6.
+`SwashMojiVocabularyPreview.exe` opens an isolated editor for keyboard and visual
+checks. See [contributor workflow](../CONTRIBUTING.md) and
+[release validation](release-validation.md) for current results and remaining
+interactive acceptance checks.

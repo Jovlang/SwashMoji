@@ -22,36 +22,48 @@ variant details, vocabulary and combination editors share these preferences.
 Vocabulary results retain their two-line presentation using the shared separator.
 
 Search accepts an independent locale filter of any length. An empty filter uses
-all available localizations; aliases and curated intents remain available. Exact,
-prefix, token and fuzzy matching iterate locale data. English inflections and the
-existing English-name-length tie-break remain unchanged. Display labels do not
-switch to the query's language.
+all available localizations; aliases and curated intents remain available.
+`SearchLanguagePolicy` separately supplies preferred locales, without a two-locale
+limit. When omitted, Search uses the profile's display locales as preferences,
+not as a hard filter. Exact names, keywords, prefixes and all-token lexical
+matches continue across the filter's locales. Keeping non-fuzzy fallback preserves
+the existing four-language behavior, including mixed-language token queries.
 
-The I18N foundation passed all 12 registered CTest suites in `build-i18n` on
-2026-09-09, including synthetic third-locale tests and the bilingual corpus.
-Python generator tests were not registered (Python unavailable). One isolated
-vocabulary visual pass confirmed bilingual result/preview rendering. The desktop
-harness completed editor/state checks but Windows denied foreground activation;
-actual insertion was skipped.
+Catalog fuzzy matching runs only in the intersection of preferred locales and
+the filter, and only if there are no ordinary results anywhere. An explicit empty
+preference or empty intersection disables catalog fuzzy matching; it must not be
+passed as an empty low-level scorer filter (which means all locales). Missing
+preferred translations do not expand fuzzy matching to other languages. Both
+selected languages have equal search preference; primary/secondary orders labels.
+The low-level `LexicalScore` and `FuzzyScore` retain their explicit filter semantics.
 
-Settings verification on 2026-09-10: `build-i18n-settings` passed all 13 CTest
-suites, including the Python catalog generator, profile migration and language
-selection tests. One visual pass confirmed the native language dialog and its
-accessible dropdown/button names. The desktop harness completed editor/state
-checks but actual insertion was skipped because Windows denied foreground focus.
-DPI transitions, high contrast and Narrator remain manual acceptance checks.
+Match classes, query learning, usage/recency and lexical detail retain their
+priority. A preferred-language match breaks ties after lexical detail and before
+default popularity/stable ID. It must achieve the winning tier and detail using
+preferred locales alone; a weak preferred match cannot promote a stronger fallback
+match. Exact aliases/names retain their existing priority. English inflections and
+the English-name-length tie-break remain unchanged. Display labels use only display
+preferences, even with an independent search-policy override.
 
-`build-i18n-settings\SwashMojiLanguagePreview.exe` opens settings against an
-isolated `vocabulary-preview-profile` beside the executable. Open
-`SwashMojiVocabularyPreview.exe` to inspect vocabulary using those preferences.
+Curated intents currently have no locale tags: they are a small, separately
+maintained phrase list, not all CLDR translations. Exact, partial and fuzzy phrase
+matching remains locale-neutral, as do personal aliases and combination names.
+If curated phrases eventually expand into a large multilingual dataset, add locale
+provenance before applying preferred/fallback policy to those phrases; do not infer
+their language from spelling. No new user setting or profile format is introduced.
+
+`SwashMojiLanguagePreview.exe` opens settings against an isolated
+`vocabulary-preview-profile` beside the executable, shared with the vocabulary
+preview. See [contributor workflow](../CONTRIBUTING.md) for building the previews.
 
 ## Existing behavior
 
 Search English, Norwegian Bokmål, German and Italian together, without a language switch or runtime
 network access. Exact personal aliases rank first, then exact English/localized
 names or a pasted known emoji, exact curated intent phrases, name prefixes,
-all-token lexical matches, and finally fuzzy matches only when ordinary results
-are absent. Partial aliases use the corresponding prefix/token classes. Existing
+all-token lexical matches, and finally preferred-locale catalog fuzzy matches only
+when ordinary results are absent. Curated/personal phrases retain their locale-neutral
+fallback. Partial aliases use the corresponding prefix/token classes. Existing
 query learning and recency/usage break ties within a class; see [learning.md](learning.md).
 
 Text uses Windows NFKC normalization and invariant Unicode lowercase conversion.
@@ -99,27 +111,17 @@ separate `nb` annotation files. Names/keywords inherit from `no` with English
 fallback. Hand-authored annotations override derived annotations. Inheritance
 markers are respected. Existing English keyword vocabulary is preserved.
 
-Italian/German expansion (2026-09-10): both languages provide names for all 3,598
-catalog variants. The original five columns and original source hashes remain
-unchanged. Newly downloaded annotation/derived-annotation hashes and all four
-locale codes are recorded in the manifest. Offline regeneration is byte-identical.
-Missing additional translations are omitted rather than replaced with English in
-the catalog; the shared display formatter supplies fallback when needed.
-
-`.\build.cmd test build-i18n-translations` passes all 13 suites, including the
-111-case existing search corpus, exact-name checks for all four locales, Italian/
-German preference round-trips, generic catalog-triple parsing, and offline Python
-generator fixtures. A vocabulary preview with Italian primary/German secondary
-confirmed translated results and selected-name rendering. The compact-grid test
-uses three fixed aliases so language additions cannot change its result-count
-assumption. English/Norwegian defaults and authored combination payloads remain
-unchanged.
+German and Italian provide names for all 3,598 catalog variants. Their addition
+preserved the original five columns and source hashes; new source hashes are in
+the manifest. Missing additional translations stay absent in the catalog; the
+shared display formatter supplies fallback. Tests cover generic locale triples,
+localized exact names, preference round-trips and deterministic offline generation.
 
 ```powershell
 python tools/update_emoji_catalog.py --download --cldr-dir build/cldr
 python tools/update_emoji_catalog.py --cldr-dir build/cldr
 python tests/test_catalog_generator.py
-.\build.cmd test build-m2
+.\build.cmd test build-agent
 ```
 
 Generator tests need Python 3.10 or later. If Python is not on PATH, set
@@ -132,6 +134,18 @@ files in offline mode are errors. Generating twice from the same inputs gives th
 same catalog and manifest. Runtime startup reads only the bundled generated files.
 
 ## Verification
+
+Preferred-language policy regression fixtures in `tests/core_tests.cpp` cover
+unselected exact names/keywords and prefixes, primary/secondary fuzzy matching,
+blocked unselected typos, exact fallback versus preferred prefixes, locale ties
+and usage precedence, independent display labels/search overrides, hard filters,
+empty preference intersections, and curated/personal phrase priority.
+
+Policy verification (2026-09-10): `.\build.cmd test build-search-policy` built the
+application and passed all 13 CTest suites with the bundled Python runtime enabled,
+including the existing multilingual corpus and catalog generator. No catalog or
+profile migration was needed. Separate real-input desktop harnesses were not run
+for this search-only change.
 
 The checked-in `tests/search_corpus.tsv` has 111 cases: 40 names/keywords, 51 intent
 phrases, seven normalization cases, four typos, three glyphs, three aliases and
@@ -152,39 +166,5 @@ Results are written to `picker-vocabulary-result.txt`. The separate
 and uses `vocabulary-preview-profile` beside the executable.
 This is separate from CTest because it changes desktop focus and submits real input.
 
-M2 verification on 2026-09-07: all six CTest suites passed, including both offline Python
-fixture tests; full-cache regeneration was byte-identical. The native picker/editor
-test passed on the interactive desktop, including variation-selector prefilling.
-Visual inspection and keyboard Save/Escape passed in the standalone preview, and
-UI Automation exposed named phrase/search/result controls. Broader target-app,
-multi-monitor/DPI and screen-reader acceptance remains assigned to M4/M6.
-For the current eight-suite baseline and remaining M3 visual review, see
-[learning verification](learning.md#verification).
-
-### Vocabulary visual redesign — 2026-09-09
-
-My vocabulary now groups saved aliases and pinned favorites in a Library panel,
-with a separate Alias editor. Results and the selected preview distinguish the
-English name from its Bokmål translation. Save alias is the primary action;
-Close and New combination / edit remain global footer actions. Native controls
-retain their mnemonics, Tab navigation, accessible names and selection behavior.
-The resizable layout expands both columns and lists, uses DPI-scaled geometry,
-and provides explicit focus outlines, subdued destructive actions and empty states.
-Status messages are local to the editor; draft changes replace permanent instructions.
-
-The implementation uses a reusable native presentation layer in vocabulary_style.h
-and opt-in single-line DirectWrite ellipsis. No runtime dependencies or profile
-format changes were introduced. The first rendered preview was inspected, followed
-by a second pass correcting input alignment, preview spacing, footer surfaces,
-focus outlines and clipping. The final preview was inspected with empty and saved
-aliases; Save and native Tab focus were exercised with its isolated profile.
-Build and all 11 registered CTest suites passed with
-`.\build.cmd test build-vocabulary-polish`, including layout growth, action alignment,
-empty results and draft-status regression checks. Python generator tests were not
-registered in this environment. Real multi-monitor DPI transitions and Narrator
-remain manual acceptance checks.
-The separate picker/vocabulary harness passed its preceding editor and layout
-checks but failed at external insertion with "Could not focus the original app"
-(`picker-vocabulary-result.txt`); actual target-app insertion remains unverified.
-The final button repaint/high-contrast focus correction was verified by a fresh
-`.\build.cmd test build-vocabulary-final`: all 11 registered suites passed.
+For current automated results and outstanding desktop, accessibility and release
+checks, see [release validation](release-validation.md).

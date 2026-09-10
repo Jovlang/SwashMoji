@@ -154,8 +154,12 @@ int PopularityPrior(const std::wstring& glyph) {
 }
 
 std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile, const std::wstring& query,
-                                 const RankingPreferences* snapshot, const std::vector<std::string>& locales) {
+                                 const RankingPreferences* snapshot, const std::vector<std::string>& locales,
+                                 const SearchLanguagePolicy* languagePolicy) {
     const auto& preferences = snapshot ? *snapshot : static_cast<const RankingPreferences&>(profile);
+    const auto& preferred = languagePolicy ? languagePolicy->preferredLocales : profile.settings.displayLanguages.Locales();
+    std::vector<std::string> preferredLocales;
+    for (const auto& locale : preferred) if (IncludesLocale(locales, locale)) preferredLocales.push_back(locale);
     const auto normalized = Lower(query);
     const auto first = normalized.find_first_not_of(L" \t\r\n");
     const auto last = normalized.find_last_not_of(L" \t\r\n");
@@ -196,6 +200,12 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
     } else {
         for (const auto& emoji : catalog.Entries()) {
             auto match = LexicalScore(emoji, words, locales);
+            // Empty filters mean all locales in the low-level scorers, so guard
+            // an empty preference/filter intersection explicitly.
+            if (match.tier && !preferredLocales.empty()) {
+                const auto selected = LexicalScore(emoji, words, preferredLocales);
+                match.preferredLanguage = selected.tier == match.tier && selected.detail == match.detail;
+            }
             const bool toned = SkinToneIndex(emoji.glyph) != 0;
             if (toned && match.tier != 8) continue;
             std::wstring explanation;
@@ -209,12 +219,13 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
         if (candidates.empty()) {
             for (const auto& emoji : catalog.Entries()) {
                 if (SkinToneIndex(emoji.glyph)) continue;
-                int score = FuzzyScore(emoji, words, locales);
+                int score = preferredLocales.empty() ? -1 : FuzzyScore(emoji, words, preferredLocales);
+                bool preferredLanguage = score >= 0;
                 for (const auto& phrase : emoji.intents) {
                     const auto match = PhraseMatch(phrase, words, false, true);
-                    if (match.tier) score = std::max(score, match.detail);
+                    if (match.tier && match.detail > score) { score = match.detail; preferredLanguage = false; }
                 }
-                if (score >= 0) addEmoji(emoji, {1, score}, L"Similar spelling");
+                if (score >= 0) addEmoji(emoji, {1, score, preferredLanguage}, L"Similar spelling");
             }
             addPersonal(true);
         }
@@ -240,6 +251,7 @@ std::vector<SearchResult> Search(const Catalog& catalog, const Profile& profile,
             UsageCount(preferences, a.id), HistoryBoost(preferences, a.id), UsageCount(preferences, b.id), HistoryBoost(preferences, b.id));
         if (preference) return preference > 0;
         if (a.match.detail != b.match.detail) return a.match.detail > b.match.detail;
+        if (a.match.preferredLanguage != b.match.preferredLanguage) return a.match.preferredLanguage;
         if (prior(a) != prior(b)) return prior(a) > prior(b);
         if (!(a.id == b.id)) return a.id < b.id;
         return a.payload < b.payload;

@@ -1,8 +1,19 @@
-# M6 release validation
+# Release validation
 
-M6 now has a repeatable automated release workflow. Release acceptance remains
+SwashMoji has a repeatable automated release workflow. Release acceptance remains
 open: automated and hidden-control checks cannot establish actual delivery to
 all target apps, visible opening time, accessibility or user-study outcomes.
+
+## Current verification — 2026-09-10
+
+`build-search-policy` is the retained build. The application build and all 13 CTest
+suites passed, including the 111-case search corpus, multilingual exact-name
+coverage, preferred-language search regressions and offline Python generator tests.
+No separate real-input desktop harness was run for the latest search-policy change.
+
+Older build directories and their local artifacts have been removed. Dated results
+below are historical summaries, not retained release artifacts or verification of
+the latest build. Re-run the release workflow to produce a current package and evidence.
 
 ## Reproduce the automated evidence
 
@@ -74,7 +85,7 @@ until an idle reference-machine run measures the full visible paths.
 
 Run desktop harnesses separately with modifier keys released. Preserve
 `native-input-result.txt` and `picker-vocabulary-result.txt` beside the executables.
-Exit 77 means unverified, not passed. This task did not resume visual automation.
+Exit 77 means unverified, not passed. These historical runs did not complete visual acceptance.
 
 ## Remaining acceptance protocol
 
@@ -85,7 +96,7 @@ Do not check a row merely because the corresponding state test passes.
 
 | Gate | Required exercise | Status |
 | --- | --- | --- |
-| Picker walkthrough | English/Bokmål footer, long/missing names, favorites, hover versus keyboard selection, Details and one-use variants; all shortcuts and 1–3 rows including partial pages | Open |
+| Picker walkthrough | Selected-language footer, long/missing names, favorites, hover versus keyboard selection, Details and one-use variants; all shortcuts and 1–3 rows including partial pages | Open |
 | Combination walkthrough | Create launch → 🚀✨ and please → 🥺🙏; reorder, tone/ZWJ variants, rename, alias, pin, copy, insert, restart, delete cascade and cancellation | Open |
 | Controlled Win32 target | Run both native harnesses in an interactive foreground-capable session; check exact UTF-16 and unchanged clipboard for direct input | Skipped here |
 | Target applications | Notepad, browser input and contenteditable, Chromium desktop editor/chat app and terminal: Enter, Ctrl+Enter repeats, copy/paste, editor round trip and failure recovery | Open; record actual versions |

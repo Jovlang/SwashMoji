@@ -9,9 +9,8 @@ adding dependencies without a concrete need. Source and catalog files are UTF-8.
 Read `README.md` for the product overview, `docs/user-guide.md` for user behavior
 and commands, and `CONTRIBUTING.md` for general build/test workflow. Consult the
 relevant technical document in `docs/` before changing search, learning, storage
-or insertion. Consult `I18N.md` for localization scope and status. Plans may include
-completed work; verify current behavior in code before implementing
-`IMPLEMENTATION_PLAN.md` or `I18N.md`.
+or insertion. Localization scope and search policy are documented in
+`docs/search.md`; verify current behavior in code before changing it.
 
 ## Code map
 
@@ -82,7 +81,12 @@ to unlock a build; use another build directory.
 
 - English (`en`), Norwegian Bokmål (`nb`), German (`de`) and Italian (`it`) search
   together. Search locale filters are independent of display preferences; an empty
-  filter searches all available localizations. Preserve Unicode normalization,
+  filter searches all available localizations for non-fuzzy matches. Search uses
+  display locales as default preferences, not a hard filter: catalog fuzzy matching
+  is restricted to preferred locales, and language preference breaks ties after
+  lexical detail. Keep SearchLanguagePolicy independent and unrestricted in length.
+  Curated/personal phrases remain locale-neutral until intents have locale metadata.
+  Preserve Unicode normalization,
   English-only inflection rules, exact alias/name priority and fuzzy fallback
   rules in `docs/search.md`.
 - Keep names, keywords and normalized search caches in the canonical

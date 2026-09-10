@@ -32,7 +32,7 @@ struct ResultId {
     }
 };
 
-struct MatchScore { int tier{}; int detail{}; };
+struct MatchScore { int tier{}; int detail{}; bool preferredLanguage{}; };
 
 struct SearchResult {
     ResultId id;

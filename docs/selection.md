@@ -1,11 +1,8 @@
-# Selection, Details and display scaling (M4)
+# Selection, Details and display scaling
 
-Implementation is present; the full M4 acceptance gate is still open. See the
-verification record below before treating this as release-ready.
-
-For the complete user workflow and shortcut guide, see the
-[Norwegian user guide](user-guide.md). This document describes selection rules,
-implementation details and historical verification.
+For the complete workflow and shortcuts, see the [Norwegian user guide](user-guide.md).
+This document describes selection and rendering rules; remaining desktop acceptance
+checks are tracked in [release validation](release-validation.md).
 
 ## Keyboard and pointer behavior
 
@@ -38,11 +35,6 @@ Combination names are unchanged. The line retains its
 full accessible text when ellipsized. Alt+S can hide it. Font/tone messages and
 failure recovery remain available, but there are no permanent shortcut hints or
 Details button. Right-click a result or press Alt+D for Details; F1 retains help.
-The normal window is 44 logical pixels shorter without changing grid geometry,
-ordering, search, or navigation. All ten CTest suites passed. Visual checking was
-attempted, but the preview exposed no targetable window and the user stopped
-Computer Use with physical Escape; the visual acceptance check remains open.
-
 `picker.cpp` maps ranked results into the native listbox's column-major slots.
 Complete pages read left-to-right across ten columns. Incomplete final pages
 balance real items across columns without synthetic empty items; every ranked
@@ -86,44 +78,19 @@ alert event. No custom UI Automation provider has been added; native result
 Selection/SelectionItem exposure still needs direct validation with Inspect and
 Narrator. See [Microsoft's control-pattern overview](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controlpatternsoverview).
 
-## Verification record — 2026-09-08
+## Verification
 
-- `build.cmd test build-m4`: all nine CTest suites pass, including the offline
-  Python generator tests. The new picker suite checks grid permutations for
-  0–125 results at 1–3 rows, spatial edges, partial pages and catalog-only mixed
-  variants. Existing search, storage, learning and insertion suites still pass.
-- The separate `SwashMojiPickerVocabularyTests.exe` reached its final native
-  insertion assertion after passing Details cancellation/commit, target/query
-  retention, one-use failure retention/consumption, empty-space clicks, search
-  caret behavior and layout/item-height checks at 96/120/144/192 DPI. Those are
-  controlled layout checks, not proof of real mixed-monitor behavior.
-- That final insertion reported **Could not focus the original app**. Actual
-  external text delivery is therefore not a passing M4 result. Investigate with
-  an interactive foreground launch; do not bypass the production focus guard.
-- Computer Use inspected the isolated vocabulary dialog: the visible controls
-  fit on the current display, and named editable fields, buttons and selectable
-  result items appeared in its accessibility tree. The favorites list was empty
-  in that preview, so the outstanding favorites visual review remains open.
-- The user stopped Computer Use with physical Escape before picker/Details
-  visual review. Computer Use was not resumed after the stop.
+The picker suite checks grid permutations for 0–125 results at 1–3 rows, spatial
+edges, partial pages and catalog-only mixed variants. The separate picker/vocabulary
+harness covers Details cancellation/commit, target/query retention, one-use failure
+retention/consumption, empty-space clicks, caret behavior and controlled layout at
+96/120/144/192 DPI. Simulated layout checks do not establish mixed-monitor behavior.
 
-Outstanding: picker and Details visual/keyboard review, favorites ordering review,
-hover timing/focus observation, Inspect/Narrator result-selection semantics,
-high-contrast review, real 100/125/150/200% and mixed-monitor transitions, edge
-placement, and actual insertion into the planned Win32/Notepad/browser/Chromium
-editor/terminal matrix (including the elevated-target boundary). Record actual
-app versions and observed delivery; simulated input success does not satisfy it.
+`SwashMojiPickerPreview.exe` opens an isolated picker seeded with two favorites;
+`SwashMojiVocabularyPreview.exe` opens the editor preview. Both use test profiles
+beside the executable. Exit the picker preview through its tray Exit command.
+Do not run desktop input tests while a user is typing or holding modifiers.
 
-The 2026-09-08 native-editor polish pass did not change picker geometry, drawing,
-focus routing, accessibility events or high-contrast handling. Its `build-polish`
-run passed all 11 registered CTest suites, and the separate native harness again
-passed the picker/editor and simulated 96/120/144/192-DPI checks before failing its
-known final external foreground assertion. Computer Use exposed no native-app
-surface for the rebuilt previews, so the visual and real-monitor items above remain
-open; source inspection and automated geometry checks are not visual acceptance.
-
-`build-m4/SwashMojiPickerPreview.exe` opens an isolated picker seeded with two
-favorites; `SwashMojiVocabularyPreview.exe` opens the separate editor preview.
-Both use test profiles under the build directory, not the user's profile. Exit
-the picker preview through its tray Exit command. Do not run desktop input tests
-while a user is typing or holding modifiers.
+See [contributor workflow](../CONTRIBUTING.md) for builds and
+[release validation](release-validation.md) for current results and the remaining
+visual, keyboard, hover, target-app, DPI and accessibility acceptance checklist.

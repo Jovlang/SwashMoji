@@ -53,6 +53,58 @@ void LocalizedNames() {
     CHECK(Search(catalog, profile, L"smiler litt").front().label == L"smiling face");
 }
 
+void PreferredSearchLanguages() {
+    Catalog catalog;
+    std::istringstream input(
+        "👧\tgirl\tchild\tjente\tbarn\tit\tragazza\tfanciulla\n"
+        "🚀\trocket\tlaunch\trakett\tromskip\tit\trazzo\tspazio\n"
+        "😀\tsunshine\tbright\t\t\tit\tstella\tluce\n"
+        "😊\tmoonbeam\tdim\t\t\tit\tsunshine\tbagliore\n"
+        "☕\tragazzaria\tcompanion\t\t\tit\tcaffè\tbevanda\n");
+    CHECK(catalog.Load(input));
+    Profile profile;
+    auto results = Search(catalog, profile, L"ragazza");
+    CHECK(results.size() == 2);
+    CHECK(results[0].payload == L"👧" && results[0].match.tier == 8);
+    CHECK(results[1].payload == L"☕" && results[1].match.tier == 6);
+    CHECK(results[0].label == L"girl · jente");
+    CHECK(Search(catalog, profile, L"fanciulla").front().match.tier == 4);
+    results = Search(catalog, profile, L"ragazz");
+    CHECK(results.size() == 2 && results[1].payload == L"👧"); // Prefix survives; preferred prefix leads.
+    CHECK(Search(catalog, profile, L"rocxet").front().match.tier == 1);
+    CHECK(Search(catalog, profile, L"raxett").front().match.tier == 1); // Secondary locale too.
+    CHECK(Search(catalog, profile, L"ragazxa").empty());
+    CHECK(Search(catalog, profile, L"fanciulxa").empty());
+    CHECK(Search(catalog, profile, L"sunshine").front().payload == L"😀"); // Beats popularity on a tie.
+    Remember(profile, L"😊");
+    CHECK(Search(catalog, profile, L"sunshine").front().payload == L"😊"); // Learning order retained.
+    ClearHistory(profile);
+    CHECK(profile.settings.displayLanguages.Set({"it"}));
+    CHECK(Search(catalog, profile, L"ragazxa").front().label == L"ragazza");
+    CHECK(Search(catalog, profile, L"rocxet").empty());
+    CHECK(Search(catalog, profile, L"sunshine").front().payload == L"😊");
+
+    // Search preference can have any length and does not change display labels.
+    const SearchLanguagePolicy policy{{"en", "nb", "it", "unknown"}};
+    CHECK(Search(catalog, profile, L"rocxet", nullptr, {}, &policy).front().label == L"razzo");
+    CHECK(Search(catalog, profile, L"rocxet", nullptr, {"it"}, &policy).empty());
+    CHECK(Search(catalog, profile, L"ragazxa", nullptr, {"en"}).empty()); // Empty intersection is not all.
+    CHECK(Search(catalog, profile, L"ragazza", nullptr, {"en"}).front().payload == L"☕");
+    const SearchLanguagePolicy none{};
+    CHECK(Search(catalog, profile, L"ragazxa", nullptr, {}, &none).empty());
+    CHECK(Search(catalog, profile, L"ragazza", nullptr, {}, &none).front().payload == L"👧");
+
+    // Curated and personal phrases have no locale tags and stay available.
+    std::istringstream intents("partenza stellare\t🚀\n");
+    CHECK(catalog.LoadIntents(intents));
+    CHECK(profile.settings.displayLanguages.Set({"en", "nb"}));
+    CHECK(Search(catalog, profile, L"partenza stellare").front().match.tier == 7);
+    CHECK(Search(catalog, profile, L"partenza stel").front().payload == L"🚀");
+    CHECK(Search(catalog, profile, L"partenxa stellare").front().match.tier == 1);
+    CHECK(SetAlias(profile, catalog, L"ragazza", {ResultKind::Emoji, L"🚀"}) == AliasResult::Saved);
+    CHECK(Search(catalog, profile, L"ragazza").front().match.tier == 9);
+}
+
 Catalog Fixture() {
     std::istringstream input(
         "😀\tgrinning face\tsmile | happy | joy\n"
@@ -176,7 +228,7 @@ void BundledCatalog(const std::filesystem::path& path) {
 
 int main(int argc, char** argv) {
     try {
-        LocalizedNames(); SearchBehavior(); CatalogIdentity(); Personalization();
+        LocalizedNames(); PreferredSearchLanguages(); SearchBehavior(); CatalogIdentity(); Personalization();
         CHECK(argc == 2);
         BundledCatalog(std::filesystem::u8path(argv[1]));
         std::cout << "Catalog, search, stable identity and history checks passed.\n";
