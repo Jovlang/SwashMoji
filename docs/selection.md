@@ -3,6 +3,10 @@
 Implementation is present; the full M4 acceptance gate is still open. See the
 verification record below before treating this as release-ready.
 
+For the complete user workflow and shortcut guide, see the
+[Norwegian user guide](user-guide.md). This document describes selection rules,
+implementation details and historical verification.
+
 ## Keyboard and pointer behavior
 
 The saved row count is a maximum: up to ten matches use one row, eleven to
@@ -27,8 +31,9 @@ dialog or help first; otherwise it dismisses the picker and requests focus for
 the still-valid original target. Vocabulary uses Save alias as its default button.
 
 The picker shows only an unlabelled, empty search control, the grid, and a
-compact selected-name line: English name · Norwegian name, using the existing
-catalog names for the exact variant. Missing names are omitted without a separator.
+compact selected-name line using the exact variant's catalog names and the
+**Languages...** display preferences (English · Norwegian by default). Missing
+or duplicate names are omitted; [search documentation](search.md) defines fallback.
 Combination names are unchanged. The line retains its
 full accessible text when ellipsized. Alt+S can hide it. Font/tone messages and
 failure recovery remain available, but there are no permanent shortcut hints or
@@ -74,8 +79,8 @@ scrollable, read-only native text control and its own DPI-dependent font instead
 of inaccessible painted text. Picker rendering uses system colors in high
 contrast and retains the native focus rectangle.
 
-Results store exact names as native listbox strings while drawing glyphs. Search
-has a static label; Details variants and recovery messages use native controls.
+Results store localized names as native listbox strings while drawing glyphs.
+Search is an unlabelled native edit; Details variants and recovery messages use native controls.
 Selection changes emit an accessibility selection event and recovery emits an
 alert event. No custom UI Automation provider has been added; native result
 Selection/SelectionItem exposure still needs direct validation with Inspect and

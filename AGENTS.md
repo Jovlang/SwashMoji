@@ -6,10 +6,12 @@ SwashMoji is a self-contained Windows emoji picker written in C++17 using native
 Win32 controls, Direct2D and DirectWrite. Keep runtime operation offline and avoid
 adding dependencies without a concrete need. Source and catalog files are UTF-8.
 
-Read `README.md` for user behavior and commands. Consult the relevant document in
-`docs/` before changing search, learning, storage or insertion. Consult `I18N.md`
-for localization scope and status. Plans may include completed work; verify
-current behavior in code before implementing `IMPLEMENTATION_PLAN.md` or `I18N.md`.
+Read `README.md` for the product overview, `docs/user-guide.md` for user behavior
+and commands, and `CONTRIBUTING.md` for general build/test workflow. Consult the
+relevant technical document in `docs/` before changing search, learning, storage
+or insertion. Consult `I18N.md` for localization scope and status. Plans may include
+completed work; verify current behavior in code before implementing
+`IMPLEMENTATION_PLAN.md` or `I18N.md`.
 
 ## Code map
 
@@ -138,6 +140,9 @@ Distribute `emojis.txt`, `intent_phrases.tsv` and `UNICODE_LICENSE.txt` beside t
 executable; CMake copies these files. Treat `build*/` as generated output.
 
 Update relevant documentation when changing shortcuts, visible behavior, profile
-formats or workflow. Preserve the Norwegian language of `README.md` and the
-existing language of UI strings. Keep changes focused and preserve unrelated
-working-tree edits.
+formats or workflow. Keep `README.md` a concise project overview; detailed user
+instructions belong in `docs/user-guide.md`, general contributor workflow in
+`CONTRIBUTING.md`, and technical rules/evidence in the corresponding `docs/` file.
+Keep this file focused on agent/developer invariants. Preserve Norwegian in the
+README and user guide and the existing language of UI strings. Keep changes
+focused and preserve unrelated working-tree edits.

@@ -2,94 +2,51 @@
 
 En liten, avhengighetsfri Win32 emoji-velger.
 
-- `Alt+E` åpner velgeren på skjermen til det aktive vinduet.
-- Høyreklikk systemstatusikonet for plassering, sortering og sletting av lokal brukshistorikk.
-- Søk på engelsk, norsk bokmål, tysk og italiensk samtidig: navn, Unicode-nøkkelord og uttrykk som `bra jobbet`, `på vei` og `thank you`. Prøv også `Rakete` eller `razzo` for 🚀. Skrivefeil tolereres når det ikke finnes vanlige treff.
-- `Ctrl+Backspace` sletter forrige ord eller markert tekst i søkefeltet og tekstfeltene i **My vocabulary**. `Ctrl+Z` kan angre slettingen.
-- Høyreklikk et treff og velg **Add alias**, eller bruk `Alt+A`. Søket fylles inn som forslag til din egen frase. Uten treff kan du velge **Teach this phrase** og finne ønsket emoji.
-- **My vocabulary** i systemstatusmenyen lar deg opprette, endre og slette aliaser. **Save alias** lagrer; **Close** forkaster utkastet. Lagrede aliaser beholdes når brukshistorikken slettes.
-- Vokabularvinduet kan endre størrelse. **Library** samler aliaser og festede favoritter, mens **Alias editor** viser søketreff og valgt emoji med navn på valgte språk. **Close** og kombinasjonsredigering ligger nederst i vinduet.
-- **New combination / edit...** i **My vocabulary** lagrer sekvenser av 2–8 emojier med eget navn, for eksempel `launch` → 🚀✨. Velg hudtone per emoji og rekkefølge før **Save**. Lagrede sekvenser påvirkes ikke av global hudtone. Se [kombinasjoner og teststatus](docs/combinations.md).
-- Kombinasjonsredigeringen viser sekvensen som vannrette emoji-fliser. Pilknappene flytter valgt emoji, **Save combination** lagrer, og **Close** nederst lukker vinduet. Bibliotek og treffliste tilpasser seg vindusstørrelsen.
-- `Alt+P` eller **Pin favorite** i treffmenyen fester valgt emoji som favoritt. Opptil ti favoritter vises først uten søketekst; **My vocabulary** lar deg flytte dem opp/ned eller fjerne dem.
-- Velgeren lærer hvilke treff du velger for hele søket. Læring kan slås av med **Learn from searches** i systemstatusmenyen. Nye valg påvirker rangeringen neste gang velgeren åpnes, slik at gjentatt innsetting ikke flytter treffene.
-- Hudtonevariantene deler brukshistorikk. Bytte av hudtone, font og antall rader beholder markeringen.
-- Treff vises i én til tre emoji-rader; bruk `Alt+1`, `Alt+2` eller `Alt+3` for å velge antall rader, og piltastene for å flytte markeringen.
-- Valgt radantall er en øvre grense: opptil ti treff samles i én rad, og vinduet krymper automatisk. Flere treff utvider visningen igjen uten å endre innstillingen.
-- Med én rad velger pil opp/ned forrige/neste treff. Med flere rader flytter de markeringen opp/ned i samme kolonne.
-- Klikk en emoji for å sette den inn og lukke velgeren. `Ctrl+klikk` lar SwashMoji forbli åpen.
-- `Enter` setter valgt emoji direkte inn i det aktive programmet uten å endre utklippstavlen.
-- `Ctrl+Enter` setter inn valgt emoji og lar SwashMoji forbli åpen.
-- `Shift+Enter` kopierer valgt emoji til utklippstavlen og lukker vinduet.
-- Ved innsettingsfeil beholdes søket og markeringen. **Copy instead** (`Alt+C`)
-  kopierer valget; delvis innsetting prøves aldri automatisk på nytt.
-- Ved kopieringsfeil forblir velgeren åpen. Meldingen sier fra hvis utklippstavlen
-  allerede ble tømt før feilen oppstod.
-- `Esc` lukker vinduet.
-- `F1` viser en komplett oversikt over funksjoner og hurtigtaster.
-- `Tab` og `Shift+Tab` flytter fokus mellom søk, treff og tilgjengelige handlinger. Piltastene og `Ctrl`+piltaster navigerer treffene direkte, både før og etter at du skriver. Søket beholder fokus, slik at du kan fortsette å skrive. Bruk `Shift`+piltaster eller `Home`/`End` for å redigere søketeksten.
-- `Alt+F` bytter til neste installerte fargefont eller monokrome emoji-font (tidligere `Tab`).
-- **Details** (`Alt+D` eller treffmenyen) viser en større forhåndsvisning og gyldige varianter fra katalogen, også blandede hudtoner. **Use once** velger varianten for neste vellykkede innsetting eller kopiering uten å endre global hudtone. **Cancel** forkaster utkastet.
-- Hold pekeren rolig over et treff i omtrent 350 ms for en forhåndsvisning uten å flytte tastaturmarkeringen.
-- `Alt+I` bytter global hudtone for alle kompatible emojier.
-- Under treffene vises navn på valgt variant på de valgte språkene (engelsk og norsk som standard), atskilt med «·». Manglende navn utelates, og lange navn forkortes visuelt. Søket er uten etikett eller plassholder, og hurtigtastene vises ikke fast i velgeren. Font- og hudtonebytte vises midlertidig i 0,8 sekunder.
-- **Languages...** i systemstatusmenyen lar deg velge ett eller to språk for emojinavn. **Primary** vises først; **Secondary** kan settes til **None**. **Save** lagrer valget; **Close** forkaster utkastet. Engelsk og norsk er standard for eksisterende brukere. Søket bruker fortsatt alle tilgjengelige språk.
-- Italiensk (**Italian**) og tysk (**German**) kan også velges som visningsspråk. Begge har oversatte navn for alle 3598 emojivariantene i katalogen.
-- Navn i treff, forhåndsvisning og variantvalg bruker samme språkdata og språkvalg. Like oversettelser vises bare én gang; manglende oversettelser utelates, med engelsk som reservespråk.
-- `Alt+T` bytter mellom sortering etter sist brukt og totalt antall ganger brukt.
-- Sorteringen kan også velges i systemstatusmenyen, som viser aktiv modus.
-- Tidligere valg og bruksteller lagres lokalt i `%LOCALAPPDATA%\SwashMoji`; sist brukt er standard sortering.
-- **Clear learned history** sletter nylige valg, brukstellere og lærte søk etter bekreftelse. Aliaser, kombinasjoner, favoritter og utseende beholdes.
-- Ikonet i systemstatusfeltet åpner velgeren ved venstreklikk og har `Exit` ved høyreklikk.
-- Emoji-katalogen og uttrykkene leses fra UTF-8-filene `emojis.txt` og `intent_phrases.tsv` ved siden av programfilen. Begge må følge med når programmet flyttes.
+**`Alt+E` → søk etter en emoji eller frase → `Enter` setter den direkte inn.**
+Skriv for eksempel `bra jobbet`, `på vei` eller `razzo`. Bruk piltastene for å
+velge treff, uten å slippe tastaturet.
 
-Bygg med den native Visual Studio 2022-verktøykjeden:
+SwashMoji er et portabelt Windows-program med native Win32-grensesnitt.
+Det virker uten nett, installasjon eller ekstra kjøretidsavhengigheter.
+
+## Finn og gjenbruk det du mener
+
+- **Fire søkespråk samtidig:** engelsk, norsk bokmål, tysk og italiensk.
+  Naturlige fraser og toleranse for skrivefeil gjør det lettere å finne riktig emoji.
+- **Dine egne uttrykk:** lag aliaser eller lær velgeren hva en frase skal bety.
+- **Favoritter og kombinasjoner:** fest vanlige valg, eller lagre en sekvens som
+  `launch` → 🚀✨ under ett navn.
+- **Lærer av valgene dine:** tidligere bruk hjelper med å rangere treffene.
+- **Hudtoner og varianter:** velg global hudtone eller se og velg en variant i
+  **Details**. **Languages...** velger ett eller to språk for navnene som vises.
+
+## Viktigste hurtigtaster
+
+| Tast | Handling |
+| --- | --- |
+| `Alt+E` | Åpne velgeren |
+| `Enter` | Sett inn uten å endre utklippstavlen |
+| `Ctrl+Enter` | Sett inn og behold velgeren åpen |
+| `Shift+Enter` | Kopier til utklippstavlen |
+| `Esc` / `F1` | Lukk / vis hjelp |
+
+## Bygg selv
+
+Med Visual Studio 2022 C++ Build Tools installert, kjør fra prosjektmappen:
 
 ```powershell
 .\build.cmd
 ```
 
-Skriptet finner Visual Studio Build Tools automatisk. Ingen installasjon av SwashMoji
-er nødvendig; kjør `build\SwashMoji.exe`.
+Start `build\SwashMoji.exe`. Skriptet finner verktøykjeden automatisk.
+Se [brukerveiledningen](docs/user-guide.md#start-og-systemstatusmeny) før du flytter programmet.
 
-M4 har endret klikk- og Tab-oppførselen og lagt til DPI-støtte. Full skrivebords-,
-skjermleser- og skjermtesting gjenstår; se [endringsnotater](docs/release-notes.md)
-og [teststatus for M4](docs/selection.md). Den siste native innsettingstesten fikk
-avslag på fokusbytte til målprogrammet; M4 er ennå ikke ferdig godkjent.
+## Dokumentasjon
 
-Bygg og kjør automatiske tester med `.\build.cmd test`.
-M6 har en egen kontroll for utgivelseskandidater: sett `SWASHMOJI_PYTHON` til
-Python 3.10+ og kjør `.\tools\verify_release.ps1`. Den bygger, kjører alle
-testene, måler responstid og lager en portabel ZIP med kontrollsummer i en ny
-undermappe i `build-m6`. Skrivebords- og brukertesting gjenstår; se
-[M6-testprotokollen](docs/release-validation.md).
-Hvis programfilen i `build` allerede kjører, bruk en separat
-byggemappe: `.\build.cmd test build-m1`. Testene bruker egne midlertidige mapper
-i byggemappen og berører ikke din lokale brukshistorikk.
+- [Brukerveiledning](docs/user-guide.md) – alle funksjoner, hurtigtaster og innstillinger.
+- [Søk og språk](docs/search.md), [læring](docs/learning.md) og [kombinasjoner](docs/combinations.md) – detaljer og regler.
+- [Bidra og utvikle](CONTRIBUTING.md) – bygging, tester og teknisk dokumentasjon.
+- [Endringsnotater](docs/release-notes.md) og [utgivelsesstatus](docs/release-validation.md) – verifiserte resultater og gjenstående testing.
 
-Den separate testen `.\build-m1\SwashMojiNativeInputTests.exe` åpner et midlertidig
-tekstfelt i en egen prosess og kontrollerer faktisk Unicode-innsetting. Den krever
-et interaktivt skrivebord, endrer ikke utklippstavlen og lagrer resultatet i
-`build-m1\native-input-result.txt`. Slipp modifikatortastene før testen kjøres.
-
-Innstillinger og brukshistorikk lagres nå samlet i
-`%LOCALAPPDATA%\SwashMoji\profile.tsv`. Ved første oppstart importeres eksisterende
-`settings.txt`, `history.txt` og `usage.txt` automatisk; originalfilene beholdes.
-Manglende eldre filer kan importeres fra `%LOCALAPPDATA%\WinMoji`.
-Programmet lagrer gjennom en midlertidig fil og beholder forrige komplette profil
-som `profile.tsv.bak`. Hvis profilen er ufullstendig, forsøkes gjenoppretting fra
-sikkerhetskopien. Lagringsfeil vises i statuslinjen og i systemstatusikonets tekst;
-valgene beholdes i minnet. Ukjente profilversjoner overskrives ikke.
-
-Katalog, søk, personalisering og lagring ligger i det delte C++-biblioteket
-`SwashMojiCore`. Se `docs/profile-format.md` for filformat og migreringsregler,
-og `docs/insertion.md` for innsetting, feilhåndtering og testdekning.
-M3-regler for læring, favoritter og stabile treff er beskrevet i `docs/learning.md`.
-
-Søkenavn og nøkkelord er basert på [Unicode CLDR 48.2](https://cldr.unicode.org/),
-lisensiert under [Unicode License v3](https://www.unicode.org/license.txt). Katalogen kan
-oppdateres med `python tools\update_emoji_catalog.py --download --cldr-dir build\cldr`.
-Gjenta uten `--download` for å bruke den lokale kildekopien. Se `docs/search.md`
-for kildeversjoner, språkregler, aliasgrenser og tester. Kjør generatortestene
-med `python tests\test_catalog_generator.py`; CTest inkluderer dem automatisk
-når CMake finner Python 3.
+Søkenavn og nøkkelord bygger på Unicode CLDR, under
+[Unicode License v3](third_party/UNICODE_LICENSE.txt).
