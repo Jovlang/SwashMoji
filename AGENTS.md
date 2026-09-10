@@ -7,15 +7,19 @@ Win32 controls, Direct2D and DirectWrite. Keep runtime operation offline and avo
 adding dependencies without a concrete need. Source and catalog files are UTF-8.
 
 Read `README.md` for user behavior and commands. Consult the relevant document in
-`docs/` before changing search, learning, storage or insertion. The
-`IMPLEMENTATION_PLAN.md` describes planned work; verify current behavior in code.
+`docs/` before changing search, learning, storage or insertion. Consult `I18N.md`
+for localization scope and status. Plans may include completed work; verify
+current behavior in code before implementing `IMPLEMENTATION_PLAN.md` or `I18N.md`.
 
 ## Code map
 
 - `main.cpp`: picker window, tray, shortcuts, rendering and session coordination.
 - `vocabulary.cpp/.h`, `vocabulary.rc`, `vocabulary_ids.h`: vocabulary editor UI.
+- `language_preferences.h`, `language_preferences.rc`: native **Languages...**
+  preferences dialog; `DisplayLanguages` in `models.h` validates the selection.
 - `catalog.cpp/.h`, `text.cpp/.h`, `search.cpp/.h`, `ranking.h`: catalog loading,
-  Unicode normalization, bilingual matching and ranking.
+  locale-keyed names and search caches, shared name formatting, Unicode
+  normalization, multilingual matching and ranking.
 - `picker.cpp/.h`: testable picker-session state, grid navigation and selection.
 - `models.h`, `personalization.cpp/.h`, `storage.cpp/.h`: profile data, learning,
   favorites, saved combinations, persistence and migration.
@@ -56,19 +60,39 @@ python tests\test_catalog_generator.py
 
 Set `$env:SWASHMOJI_PYTHON` to a Python executable before configuring if CMake
 cannot discover it. CTest includes generator tests only when Python is found.
+The current full suite contains 13 tests with Python enabled; inspect the actual
+CTest output rather than assuming generator coverage. Use deterministic fixtures
+for result-count/layout checks, since new translations can add valid matches.
 
 `SwashMojiNativeInputTests.exe` and `SwashMojiPickerVocabularyTests.exe` are separate
 from CTest: they require an interactive desktop, change focus and submit real
 input. Run them when relevant with modifier keys released, using their isolated
-profiles. `SwashMojiPickerPreview.exe` and `SwashMojiVocabularyPreview.exe` support
-visual and keyboard checks. See `docs/insertion.md`, `docs/search.md`, and
+profiles. A foreground-activation denial leaves actual insertion unverified even
+when editor/state checks pass. `SwashMojiPickerPreview.exe`,
+`SwashMojiVocabularyPreview.exe`, and `SwashMojiCombinationPreview.exe` support
+visual and keyboard checks. `SwashMojiLanguagePreview.exe` opens language settings;
+it shares the isolated `vocabulary-preview-profile` beside the executable with
+the vocabulary preview. See `docs/insertion.md`, `docs/search.md`, and
 `docs/combinations.md` for details. Do not terminate a user's running picker merely
 to unlock a build; use another build directory.
 
 ## Behavior to preserve
 
-- English and Norwegian Bokmal search together. Preserve Unicode normalization,
-  exact alias/name priority and fuzzy fallback rules in `docs/search.md`.
+- English (`en`), Norwegian Bokmål (`nb`), German (`de`) and Italian (`it`) search
+  together. Search locale filters are independent of display preferences; an empty
+  filter searches all available localizations. Preserve Unicode normalization,
+  English-only inflection rules, exact alias/name priority and fuzzy fallback
+  rules in `docs/search.md`.
+- Keep names, keywords and normalized search caches in the canonical
+  `Emoji::names` locale map. Use `SetEmojiLocalization` to build/replace caches,
+  `SupportedLocales` for locale metadata and `FormatEmojiDisplayName` for UI names.
+  Do not add per-language fields or separate translation mappings in UI code.
+- **Languages...** selects one or two distinct registered display locales, primary
+  first, with English + Norwegian as the default. Pass the profile's display
+  preferences through picker, vocabulary, combination and details views. Omit
+  missing/duplicate names and dangling separators; fall back to English when
+  neither selected name exists. Matching another locale must not change display
+  languages. Localized emoji names do not translate the app's interface strings.
 - Query learning stays within match classes and uses the complete normalized
   query. Ranking snapshots keep repeated insertions stable within a session.
   Preserve family IDs across skin tones; see `docs/learning.md`.
@@ -83,7 +107,9 @@ to unlock a build; use another build directory.
 - Preserve profile migration, backup recovery and unsupported-version protection.
   Use isolated directories for tests, never the user's real
   `%LOCALAPPDATA%\SwashMoji` or legacy `%LOCALAPPDATA%\WinMoji` data.
-  History clearing retains aliases, combinations, favorites and appearance settings.
+  Profile version 5 stores `display_languages`; versions 1–4 migrate with `en`,
+  `nb` defaults. History clearing retains aliases, combinations, favorites,
+  appearance settings and display languages.
   Consult `docs/profile-format.md` before changing the file format.
 
 ## Catalog and documentation
@@ -96,7 +122,18 @@ python tools\update_emoji_catalog.py --download --cldr-dir build\cldr
 python tools\update_emoji_catalog.py --cldr-dir build\cldr
 ```
 
-Keep generation deterministic and preserve source hashes and Unicode licensing.
+The catalog retains five legacy columns (glyph, English name/keywords, Bokmål
+name/keywords), followed by locale/name/keywords triples for additional languages.
+Keep older three/five-column loading compatible. To add a language, register its
+metadata in `SupportedLocales` and its source in the generator's `EXTRA_LOCALES`;
+use the generic loader/search rather than adding language-specific branches.
+Missing additional translations stay absent; display fallback handles them.
+
+Use the pinned CLDR release and preserve source hashes and Unicode licensing.
+When expanding locales, preserve existing language columns and source hashes,
+record the new sources in `data/catalog_sources.json`, and verify byte-identical
+offline regeneration. Add generator fixtures, localized search/name coverage and
+display-preference round-trips for the new locales.
 Distribute `emojis.txt`, `intent_phrases.tsv` and `UNICODE_LICENSE.txt` beside the
 executable; CMake copies these files. Treat `build*/` as generated output.
 
