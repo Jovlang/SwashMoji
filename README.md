@@ -65,5 +65,10 @@ To build from source, follow [CONTRIBUTING.md](CONTRIBUTING.md#build-on-windows)
 - [Contributing](CONTRIBUTING.md) – building, testing, and technical documentation.
 - [Release status](docs/release-validation.md) – verified results and remaining testing.
 
+## License
+
+SwashMoji is licensed under the [GNU General Public License version 3](LICENSE)
+(`GPL-3.0-only`).
+
 Search names and keywords are based on Unicode CLDR, under the
 [Unicode License v3](third_party/UNICODE_LICENSE.txt).
