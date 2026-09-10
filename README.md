@@ -16,6 +16,16 @@ And because SwashMoji is a **native Windows app**, it launches instantly, stays 
 
 **SwashMoji — your emoji picker should know your vocabulary.** 🙂🚀
 
+## Download
+
+**[Download SwashMoji for Windows x64](https://github.com/Jovlang/SwashMoji/releases/download/v0.1.0/SwashMoji-portable.zip)** — portable ZIP, no installation required.
+
+Extract all files into one folder, run `SwashMoji.exe`, and press **Alt+E**.
+Keep the included data and license files beside the executable.
+
+See the [v0.1.0 release](https://github.com/Jovlang/SwashMoji/releases/tag/v0.1.0) for release notes and the SHA-256 checksum.
+To build from source, follow [CONTRIBUTING.md](CONTRIBUTING.md#build-on-windows).
+
 ## Screenshots
 
 **Your emoji, ready to use.** Browse the compact picker with names in your chosen languages.
@@ -47,17 +57,6 @@ And because SwashMoji is a **native Windows app**, it launches instantly, stays 
 | `Ctrl+Enter` | Insert and keep the picker open |
 | `Shift+Enter` | Copy to the clipboard |
 | `Esc` / `F1` | Close / show help |
-
-## Build it yourself
-
-With Visual Studio 2022 C++ Build Tools installed, run from the project directory:
-
-```powershell
-.\build.cmd
-```
-
-Launch `build\SwashMoji.exe`. The script finds the toolchain automatically.
-See the [user guide](docs/user-guide.md#startup-and-tray-menu) before moving the application.
 
 ## Documentation
 
