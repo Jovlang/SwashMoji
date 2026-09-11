@@ -213,7 +213,7 @@ void RefreshAliases(HWND dialog, Editor& editor) {
         if (entry.first == editor.original) SendMessageW(list, LB_SETCURSEL, index, 0);
     }
     SendMessageW(list, WM_SETREDRAW, TRUE, 0);
-    InvalidateRect(list, nullptr, FALSE);
+    InvalidateRect(list, nullptr, TRUE);
     EnableWindow(GetDlgItem(dialog, IDC_DELETE_ALIAS), !editor.original.empty());
 }
 
@@ -250,7 +250,7 @@ void FindTargets(HWND dialog, Editor& editor) {
     if (dc) ReleaseDC(list, dc);
     SendMessageW(list, LB_SETHORIZONTALEXTENT, textWidth, 0);
     SendMessageW(list, WM_SETREDRAW, TRUE, 0);
-    InvalidateRect(list, nullptr, FALSE);
+    InvalidateRect(list, nullptr, TRUE);
     TargetButtons(dialog, editor);
     if (editor.results.empty()) Status(dialog, L"No emoji matches. Try a shorter name or another phrase.");
     else Status(dialog, L"");
@@ -387,12 +387,10 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         else if (result == AliasResult::LimitReached) Status(dialog, L"Your vocabulary has 500 aliases. Delete one to add another.");
         else Status(dialog, L"The original alias no longer exists. Choose New to save it again.");
     } else if (id == IDC_DELETE_ALIAS && !editor->original.empty()) {
-        if (MessageBoxW(dialog, L"Delete this saved alias?", L"Delete alias", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == IDYES) {
-            DeleteAlias(editor->profile, editor->original);
-            editor->original.clear();
-            LoadDraft(dialog, *editor, L"", {});
-            Status(dialog, editor->persist() ? L"Alias deleted." : L"Deletion not saved to disk. Changes remain in this session.");
-        }
+        DeleteAlias(editor->profile, editor->original);
+        editor->original.clear();
+        LoadDraft(dialog, *editor, L"", {});
+        Status(dialog, editor->persist() ? L"Alias deleted." : L"Deletion not saved to disk. Changes remain in this session.");
     } else return FALSE;
     return TRUE;
 }

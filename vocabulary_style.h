@@ -21,7 +21,12 @@ inline void Round(HDC dc, RECT r, COLORREF color, int radius, COLORREF edge = CL
 }
 inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR kind) {
     if (message == WM_NCDESTROY) { RemoveWindowSubclass(window, ControlProc, 1); return DefSubclassProc(window, message, wParam, lParam); }
-    if (message == WM_ERASEBKGND && kind == 2) return 1;
+    if (message == WM_ERASEBKGND && kind == 2) {
+        RECT client{};
+        GetClientRect(window, &client);
+        FillRect(reinterpret_cast<HDC>(wParam), &client, InputBrush());
+        return 1;
+    }
     if (message == WM_LBUTTONDOWN && kind == 2) {
         const auto hit = SendMessageW(window, LB_ITEMFROMPOINT, 0, lParam);
         const auto row = HIWORD(hit) ? LB_ERR : static_cast<LRESULT>(LOWORD(hit));

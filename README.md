@@ -18,12 +18,12 @@ And because SwashMoji is a **native Windows app**, it launches instantly, stays 
 
 ## Download
 
-**[Download SwashMoji for Windows x64](https://github.com/Jovlang/SwashMoji/releases/download/v0.1.0/SwashMoji-portable.zip)** — portable ZIP, no installation required.
+**[Download SwashMoji for Windows x64](https://github.com/Jovlang/SwashMoji/releases/download/v0.2.0/SwashMoji-portable.zip)** — portable ZIP, no installation required.
 
 Extract all files into one folder, run `SwashMoji.exe`, and press **Alt+E**.
 Keep the included data and license files beside the executable.
 
-See the [v0.1.0 release](https://github.com/Jovlang/SwashMoji/releases/tag/v0.1.0) for release notes and the SHA-256 checksum.
+See the [v0.2.0 release](https://github.com/Jovlang/SwashMoji/releases/tag/v0.2.0) for release notes and the SHA-256 checksum.
 To build from source, follow [CONTRIBUTING.md](CONTRIBUTING.md#build-on-windows).
 
 ## Screenshots
