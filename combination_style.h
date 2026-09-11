@@ -49,7 +49,7 @@ inline void Layout(HWND dialog) {
     SendDlgItemMessageW(dialog,IDC_COMBO_ENTRIES,LB_SETCOLUMNWIDTH,std::max(Px(dialog,48),static_cast<int>(sequence.right)/8),0);
     SendDlgItemMessageW(dialog,IDC_COMBO_VARIANTS,CB_SETITEMHEIGHT,static_cast<WPARAM>(-1),Px(dialog,30));
     SendDlgItemMessageW(dialog,IDC_COMBO_VARIANTS,CB_SETITEMHEIGHT,0,Px(dialog,34));
-    InvalidateRect(dialog,nullptr,TRUE);
+    InvalidateRect(dialog,nullptr,FALSE);
 }
 inline void Paint(HWND dialog) {
     PAINTSTRUCT paint{}; auto dc=BeginPaint(dialog,&paint); RECT client{}; GetClientRect(dialog,&client);

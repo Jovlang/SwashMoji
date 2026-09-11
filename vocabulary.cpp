@@ -168,22 +168,27 @@ void PinButtons(HWND dialog, const Editor& editor) {
 }
 
 void RefreshPins(HWND dialog, Editor& editor, const ResultId& selected = {}) {
-    SendDlgItemMessageW(dialog, IDC_PINS, LB_RESETCONTENT, 0, 0);
+    const auto list = GetDlgItem(dialog, IDC_PINS);
+    SendMessageW(list, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(list, LB_RESETCONTENT, 0, 0);
     size_t selection = 0;
     for (size_t i = 0; i < editor.profile.pins.size(); ++i) {
         const auto& id = editor.profile.pins[i];
         SearchResult result;
         const bool valid = ResolveResult(editor.catalog, editor.profile, id, result);
         const auto label = std::to_wstring(i + 1) + L". " + (valid ? result.payload + L" " + result.label : L"Unavailable: " + id.value);
-        SendDlgItemMessageW(dialog, IDC_PINS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+        SendMessageW(list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
         if (id == selected) selection = i;
     }
-    if (!editor.profile.pins.empty()) SendDlgItemMessageW(dialog, IDC_PINS, LB_SETCURSEL, selection, 0);
+    if (!editor.profile.pins.empty()) SendMessageW(list, LB_SETCURSEL, selection, 0);
+    SendMessageW(list, WM_SETREDRAW, TRUE, 0);
+    InvalidateRect(list, nullptr, FALSE);
     PinButtons(dialog, editor);
 }
 
 void RefreshAliases(HWND dialog, Editor& editor) {
     auto list = GetDlgItem(dialog, IDC_ALIASES);
+    SendMessageW(list, WM_SETREDRAW, FALSE, 0);
     SendMessageW(list, LB_RESETCONTENT, 0, 0);
     editor.aliasKeys.clear();
     for (const auto& entry : editor.profile.aliases) {
@@ -191,6 +196,8 @@ void RefreshAliases(HWND dialog, Editor& editor) {
         editor.aliasKeys.push_back(entry.first);
         if (entry.first == editor.original) SendMessageW(list, LB_SETCURSEL, index, 0);
     }
+    SendMessageW(list, WM_SETREDRAW, TRUE, 0);
+    InvalidateRect(list, nullptr, FALSE);
     EnableWindow(GetDlgItem(dialog, IDC_DELETE_ALIAS), !editor.original.empty());
 }
 
@@ -227,7 +234,7 @@ void FindTargets(HWND dialog, Editor& editor) {
     if (dc) ReleaseDC(list, dc);
     SendMessageW(list, LB_SETHORIZONTALEXTENT, textWidth, 0);
     SendMessageW(list, WM_SETREDRAW, TRUE, 0);
-    InvalidateRect(list, nullptr, TRUE);
+    InvalidateRect(list, nullptr, FALSE);
     TargetButtons(dialog, editor);
     if (editor.results.empty()) Status(dialog, L"No emoji matches. Try a shorter name or another phrase.");
     else Status(dialog, L"");
@@ -384,15 +391,19 @@ struct CombinationEditor {
 };
 void ComboStatus(HWND dialog, const std::wstring& text) { SetDlgItemTextW(dialog, IDC_COMBO_STATUS, text.c_str()); }
 void Sequence(HWND dialog, const Catalog& catalog, const Combination& c, int selection = 0, const DisplayLanguages& languages = {}) {
-    SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_RESETCONTENT, 0, 0);
+    const auto list = GetDlgItem(dialog, IDC_COMBO_ENTRIES);
+    SendMessageW(list, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(list, LB_RESETCONTENT, 0, 0);
     for (size_t i = 0; i < c.entries.size(); ++i) {
         const auto& entry = c.entries[i];
         const auto* emoji = catalog.Find(entry.payload);
         const auto label = std::to_wstring(i + 1) + L". " + entry.payload + (emoji ? L"  " + FormatEmojiDisplayName(*emoji, languages) : L"");
-        SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+        SendMessageW(list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
-    SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETCURSEL, selection, 0);
-    if (!GetDlgItem(dialog,IDC_COMBO_EDITOR)) SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_SETHORIZONTALEXTENT, 1000, 0);
+    SendMessageW(list, LB_SETCURSEL, selection, 0);
+    if (!GetDlgItem(dialog,IDC_COMBO_EDITOR)) SendMessageW(list, LB_SETHORIZONTALEXTENT, 1000, 0);
+    SendMessageW(list, WM_SETREDRAW, TRUE, 0);
+    InvalidateRect(list, nullptr, FALSE);
 }
 void ComboButtons(HWND dialog, const CombinationEditor& e) {
     const auto selected = SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_GETCURSEL, 0, 0);
@@ -403,34 +414,42 @@ void ComboButtons(HWND dialog, const CombinationEditor& e) {
     EnableWindow(GetDlgItem(dialog, IDC_COMBO_DELETE), !e.draft.id.empty());
 }
 void ComboSaved(HWND dialog, CombinationEditor& e) {
-    SendDlgItemMessageW(dialog, IDC_COMBO_SAVED, LB_RESETCONTENT, 0, 0); e.keys.clear();
+    const auto list = GetDlgItem(dialog, IDC_COMBO_SAVED);
+    SendMessageW(list, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(list, LB_RESETCONTENT, 0, 0); e.keys.clear();
     for (const auto& item : e.parent.profile.combinations) {
-        const auto index = SendDlgItemMessageW(dialog, IDC_COMBO_SAVED, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item.second.name.c_str()));
+        const auto index = SendMessageW(list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item.second.name.c_str()));
         e.keys.push_back(item.first);
-        if (item.first == e.draft.id) SendDlgItemMessageW(dialog, IDC_COMBO_SAVED, LB_SETCURSEL, index, 0);
+        if (item.first == e.draft.id) SendMessageW(list, LB_SETCURSEL, index, 0);
     }
+    SendMessageW(list, WM_SETREDRAW, TRUE, 0);
+    InvalidateRect(list, nullptr, FALSE);
     const auto heading = L"&Saved combinations (" + std::to_wstring(e.keys.size()) + L")";
     SetDlgItemTextW(dialog, IDC_COMBO_SAVED_HEADING, heading.c_str());
     ComboButtons(dialog, e);
 }
 void ComboVariants(HWND dialog, CombinationEditor& e) {
-    SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_RESETCONTENT, 0, 0); e.variants.clear();
+    const auto combo = GetDlgItem(dialog, IDC_COMBO_VARIANTS);
+    SendMessageW(combo, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(combo, CB_RESETCONTENT, 0, 0); e.variants.clear();
     const auto selected = SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_GETCURSEL, 0, 0);
     if (selected >= 0 && static_cast<size_t>(selected) < e.results.size()) {
         e.variants = CatalogVariants(e.parent.catalog, e.results[selected].id);
         int choice = 0;
         for (size_t i = 0; i < e.variants.size(); ++i) {
             const auto label = e.variants[i]->glyph + L"  " + FormatEmojiDisplayName(*e.variants[i], e.parent.profile.settings.displayLanguages);
-            SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+            SendMessageW(combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
             if (e.variants[i]->glyph == e.results[selected].payload) choice = static_cast<int>(i);
         }
-        SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_SETCURSEL, choice, 0);
-        SendDlgItemMessageW(dialog, IDC_COMBO_VARIANTS, CB_SETDROPPEDWIDTH, 600, 0);
+        SendMessageW(combo, CB_SETCURSEL, choice, 0);
+        SendMessageW(combo, CB_SETDROPPEDWIDTH, 600, 0);
     }
+    SendMessageW(combo, WM_SETREDRAW, TRUE, 0);
+    InvalidateRect(combo, nullptr, FALSE);
     const int variantVisibility = e.variants.size() > 1 ? SW_SHOW : SW_HIDE;
     ShowWindow(GetDlgItem(dialog, IDC_COMBO_VARIANT_LABEL), variantVisibility);
     ShowWindow(GetDlgItem(dialog, IDC_COMBO_VARIANTS), variantVisibility);
-    InvalidateRect(dialog, nullptr, TRUE);
+    InvalidateRect(dialog, nullptr, FALSE);
     ComboButtons(dialog, e);
 }
 void ComboSearch(HWND dialog, CombinationEditor& e) {
@@ -438,13 +457,17 @@ void ComboSearch(HWND dialog, CombinationEditor& e) {
     neutral.settings.displayLanguages = e.parent.profile.settings.displayLanguages;
     e.results = Search(e.parent.catalog, neutral, Text(dialog, IDC_COMBO_QUERY));
     if (e.results.size() > 200) e.results.resize(200);
-    SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_RESETCONTENT, 0, 0);
+    const auto list = GetDlgItem(dialog, IDC_COMBO_RESULTS);
+    SendMessageW(list, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(list, LB_RESETCONTENT, 0, 0);
     for (const auto& result : e.results) {
         const auto label = result.payload + L"  " + result.label;
-        SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+        SendMessageW(list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
 
-    SendDlgItemMessageW(dialog, IDC_COMBO_RESULTS, LB_SETCURSEL, 0, 0);
+    SendMessageW(list, LB_SETCURSEL, 0, 0);
+    SendMessageW(list, WM_SETREDRAW, TRUE, 0);
+    InvalidateRect(list, nullptr, FALSE);
     ComboVariants(dialog, e);
 }
 INT_PTR CALLBACK ConfirmCombinationDelete(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {

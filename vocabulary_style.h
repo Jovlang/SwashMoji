@@ -141,7 +141,7 @@ inline void Layout(HWND dialog) {
         SetWindowRgn(control,CreateRoundRectRgn(0,0,r.right-r.left+1,r.bottom-r.top+1,Px(dialog,16),Px(dialog,16)),TRUE);
         SendMessageW(control,LB_SETITEMHEIGHT,0,Px(dialog,id==IDC_TARGET_RESULTS ? 48 : 36));
     }
-    InvalidateRect(dialog,nullptr,TRUE);
+    InvalidateRect(dialog,nullptr,FALSE);
 }
 inline void Paint(HWND dialog) {
     PAINTSTRUCT paint{}; auto dc=BeginPaint(dialog,&paint); RECT client{}; GetClientRect(dialog,&client);
