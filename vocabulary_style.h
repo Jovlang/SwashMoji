@@ -21,25 +21,37 @@ inline void Round(HDC dc, RECT r, COLORREF color, int radius, COLORREF edge = CL
 }
 inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR kind) {
     if (message == WM_NCDESTROY) { RemoveWindowSubclass(window, ControlProc, 1); return DefSubclassProc(window, message, wParam, lParam); }
-    if (message == WM_MOUSEMOVE && kind == 2) {
-        auto hit=SendMessageW(window,LB_ITEMFROMPOINT,0,lParam);
-        auto hot=HIWORD(hit) ? 0 : LOWORD(hit)+1;
-        if (reinterpret_cast<UINT_PTR>(GetPropW(window,L"VocabularyHotRow"))!=hot) {
-            SetPropW(window,L"VocabularyHotRow",reinterpret_cast<HANDLE>(static_cast<UINT_PTR>(hot)));
-            InvalidateRect(window,nullptr,FALSE);
+    if (message == WM_ERASEBKGND && kind == 2) return 1;
+    if (message == WM_LBUTTONDOWN && kind == 2) {
+        const auto hit = SendMessageW(window, LB_ITEMFROMPOINT, 0, lParam);
+        const auto row = HIWORD(hit) ? LB_ERR : static_cast<LRESULT>(LOWORD(hit));
+        if (row != LB_ERR && row == SendMessageW(window, LB_GETCURSEL, 0, 0)) {
+            SetFocus(window);
+            return 0;
         }
     }
-    if (message == WM_MOUSEMOVE) {
+    if (message == WM_MOUSEMOVE && kind != 2) {
         if (!GetPropW(window, L"VocabularyHover")) {
             SetPropW(window, L"VocabularyHover", reinterpret_cast<HANDLE>(1));
             TRACKMOUSEEVENT track{sizeof(track), TME_LEAVE, window, 0}; TrackMouseEvent(&track);
             InvalidateRect(window, nullptr, FALSE);
         }
     }
-    if (message == WM_MOUSELEAVE) { RemovePropW(window, L"VocabularyHover"); RemovePropW(window,L"VocabularyHotRow"); InvalidateRect(window, nullptr, FALSE); }
+    if (message == WM_MOUSELEAVE && kind != 2) { RemovePropW(window, L"VocabularyHover"); InvalidateRect(window, nullptr, FALSE); }
     if (message == WM_SETFOCUS || message == WM_KILLFOCUS || message == WM_ENABLE || message == BM_SETSTATE || message == BM_SETSTYLE || message == WM_UPDATEUISTATE) {
         auto result = DefSubclassProc(window, message, wParam, lParam);
-        InvalidateRect(window, nullptr, FALSE); InvalidateRect(GetParent(window), nullptr, FALSE); return result;
+        if (kind != 2) {
+            if (kind != 3) InvalidateRect(window, nullptr, FALSE);
+            auto parent = GetParent(window);
+            if (parent) {
+                RECT bounds{};
+                GetWindowRect(window, &bounds);
+                MapWindowPoints(nullptr, parent, reinterpret_cast<POINT*>(&bounds), 2);
+                InflateRect(&bounds, Px(parent, 12), Px(parent, 8));
+                RedrawWindow(parent, &bounds, nullptr, RDW_INVALIDATE | RDW_NOERASE | RDW_NOCHILDREN);
+            }
+        }
+        return result;
     }
     if (message == WM_PAINT && kind == 4 && !NativeTheme::HighContrast()) {
         PAINTSTRUCT paint{}; auto dc=BeginPaint(window,&paint); RECT r{}; GetClientRect(window,&r);

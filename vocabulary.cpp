@@ -53,6 +53,20 @@ std::wstring DrawItemText(const DRAWITEMSTRUCT& item) {
 bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
     auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
     if (!EmojiControl(item->CtlID)) return false;
+    static thread_local bool buffering = false;
+    if (!buffering && !NativeTheme::HighContrast()) {
+        HDC bufferedDc{};
+        const auto buffer = BeginBufferedPaint(item->hDC, &item->rcItem, BPBF_COMPATIBLEBITMAP, nullptr, &bufferedDc);
+        if (buffer) {
+            auto bufferedItem = *item;
+            bufferedItem.hDC = bufferedDc;
+            buffering = true;
+            const auto result = DrawEmojiControl(dialog, reinterpret_cast<LPARAM>(&bufferedItem));
+            buffering = false;
+            EndBufferedPaint(buffer, TRUE);
+            return result;
+        }
+    }
     if (GetDlgItem(dialog,IDC_COMBO_EDITOR) && item->CtlID == IDC_COMBO_ENTRIES) {
         auto r=item->rcItem; FillRect(item->hDC,&r,VocabularyStyle::InputBrush());
         auto text=DrawItemText(*item);
@@ -61,20 +75,23 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
             if(start!=std::wstring::npos) text=text.substr(start+2);
             auto end=text.find(L"  "); if(end!=std::wstring::npos) text.resize(end);
             InflateRect(&r,-VocabularyStyle::Px(dialog,3),-VocabularyStyle::Px(dialog,3));
-            const bool selected=(item->itemState&ODS_SELECTED)!=0;
+            const bool selected=(item->itemState&ODS_SELECTED)!=0 ||
+                (item->itemID != static_cast<UINT>(-1) &&
+                 SendMessageW(item->hwndItem, LB_GETCURSEL, 0, 0) == static_cast<LRESULT>(item->itemID));
             const bool hot=reinterpret_cast<UINT_PTR>(GetPropW(item->hwndItem,L"VocabularyHotRow"))==item->itemID+1;
             VocabularyStyle::Round(item->hDC,r,NativeTheme::HighContrast() ? GetSysColor(selected?COLOR_HIGHLIGHT:COLOR_WINDOW) :
                 selected ? RGB(48,65,88) : hot ? RGB(53,58,66) : RGB(45,48,54),VocabularyStyle::Px(dialog,8));
         }
         auto color=NativeTheme::HighContrast() && (item->itemState&ODS_SELECTED) ? GetSysColor(COLOR_HIGHLIGHTTEXT) : NativeTheme::Foreground();
         NativeEmoji::DrawLine(item->hDC,r,text,static_cast<float>(VocabularyStyle::Px(dialog,30)),color,true,!NativeTheme::HighContrast(),true);
-        if(item->itemState&ODS_FOCUS) { InflateRect(&r,-2,-2); DrawFocusRect(item->hDC,&r); }
         return true;
     }
     if (item->CtlID == IDC_COMBO_SAVED || item->CtlID == IDC_COMBO_RESULTS || item->CtlID == IDC_ALIASES || item->CtlID == IDC_PINS || item->CtlID == IDC_TARGET_RESULTS) {
         auto r = item->rcItem;
         FillRect(item->hDC, &r, VocabularyStyle::InputBrush());
-        const bool selected = (item->itemState & ODS_SELECTED) != 0;
+        const bool selected = (item->itemState & ODS_SELECTED) != 0 ||
+            (item->itemID != static_cast<UINT>(-1) &&
+             SendMessageW(item->hwndItem, LB_GETCURSEL, 0, 0) == static_cast<LRESULT>(item->itemID));
         const bool hot = item->itemID != static_cast<UINT>(-1) && reinterpret_cast<UINT_PTR>(GetPropW(item->hwndItem,L"VocabularyHotRow")) == item->itemID+1;
         if (selected || hot) {
             InflateRect(&r, -VocabularyStyle::Px(dialog,3), -VocabularyStyle::Px(dialog,2));
@@ -100,7 +117,6 @@ bool DrawEmojiControl(HWND dialog, LPARAM lParam) {
                     NativeEmoji::DrawLine(item->hDC,secondary,text.substr(translation+3),static_cast<float>(VocabularyStyle::Px(dialog,12)), selected && NativeTheme::HighContrast() ? color : NativeTheme::SecondaryText(),false,!NativeTheme::HighContrast(),true);
             } else NativeEmoji::DrawLine(item->hDC,r,text,static_cast<float>(VocabularyStyle::Px(dialog,13)),NativeTheme::SecondaryText(),false,!NativeTheme::HighContrast(),true);
         } else NativeEmoji::DrawLine(item->hDC,r,text,static_cast<float>(VocabularyStyle::Px(dialog,14)),color,false,!NativeTheme::HighContrast(),true);
-        if (item->itemState & ODS_FOCUS) { InflateRect(&r,-2,-2); DrawFocusRect(item->hDC,&r); }
         return true;
     }
     const bool selected = (item->itemState & ODS_SELECTED) != 0;
