@@ -151,6 +151,15 @@ void French(const Catalog& catalog) {
     CHECK(Search(catalog, profile, L"visage avec un léger sourire").front().payload == L"🙂");
 }
 
+void Spanish(const Catalog& catalog) {
+    for (const auto& emoji : catalog.Entries()) CHECK(!GetEmojiName(emoji, "es").empty());
+    Profile profile;
+    CHECK(profile.settings.displayLanguages.Set({"es", "en"}));
+    auto results = Search(catalog, profile, L"cohete");
+    CHECK(!results.empty() && results.front().payload == L"🚀");
+    CHECK(results.front().label == L"cohete · rocket");
+}
+
 int main(int argc, char** argv) {
     try {
         CHECK(argc == 2);
@@ -158,7 +167,7 @@ int main(int argc, char** argv) {
         std::ifstream data(root / "emojis.txt", std::ios::binary), intents(root / "intent_phrases.tsv", std::ios::binary);
         Catalog catalog;
         CHECK(catalog.Load(data) && catalog.LoadIntents(intents));
-        Aliases(catalog); NormalizationAndRanking(); Corpus(catalog, root); ItalianAndGerman(catalog); French(catalog);
+        Aliases(catalog); NormalizationAndRanking(); Corpus(catalog, root); ItalianAndGerman(catalog); French(catalog); Spanish(catalog);
         std::cout << "Bilingual names, Unicode normalization, alias CRUD/restart and ranking invariants passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
 }

@@ -5,12 +5,14 @@
   "files_sha256": {
     "annotations/de.xml": "12eb92612539223d4dcfaec3c45437a31a82022b1c59160873fa4d4439dd7d07",
     "annotations/en.xml": "8511aadd046fdba2f0ffe590266ced8bbf48175ad139b2675d85d7141057b235",
+    "annotations/es.xml": "fe8384e9cd2ee0998eb00ddf5549272eb5b56739e539ef33fedcd727fce5026a",
     "annotations/fr.xml": "1f20666212945352b3935878f83cf9f58ab479bbf027a76fbead72793943a8b7",
     "annotations/it.xml": "7963c1a757bef01f28aa2b9140111246f0eb8e31adc6aa1bfe224d5566a0a297",
     "annotations/nb.xml": null,
     "annotations/no.xml": "6512f9f6777f919f455602757e780ac53fcae66232a85f88a75f96e26284961e",
     "annotationsDerived/de.xml": "c7511229fdfa1471cecba195ff4a094d70507a320e5364e0edc8ca5c72eeae09",
     "annotationsDerived/en.xml": "d76bd041c8c9e7b00b716aff8b7d9dbf509877010e191d5efd068be2553e066e",
+    "annotationsDerived/es.xml": "ea9b3abc0a2c73a815faec1034764b6a503d14638ad4fb9556d8a7341838672c",
     "annotationsDerived/fr.xml": "f76bab496c0e1a9ae8fc309a6a01a313089ec167289db59c308a33cfd225f78b",
     "annotationsDerived/it.xml": "c42aa1e1965312251821dd3ae83097f631788982effae147954fc0754e687ed1",
     "annotationsDerived/nb.xml": null,
@@ -22,6 +24,7 @@
     "nb",
     "de",
     "it",
-    "fr"
+    "fr",
+    "es"
   ]
 }

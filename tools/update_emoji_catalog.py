@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 
 CLDR_TAG = "release-48-2"
 CLDR_BASE = f"https://raw.githubusercontent.com/unicode-org/cldr/{CLDR_TAG}/common"
-EXTRA_LOCALES = ("de", "it", "fr")
+EXTRA_LOCALES = ("de", "it", "fr", "es")
 
 
 def normalized_glyph(value: str) -> str:

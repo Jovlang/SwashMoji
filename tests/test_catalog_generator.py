@@ -28,6 +28,8 @@ class CatalogGeneration(unittest.TestCase):
                 "annotations/it.xml": '<ldml><annotations><annotation cp="🚀" type="tts">razzo</annotation><annotation cp="🚀">spazio</annotation></annotations></ldml>',
                 "annotationsDerived/fr.xml": '<ldml><annotations/></ldml>',
                 "annotations/fr.xml": '<ldml><annotations><annotation cp="🚀" type="tts">fusée</annotation><annotation cp="🚀">espace</annotation></annotations></ldml>',
+                "annotationsDerived/es.xml": '<ldml><annotations/></ldml>',
+                "annotations/es.xml": '<ldml><annotations><annotation cp="🚀" type="tts">cohete</annotation><annotation cp="🚀">espacio</annotation></annotations></ldml>',
             }
             for name, text in files.items():
                 path = cache / name
@@ -49,6 +51,8 @@ class CatalogGeneration(unittest.TestCase):
             self.assertIn("spazio", rows[0][10])
             self.assertEqual(rows[0][11:13], ["fr", "fusée"])
             self.assertIn("espace", rows[0][13])
+            self.assertEqual(rows[0][14:16], ["es", "cohete"])
+            self.assertIn("espacio", rows[0][16])
             self.assertEqual(len(rows[1]), 5)  # Missing additional data is not invented from English.
             self.assertEqual(generator.generate(result, generator.Sources(cache)), result)
             self.assertIsNone(sources.hashes["annotationsDerived/nb.xml"])

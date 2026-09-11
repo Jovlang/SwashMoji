@@ -7,7 +7,8 @@ namespace SwashMoji {
 const std::vector<LocaleMetadata>& SupportedLocales() {
     static const std::vector<LocaleMetadata> locales{
         {"en", L"English", true}, {"nb", L"Norwegian Bokmål", false},
-        {"de", L"German", false}, {"it", L"Italian", false}, {"fr", L"French", false}};
+        {"de", L"German", false}, {"it", L"Italian", false}, {"fr", L"French", false},
+        {"es", L"Spanish", false}};
     return locales;
 }
 
