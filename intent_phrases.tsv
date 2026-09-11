@@ -1,54 +1,259 @@
 # Curated intent phrases, maintained separately from Unicode CLDR annotations.
 # phrase<TAB>emoji; family variants follow the user's skin tone setting.
 # A phrase may offer several choices; personal aliases remain unique.
+
+# nice
 nice	👌
 nice	👍
+bra	👍
+schön	👌
+gut	👍
+ottimo	👌
+bene	👍
+sympa	👌
+bien	👍
+genial	👌
+bien	👍
+
+# awkward
 awkward	😬
 kleint	😬
+peinlich	😬
+imbarazzante	😬
+gênant	😬
+qué incómodo	😬
+
+# finally
 finally	🙌
 endelig	🙌
+endlich	🙌
+finalmente	🙌
+enfin	🙌
+por fin	🙌
+
+# oops
 oops	😅
 ops	😅
+ups	😅
+ops	😅
+oups	😅
+ups	😅
+
+# thanks
 takk	🙏
 thanks	🙏
+tusen takk	🙏
+thank you	🙏
+thanks a lot	🙏
+danke	🙏
+vielen dank	🙏
+grazie	🙏
+grazie mille	🙏
+merci	🙏
+merci beaucoup	🙏
+gracias	🙏
+muchas gracias	🙏
+
+# well done
 well done	👏
 good job	👏
 bra jobbet	👏
 godt jobbet	👏
-tusen takk	🙏
-thank you	🙏
-thanks a lot	🙏
+gut gemacht	👏
+ben fatto	👏
+bravo	👏
+bien joué	👏
+bravo	👏
+bien hecho	👏
+
+# fingers crossed
 fingers crossed	🤞
 krysser fingrene	🤞
-lykke til	🤞
+ich drücke die daumen	🤞
+daumen drücken	🤞
+incrocio le dita	🤞
+je croise les doigts	🤞
+cruzo los dedos	🤞
+
+# good luck
 good luck	🤞
+lykke til	🤞
+viel glück	🤞
+buona fortuna	🤞
+bonne chance	🤞
+buena suerte	🤞
+
+# running late
 running late	⏰
 jeg er forsinket	⏰
-på vei	🚶
+ich verspäte mich	⏰
+bin spät dran	⏰
+sono in ritardo	⏰
+je suis en retard	⏰
+llego tarde	⏰
+
+# on my way
 on my way	🚶
+på vei	🚶
+bin unterwegs	🚶
+sono per strada	🚶
+sto arrivando	🚶
+je suis en route	🚶
+j'arrive	🚶
+voy de camino	🚶
+
+# need coffee
 need coffee	☕
 trenger kaffe	☕
+brauche kaffee	☕
+ich brauche kaffee	☕
+mi serve un caffè	☕
+ho bisogno di caffè	☕
+j'ai besoin de café	☕
+besoin de café	☕
+necesito café	☕
+
+# happy birthday
 happy birthday	🎂
 gratulerer med dagen	🎂
+alles gute zum geburtstag	🎂
+herzlichen glückwunsch zum geburtstag	🎂
+buon compleanno	🎂
+joyeux anniversaire	🎂
+feliz cumpleaños	🎂
+
+# get well soon
 get well soon	💐
 god bedring	💐
+gute besserung	💐
+guarisci presto	💐
+buona guarigione	💐
+bon rétablissement	💐
+que te mejores	💐
+
+# thinking of you
 thinking of you	💭
 tenker på deg	💭
+denke an dich	💭
+ich denke an dich	💭
+ti penso	💭
+je pense à toi	💭
+pienso en ti	💭
+
+# love you
 love you	❤️
 glad i deg	❤️
+jeg elsker deg	❤️
+ich liebe dich	❤️
+hab dich lieb	❤️
+ti amo	❤️
+ti voglio bene	❤️
+je t'aime	❤️
+te quiero	❤️
+te amo	❤️
+
+# great idea
 great idea	💡
 god idé	💡
+tolle idee	💡
+gute idee	💡
+ottima idea	💡
+excellente idée	💡
+bonne idée	💡
+gran idea	💡
+buena idea	💡
+
+# let's celebrate
 let's celebrate	🎉
 dette må feires	🎉
+lass uns feiern	🎉
+das müssen wir feiern	🎉
+festeggiamo	🎉
+bisogna festeggiare	🎉
+on fête ça	🎉
+il faut fêter ça	🎉
+vamos a celebrarlo	🎉
+hay que celebrarlo	🎉
+
+# mission accomplished
 mission accomplished	✅
 oppdrag utført	✅
+mission erfüllt	✅
+missione compiuta	✅
+mission accomplie	✅
+misión cumplida	✅
+
+# see you later
 see you later	👋
 vi ses	👋
+bis später	👋
+ci vediamo dopo	👋
+a dopo	👋
+à plus tard	👋
+à plus	👋
+hasta luego	👋
+nos vemos	👋
+
+# totally agree
 helt enig	👍
+totally agree	👍
+absolutely agree	👍
+stimme voll zu	👍
+bin völlig deiner meinung	👍
+sono completamente d'accordo	👍
+sono d'accordissimo	👍
+tout à fait d'accord	👍
+totalement d'accord	👍
+totalmente de acuerdo	👍
+
+# sounds good
 sounds good	👍
+høres bra ut	👍
+klingt gut	👍
+va bene	👍
+mi sembra ottimo	👍
+ça me va	👍
+ça a l'air bien	👍
+suena bien	👍
+me parece bien	👍
+
+# no idea
 no idea	🤷
 aner ikke	🤷
+ingen anelse	🤷
+keine ahnung	🤷
+non ne ho idea	🤷
+nessuna idea	🤷
+aucune idée	🤷
+j'en sais rien	🤷
+ni idea	🤷
+no tengo ni idea	🤷
+
+# that was close
 that was close	😅
 det var nære	😅
+det var close	😅
+das war knapp	😅
+per un pelo	😅
+c'è mancato poco	😅
+c'était moins une	😅
+c'était juste	😅
+por poco	😅
+ha faltado poco	😅
+
+# so tired
 so tired	😴
 så trøtt	😴
+så sliten	😴
+so müde	😴
+ich bin so müde	😴
+sono stanco	😴
+sono stanca	😴
+che stanchezza	😴
+je suis fatigué	😴
+je suis fatiguée	😴
+trop fatigué	😴
+trop fatiguée	😴
+estoy cansado	😴
+estoy cansada	😴
+qué cansancio	😴
