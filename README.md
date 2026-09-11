@@ -68,7 +68,9 @@ To build from source, follow [CONTRIBUTING.md](CONTRIBUTING.md#build-on-windows)
 
 ## Incidental language learning
 
-Because SwashMoji searches all supported languages at once, while displaying one or two languages of your choice, multilingual names can also provide incidental vocabulary learning during ordinary use. Search for the Norwegian `julenissen`, for example, and 🎅  may show Babbo Natale · Weihnachtsmann; search for `fireworks` and 🎆 may show fuochi d'artificio · Feuerwerk. The emoji provides a shared visual meaning, so unfamiliar words can often be understood from context without switching languages or looking up a translation. This is not intended to turn SwashMoji into a language-learning app—it is simply a useful side effect of making the multilingual catalog visible.
+Because SwashMoji searches all supported languages at once while displaying names in one or two languages of your choice, ordinary emoji searches can also provide a little incidental vocabulary learning. Search for the Norwegian `julenissen`, for example, and 🎅 may show Babbo Natale · Weihnachtsmann; search for `fireworks` and 🎆 may show fuochi d'artificio · Feuerwerk.
+
+The emoji itself provides a shared visual meaning, so unfamiliar words can often be understood from context without switching languages or looking up a translation. SwashMoji is not intended to be a language-learning app—this is simply a useful side effect of making its multilingual catalog visible.
 
 ## License
 
