@@ -729,7 +729,7 @@ void ConfirmAndClearUsageHistory() {
 
 const wchar_t* HelpText() {
     return L"SwashMoji — keyboard guide\r\n\r\n"
-        L"Alt+E: Open from any app. Search English, Norwegian, German or Italian names, phrases and aliases.\r\n\r\n"
+        L"Alt+E: Open from any app. Search English, Norwegian, German, Italian or French names, phrases and aliases.\r\n\r\n"
         L"Click or Enter: Insert and close.\r\nCtrl+click or Ctrl+Enter: Insert and keep open.\r\n"
         L"Shift+Enter: Copy and close after success.\r\n"
         L"Tab / Shift+Tab: Move between search, results and available recovery actions.\r\n"

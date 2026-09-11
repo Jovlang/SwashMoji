@@ -39,7 +39,7 @@ Display languages default to `en`, `nb`, including when migrating versions 1–4
 One locale selects a single display language. Empty, duplicate, unknown or more
 than two locales invalidate the entire record; defaults remain unless an earlier
 valid record was read. The first valid record wins. Codes come from the shared
-locale registry and are written literally (currently `en`, `nb`, `de` and `it`). Search locale
+locale registry and are written literally (currently `en`, `nb`, `de`, `it` and `fr`). Search locale
 selection is independent and is not persisted by this feature. History clearing
 retains display languages. Version 5 protects this new record from older writers.
 

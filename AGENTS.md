@@ -79,7 +79,7 @@ to unlock a build; use another build directory.
 
 ## Behavior to preserve
 
-- English (`en`), Norwegian Bokmål (`nb`), German (`de`) and Italian (`it`) search
+- English (`en`), Norwegian Bokmål (`nb`), German (`de`), Italian (`it`) and French (`fr`) search
   together. Search locale filters are independent of display preferences; an empty
   filter searches all available localizations for non-fuzzy matches. Search uses
   display locales as default preferences, not a hard filter: catalog fuzzy matching

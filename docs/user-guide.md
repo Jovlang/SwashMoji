@@ -21,7 +21,7 @@ usage history. **Exit** quits the application; `Esc` closes the picker.
 
 ## Search and languages
 
-Search English, Norwegian Bokmål, German, and Italian together. You can use names,
+Search English, Norwegian Bokmål, German, Italian, and French together. You can use names,
 Unicode keywords, and phrases such as `bra jobbet` (well done), `på vei` (on my way),
 and `thank you`. Both `Rakete` and `razzo` find 🚀. Typos in catalog names and
 keywords are tolerated in your display languages when there are no regular matches.
@@ -35,7 +35,7 @@ Your own aliases give you more ways to find an emoji.
   to the previous secondary language, **Secondary** is set to **None**.
 - **Save** saves the selection; **Close** discards unapplied changes.
 
-English and Norwegian are the defaults. **Italian** and **German** also have
+English and Norwegian are the defaults. **Italian**, **German**, and **French** also have
 translated names for all 3598 emoji variants in the catalog. Regular matching
 still searches all available languages regardless of your display selection:
 `ragazza` finds 👧 even with English and Norwegian selected. Display languages

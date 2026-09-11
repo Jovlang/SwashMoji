@@ -6,7 +6,7 @@ The catalog now stores names, keywords and their normalized search caches by
 locale code in `Emoji::names`. `SetEmojiLocalization` builds/replaces one locale's
 data; `SupportedLocales` registers display metadata and English inflection policy.
 The existing three/five-column files are still accepted and map to `en`/`nb`.
-The bundled dataset also includes German (`de`) and Italian (`it`) names and
+The bundled dataset also includes German (`de`), Italian (`it`) and French (`fr`) names and
 keywords from the same pinned CLDR release. No runtime dependency is added.
 
 `GetEmojiName`, `GetBestEmojiName` and `FormatEmojiDisplayName` provide shared
@@ -27,7 +27,7 @@ all available localizations; aliases and curated intents remain available.
 limit. When omitted, Search uses the profile's display locales as preferences,
 not as a hard filter. Exact names, keywords, prefixes and all-token lexical
 matches continue across the filter's locales. Keeping non-fuzzy fallback preserves
-the existing four-language behavior, including mixed-language token queries.
+the existing multilingual behavior, including mixed-language token queries.
 
 Catalog fuzzy matching runs only in the intersection of preferred locales and
 the filter, and only if there are no ordinary results anywhere. An explicit empty
@@ -58,7 +58,7 @@ preview. See [contributor workflow](../CONTRIBUTING.md) for building the preview
 
 ## Existing behavior
 
-Search English, Norwegian Bokmål, German and Italian together, without a language switch or runtime
+Search English, Norwegian Bokmål, German, Italian and French together, without a language switch or runtime
 network access. Exact personal aliases rank first, then exact English/localized
 names or a pasted known emoji, exact curated intent phrases, name prefixes,
 all-token lexical matches, and finally preferred-locale catalog fuzzy matches only
@@ -97,7 +97,7 @@ be alias targets. Their authored payload is independent of global tone. See
 `emojis.txt` starts with five tab-separated UTF-8 columns: glyph, English name,
 English keywords, Bokmål name, Bokmål keywords. Additional languages use repeated
 triples of locale code, localized name and localized keywords. The current catalog
-appends `de` and `it` triples. The loader accepts arbitrary locale triples and older
+appends `de`, `it` and `fr` triples. The loader accepts arbitrary locale triples and older
 three/five-column catalogs; incomplete triples or duplicate locale codes invalidate
 the row. `intent_phrases.tsv` holds 51 separately maintained intent mappings (50 phrases).
 Both files and `UNICODE_LICENSE.txt` must be distributed beside the executable;
@@ -111,7 +111,7 @@ separate `nb` annotation files. Names/keywords inherit from `no` with English
 fallback. Hand-authored annotations override derived annotations. Inheritance
 markers are respected. Existing English keyword vocabulary is preserved.
 
-German and Italian provide names for all 3,598 catalog variants. Their addition
+German, Italian and French provide names for all 3,598 catalog variants. Their addition
 preserved the original five columns and source hashes; new source hashes are in
 the manifest. Missing additional translations stay absent in the catalog; the
 shared display formatter supplies fallback. Tests cover generic locale triples,
