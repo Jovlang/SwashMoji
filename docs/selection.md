@@ -60,7 +60,7 @@ not directly send input; Enter there confirms Use once.
 
 ## DPI and accessibility
 
-`app.manifest` enables Per-Monitor V2 and version 6 common controls. The picker
+`src/app.manifest` enables Per-Monitor V2 and version 6 common controls. The picker
 scales logical dimensions and fonts from 96 DPI. `WM_DPICHANGED` recreates resources,
 applies suggested bounds and clamps to the work area. Direct2D uses explicit
 96-DPI render-target coordinates with physical-pixel bounds/font sizes to avoid

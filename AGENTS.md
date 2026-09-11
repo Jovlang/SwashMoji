@@ -14,19 +14,19 @@ or insertion. Localization scope and search policy are documented in
 
 ## Code map
 
-- `main.cpp`: picker window, tray, shortcuts, rendering and session coordination.
-- `vocabulary.cpp/.h`, `vocabulary.rc`, `vocabulary_ids.h`: vocabulary editor UI.
-- `language_preferences.h`, `language_preferences.rc`: native **Languages...**
-  preferences dialog; `DisplayLanguages` in `models.h` validates the selection.
-- `catalog.cpp/.h`, `text.cpp/.h`, `search.cpp/.h`, `ranking.h`: catalog loading,
+- `src/main.cpp`: picker window, tray, shortcuts, rendering and session coordination.
+- `src/vocabulary.cpp/.h`, `src/vocabulary.rc`, `src/vocabulary_ids.h`: vocabulary editor UI.
+- `src/language_preferences.h`, `src/language_preferences.rc`: native **Languages...**
+  preferences dialog; `DisplayLanguages` in `src/models.h` validates the selection.
+- `src/catalog.cpp/.h`, `src/text.cpp/.h`, `src/search.cpp/.h`, `src/ranking.h`: catalog loading,
   locale-keyed names and search caches, shared name formatting, Unicode
   normalization, multilingual matching and ranking.
-- `picker.cpp/.h`: testable picker-session state, grid navigation and selection.
-- `models.h`, `personalization.cpp/.h`, `storage.cpp/.h`: profile data, learning,
+- `src/picker.cpp/.h`: testable picker-session state, grid navigation and selection.
+- `src/models.h`, `src/personalization.cpp/.h`, `src/storage.cpp/.h`: profile data, learning,
   favorites, saved combinations, persistence and migration.
-- `insertion.cpp/.h`: testable insertion and clipboard logic;
-  `insertion_win32.cpp/.h`: Windows adapters.
-- `edit_controls.cpp/.h`: shared native text-edit behavior.
+- `src/insertion.cpp/.h`: testable insertion and clipboard logic;
+  `src/insertion_win32.cpp/.h`: Windows adapters.
+- `src/edit_controls.cpp/.h`: shared native text-edit behavior.
 - `tests/`: C++ regression suites, desktop integration tools and Python generator
   tests. `tools/update_emoji_catalog.py` generates the catalog.
 - `emojis.txt`, `intent_phrases.tsv`, `data/catalog_sources.json`, `third_party/`:

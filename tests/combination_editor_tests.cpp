@@ -1,5 +1,5 @@
 // Native controls and resources, with an in-memory profile and no desktop input.
-#include "../vocabulary.cpp"
+#include "../src/vocabulary.cpp"
 #include "test_support.h"
 #include <fstream>
 #include <filesystem>

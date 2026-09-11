@@ -1,6 +1,6 @@
 // Isolated visual harness; never reads the user's application profile.
-#include "../vocabulary.cpp"
-#include "../storage.h"
+#include "../src/vocabulary.cpp"
+#include "../src/storage.h"
 #include <fstream>
 INT_PTR CALLBACK PreviewProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
     const auto handled=SwashMoji::CombinationProc(dialog,message,wParam,lParam);

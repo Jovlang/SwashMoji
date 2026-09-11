@@ -1,7 +1,7 @@
 // Exercise the actual child-window key handler without foreground activation,
 // global hotkeys, synthetic desktop input, or the user's profile.
 #define wWinMain SwashMojiUnusedApplicationMain
-#include "../main.cpp"
+#include "../src/main.cpp"
 #undef wWinMain
 #include "test_support.h"
 

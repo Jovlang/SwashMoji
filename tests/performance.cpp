@@ -1,7 +1,7 @@
 // Real picker result-update code, hidden and without desktop input or profile IO.
 // This intentionally does not claim to measure foreground activation or painting.
 #define wWinMain SwashMojiUnusedApplicationMain
-#include "../main.cpp"
+#include "../src/main.cpp"
 #undef wWinMain
 #include "test_support.h"
 #include <chrono>

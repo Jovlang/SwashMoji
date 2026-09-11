@@ -1,6 +1,6 @@
 #define IDI_APP_ICON 101
 
-IDI_APP_ICON ICON "assets/app.ico"
+IDI_APP_ICON ICON "../assets/app.ico"
 #include "vocabulary.rc"
 #include "details.rc"
 #include "language_preferences.rc"

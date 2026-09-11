@@ -2,12 +2,12 @@
 // or registering the application's global hotkey. The included entry points are
 // renamed; only this test's isolated setup is run.
 #define wWinMain SwashMojiUnusedApplicationMain
-#include "../main.cpp"
+#include "../src/main.cpp"
 #undef wWinMain
 #define wmain SwashMojiUnusedInputTestMain
 #include "native_input_tests.cpp"
 #undef wmain
-#include "../vocabulary_ids.h"
+#include "../src/vocabulary_ids.h"
 
 namespace {
 enum class DialogAction { Create, Cancel, Edit, DeclineReplacement, Delete, CheckHeartPrefill, Favorites };
