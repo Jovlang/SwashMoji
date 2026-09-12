@@ -152,6 +152,14 @@ void UpdateStatusLine();
 void UpdateSortIndicator();
 int PickerHeight();
 void LayoutChildren(HWND window);
+void SetRecoveryMessage(const std::wstring& message);
+
+void CaptureInputTarget(HWND active) {
+    const auto target = CaptureExternalTarget(active);
+    g_inputTarget = target;
+    g_session.originalTarget = target.window;
+    if (target.window) SetRecoveryMessage(L"");
+}
 
 std::filesystem::path EmojiCatalogPath() {
     wchar_t path[MAX_PATH]{};
@@ -448,12 +456,7 @@ void CenterOnActiveMonitor() {
     CancelPendingReturn();
     BeginPickerSession();
     HWND active = GetForegroundWindow();
-    const auto target = CaptureExternalTarget(active);
-    if (target.window) {
-        g_inputTarget = target;
-        g_session.originalTarget = target.window;
-        SetRecoveryMessage(L"");
-    }
+    CaptureInputTarget(active);
     RECT anchor{};
     const bool hasAnchor = g_positionAboveTextField && TryGetTextFieldAnchor(active, anchor);
     HMONITOR monitor = hasAnchor
@@ -729,7 +732,7 @@ void ConfirmAndClearUsageHistory() {
 
 const wchar_t* HelpText() {
     return L"SwashMoji — keyboard guide\r\n\r\n"
-        L"Alt+E: Open from any app. Search English, Norwegian, German, Italian or French names, phrases and aliases.\r\n\r\n"
+        L"Alt+E: Open from any app. Search English, Norwegian, German, Italian, French or Spanish names, phrases and aliases.\r\n\r\n"
         L"Click or Enter: Insert and close.\r\nCtrl+click or Ctrl+Enter: Insert and keep open.\r\n"
         L"Shift+Enter: Copy and close after success.\r\n"
         L"Tab / Shift+Tab: Move between search, results and available recovery actions.\r\n"

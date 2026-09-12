@@ -117,6 +117,11 @@ int main() {
         g_window = CreateWindowExW(0, type.lpszClassName, L"Keyboard test", WS_POPUP,
             0, 0, kPickerWidth, PickerHeight(), nullptr, nullptr, type.hInstance, nullptr);
         CHECK(g_window);
+        g_inputTarget = {42, 1, 1};
+        g_session.originalTarget = 42;
+        CaptureInputTarget(g_window);
+        CHECK(!g_inputTarget.window && !g_session.originalTarget);
+        CHECK(std::wstring(HelpText()).find(L"Spanish") != std::wstring::npos);
         CHECK((GetWindowLongPtrW(g_status,GWL_STYLE)&SS_ENDELLIPSIS)==SS_ENDELLIPSIS);
         BeginPickerSession();
         SetWindowTextW(g_edit,L"slightly smiling face");
