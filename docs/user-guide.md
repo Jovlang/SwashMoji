@@ -14,9 +14,10 @@ it is in the `build` directory. When moving it, keep `emojis.txt`,
 The catalog and phrases are read from the two UTF-8 files, with no network access.
 Settings and history are stored separately in your user profile.
 
-`Alt+E` opens the picker on the active window's monitor. Left-clicking the tray
-icon also opens it. Right-click the icon to configure placement near the active
-text field, sorting, languages, **My vocabulary**, learning, and clearing local
+`Alt+E` opens the picker near the active text cursor, falling back to the mouse
+pointer when an application does not expose a text cursor.
+Left-clicking the tray icon also opens it. Right-click the icon to configure
+sorting, languages, **My vocabulary**, learning, and clearing local
 usage history. **Exit** quits the application; `Esc` closes the picker.
 
 ## Search and languages

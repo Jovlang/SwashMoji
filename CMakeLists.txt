@@ -20,7 +20,7 @@ target_link_libraries(SwashMojiCore PUBLIC user32 normaliz comctl32 ole32)
 add_executable(SwashMoji WIN32 src/main.cpp src/vocabulary.cpp src/app.rc)
 target_compile_features(SwashMoji PRIVATE cxx_std_17)
 target_compile_definitions(SwashMoji PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(SwashMoji PRIVATE SwashMojiCore user32 shell32 uxtheme dwmapi d2d1 dwrite ole32 uiautomationcore)
+target_link_libraries(SwashMoji PRIVATE SwashMojiCore user32 shell32 uxtheme dwmapi d2d1 dwrite ole32 oleaut32 uiautomationcore)
 
 if(MSVC)
   # Source files are UTF-8; make non-ASCII UI strings compile correctly.

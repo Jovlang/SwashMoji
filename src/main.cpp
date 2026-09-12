@@ -59,7 +59,6 @@ constexpr int kLearnQueriesId = 207;
 constexpr int kDisplayLanguagesId = 208;
 constexpr int kRecoveryHeight = 68;
 constexpr int kExitId = 200;
-constexpr int kPositionAboveTextFieldId = 201;
 constexpr int kSortRecentId = 202;
 constexpr int kSortMostUsedId = 203;
 constexpr int kClearUsageHistoryId = 204;
@@ -123,9 +122,9 @@ RankingPreferences g_rankingPreferences;
 ProfileStorage g_storage;
 bool g_profileUnsaved{};
 std::wstring g_storageDiagnostic;
-bool& g_positionAboveTextField = g_profile.settings.positionAboveTextField;
 bool& g_sortByUsage = g_profile.settings.sortByUsage;
 bool g_statusVisible{true};
+bool g_pickerAboveAnchor{};
 int& g_emojiRows = g_profile.settings.emojiRows;
 int& g_skinToneIndex = g_profile.settings.skinTone;
 WNDPROC g_editProc{};
@@ -153,6 +152,7 @@ void UpdateSortIndicator();
 int PickerHeight();
 void LayoutChildren(HWND window);
 void SetRecoveryMessage(const std::wstring& message);
+void ResizePicker(int height);
 
 void CaptureInputTarget(HWND active) {
     const auto target = CaptureExternalTarget(active);
@@ -220,9 +220,7 @@ void RefreshList() {
     RECT bounds{};
     GetWindowRect(window, &bounds);
     if (bounds.bottom - bounds.top != PickerHeight()) {
-        SetWindowPos(window, nullptr, 0, 0, Px(kPickerWidth), PickerHeight(),
-            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-        ClampWindow(window);
+        ResizePicker(PickerHeight());
     }
     LayoutChildren(window);
     ShowWindow(g_teachPhrase, g_visible.empty() && !NormalizePhrase(g_session.query).empty() ? SW_SHOW : SW_HIDE);
@@ -412,37 +410,90 @@ void CALLBACK ForegroundChanged(HWINEVENTHOOK, DWORD, HWND window, LONG, LONG, D
     if (!g_focusReturn.Pending()) CancelPendingReturn();
 }
 
-bool TryGetAutomationTextFieldAnchor(RECT& anchor) {
-    if (!g_uiAutomation) return false;
-    IUIAutomationElement* focused{};
-    if (FAILED(g_uiAutomation->GetFocusedElement(&focused)) || !focused) return false;
-    CONTROLTYPEID type{};
-    RECT bounds{};
-    const bool isTextField = SUCCEEDED(focused->get_CurrentControlType(&type)) &&
-        (type == UIA_EditControlTypeId || type == UIA_DocumentControlTypeId ||
-         type == UIA_ComboBoxControlTypeId);
-    const bool hasBounds = SUCCEEDED(focused->get_CurrentBoundingRectangle(&bounds)) &&
-        bounds.right > bounds.left && bounds.bottom > bounds.top;
-    focused->Release();
-    if (!isTextField || !hasBounds) return false;
-    anchor = bounds;
+bool TextRangeBounds(IUIAutomationTextRange* range, RECT& anchor, bool useRightEdge) {
+    SAFEARRAY* rectangles{};
+    if (!range || FAILED(range->GetBoundingRectangles(&rectangles)) || !rectangles) return false;
+    LONG lower{}, upper{};
+    double* values{};
+    const bool valid = SUCCEEDED(SafeArrayGetLBound(rectangles, 1, &lower)) &&
+        SUCCEEDED(SafeArrayGetUBound(rectangles, 1, &upper)) && upper - lower + 1 >= 4 &&
+        SUCCEEDED(SafeArrayAccessData(rectangles, reinterpret_cast<void**>(&values)));
+    if (!valid) { SafeArrayDestroy(rectangles); return false; }
+    const LONG offset = useRightEdge ? upper - lower - 3 : 0;
+    const double x = values[offset] + (useRightEdge ? values[offset + 2] : 0.0);
+    const double y = values[offset + 1];
+    const double height = values[offset + 3];
+    anchor.left = static_cast<LONG>(x);
+    anchor.right = anchor.left + 1;
+    anchor.top = static_cast<LONG>(y);
+    anchor.bottom = std::max(anchor.top + 1, static_cast<LONG>(y + height));
+    SafeArrayUnaccessData(rectangles);
+    SafeArrayDestroy(rectangles);
     return true;
 }
 
-bool TryGetTextFieldAnchor(HWND active, RECT& anchor) {
-    if (TryGetAutomationTextFieldAnchor(anchor)) return true;
+bool TextRangeCaretBounds(IUIAutomationTextRange* range, RECT& anchor) {
+    if (TextRangeBounds(range, anchor, true)) return true;
+    int moved{};
+    if (SUCCEEDED(range->MoveEndpointByUnit(TextPatternRangeEndpoint_End, TextUnit_Character, 1, &moved)) && moved &&
+        TextRangeBounds(range, anchor, false)) return true;
+    if (SUCCEEDED(range->MoveEndpointByUnit(TextPatternRangeEndpoint_Start, TextUnit_Character, -1, &moved)) && moved)
+        return TextRangeBounds(range, anchor, true);
+    return false;
+}
 
+bool TryGetAutomationCaretAnchor(RECT& anchor) {
+    if (!g_uiAutomation) return false;
+    IUIAutomationElement* focused{};
+    if (FAILED(g_uiAutomation->GetFocusedElement(&focused)) || !focused) return false;
+    IUIAutomationTextPattern2* pattern{};
+    const HRESULT patternResult = focused->GetCurrentPatternAs(UIA_TextPattern2Id, IID_PPV_ARGS(&pattern));
+    if (SUCCEEDED(patternResult) && pattern) {
+        BOOL active{};
+        IUIAutomationTextRange* range{};
+        const HRESULT caretResult = pattern->GetCaretRange(&active, &range);
+        pattern->Release();
+        if (SUCCEEDED(caretResult) && active && range) {
+            const bool found = TextRangeCaretBounds(range, anchor);
+            range->Release();
+            if (found) { focused->Release(); return true; }
+        } else if (range) {
+            range->Release();
+        }
+    }
+
+    IUIAutomationTextPattern* textPattern{};
+    const HRESULT textResult = focused->GetCurrentPatternAs(UIA_TextPatternId, IID_PPV_ARGS(&textPattern));
+    focused->Release();
+    if (FAILED(textResult) || !textPattern) return false;
+    IUIAutomationTextRangeArray* selections{};
+    const HRESULT selectionResult = textPattern->GetSelection(&selections);
+    textPattern->Release();
+    if (FAILED(selectionResult) || !selections) return false;
+    int length{};
+    selections->get_Length(&length);
+    IUIAutomationTextRange* range{};
+    if (length > 0) selections->GetElement(length - 1, &range);
+    selections->Release();
+    if (!range) return false;
+    const bool found = TextRangeCaretBounds(range, anchor);
+    range->Release();
+    return found;
+}
+
+bool TryGetTextFieldAnchor(HWND active, RECT& anchor) {
     GUITHREADINFO info{sizeof(info)};
     const DWORD thread = GetWindowThreadProcessId(active, nullptr);
-    if (!thread || !GetGUIThreadInfo(thread, &info)) return false;
-    if (info.hwndCaret) {
+    const bool hasThreadInfo = thread && GetGUIThreadInfo(thread, &info);
+    if (hasThreadInfo && info.hwndCaret) {
         anchor = info.rcCaret;
         MapWindowPoints(info.hwndCaret, nullptr, reinterpret_cast<POINT*>(&anchor), 2);
         if (anchor.right <= anchor.left) anchor.right = anchor.left + 1;
         if (anchor.bottom <= anchor.top) anchor.bottom = anchor.top + 1;
         return true;
     }
-    if (!info.hwndFocus || GetAncestor(info.hwndFocus, GA_ROOT) == info.hwndFocus) return false;
+    if (TryGetAutomationCaretAnchor(anchor)) return true;
+    if (!hasThreadInfo || !info.hwndFocus || GetAncestor(info.hwndFocus, GA_ROOT) == info.hwndFocus) return false;
     return GetWindowRect(info.hwndFocus, &anchor);
 }
 
@@ -452,16 +503,32 @@ int PickerHeight() {
         + (g_recoveryMessage.empty() ? 0 : kRecoveryHeight));
 }
 
+void ResizePicker(int height) {
+    RECT bounds{};
+    GetWindowRect(g_window, &bounds);
+    int y = bounds.top;
+    if (IsWindowVisible(g_window) && g_pickerAboveAnchor) y = bounds.bottom - height;
+    SetWindowPos(g_window, nullptr, bounds.left, y, Px(kPickerWidth), height,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+    ClampWindow(g_window);
+}
+
 void CenterOnActiveMonitor() {
     CancelPendingReturn();
     BeginPickerSession();
     HWND active = GetForegroundWindow();
     CaptureInputTarget(active);
     RECT anchor{};
-    const bool hasAnchor = g_positionAboveTextField && TryGetTextFieldAnchor(active, anchor);
-    HMONITOR monitor = hasAnchor
-        ? MonitorFromRect(&anchor, MONITOR_DEFAULTTONEAREST)
-        : MonitorFromWindow(active, MONITOR_DEFAULTTONEAREST);
+    bool hasAnchor = TryGetTextFieldAnchor(active, anchor);
+    if (!hasAnchor) {
+        POINT cursor{};
+        if (GetCursorPos(&cursor)) {
+            anchor = {cursor.x, cursor.y, cursor.x + 1, cursor.y + 1};
+            hasAnchor = true;
+        }
+    }
+    HMONITOR monitor = hasAnchor ? MonitorFromRect(&anchor, MONITOR_DEFAULTTONEAREST)
+                                 : MonitorFromWindow(active, MONITOR_DEFAULTTONEAREST);
     MONITORINFO info{sizeof(info)};
     GetMonitorInfoW(monitor, &info);
     const RECT& area = info.rcWork;
@@ -472,15 +539,13 @@ void CenterOnActiveMonitor() {
     const int pickerHeight = PickerHeight();
     int y = area.top + ((area.bottom - area.top) - pickerHeight) / 2;
     if (hasAnchor) {
-        x = anchor.left + (anchor.right - anchor.left) / 2 - Px(kPickerWidth) / 2;
-        y = anchor.top - pickerHeight - 8;
-        if (y < area.top) y = anchor.bottom + 8;
-        const int minX = static_cast<int>(area.left);
-        const int minY = static_cast<int>(area.top);
-        const int maxX = std::max(minX, static_cast<int>(area.right) - Px(kPickerWidth));
-        const int maxY = std::max(minY, static_cast<int>(area.bottom) - pickerHeight);
-        x = std::clamp(x, minX, maxX);
-        y = std::clamp(y, minY, maxY);
+        const auto placement = PlacePickerNearAnchor(anchor.left, anchor.top, anchor.right, anchor.bottom,
+            area.left, area.top, area.right, area.bottom, Px(kPickerWidth), pickerHeight, Px(8));
+        x = placement.x;
+        y = placement.y;
+        g_pickerAboveAnchor = placement.aboveAnchor;
+    } else {
+        g_pickerAboveAnchor = false;
     }
     SetWindowPos(g_window, HWND_TOPMOST, x, y, Px(kPickerWidth), pickerHeight,
                  SWP_NOACTIVATE | SWP_SHOWWINDOW);
@@ -521,25 +586,16 @@ void ToggleStatusLine() {
     KillTimer(g_window, kStatusTimerId);
     ShowWindow(g_status, g_statusVisible ? SW_SHOW : SW_HIDE);
     if (g_statusVisible) UpdateStatusLine();
-    SetWindowPos(g_window, nullptr, 0, 0, Px(kPickerWidth), PickerHeight(),
-                 SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    ResizePicker(PickerHeight());
 }
 
 void SetEmojiRows(int rows) {
     rows = std::clamp(rows, kMinEmojiRows, kMaxEmojiRows);
     if (rows == g_emojiRows) return;
-    RECT bounds{};
-    GetWindowRect(g_window, &bounds);
     g_emojiRows = rows;
     SaveSettings();
     RefreshList();
-    const int height = PickerHeight();
-    const HMONITOR monitor = MonitorFromRect(&bounds, MONITOR_DEFAULTTONEAREST);
-    MONITORINFO info{sizeof(info)};
-    GetMonitorInfoW(monitor, &info);
-    const int y = std::max(static_cast<int>(info.rcWork.top), static_cast<int>(bounds.bottom) - height);
-    SetWindowPos(g_window, nullptr, bounds.left, y, Px(kPickerWidth), height,
-                 SWP_NOZORDER | SWP_NOACTIVATE);
+    ResizePicker(PickerHeight());
 }
 
 void CycleSkinTone() {
@@ -827,9 +883,6 @@ void ShowTrayMenu() {
     const auto target = CaptureExternalTarget(GetForegroundWindow());
     if (target.window) { g_inputTarget = target; g_session.originalTarget = target.window; }
     HMENU menu = CreatePopupMenu();
-    const UINT positionFlags = MF_STRING | (g_positionAboveTextField ? MF_CHECKED : MF_UNCHECKED);
-    AppendMenuW(menu, positionFlags, kPositionAboveTextFieldId, L"Try positioning above active text field");
-    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(menu, MF_STRING, kSortRecentId, L"Sort: Most recent");
     AppendMenuW(menu, MF_STRING, kSortMostUsedId, L"Sort: Most used");
     CheckMenuRadioItem(menu, kSortRecentId, kSortMostUsedId,
@@ -849,10 +902,7 @@ void ShowTrayMenu() {
     DestroyMenu(menu);
     // Lets the taskbar dismiss the menu correctly after a tray interaction.
     PostMessageW(g_window, WM_NULL, 0, 0);
-    if (command == kPositionAboveTextFieldId) {
-        g_positionAboveTextField = !g_positionAboveTextField;
-        SaveSettings();
-    } else if (command == kSortRecentId) {
+    if (command == kSortRecentId) {
         SetSortMode(false);
     } else if (command == kSortMostUsedId) {
         SetSortMode(true);
