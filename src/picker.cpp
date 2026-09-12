@@ -11,7 +11,7 @@ PickerPlacement PlacePickerNearAnchor(int anchorLeft, int anchorTop, int anchorR
     const int maxX = std::max(minX, workRight - width);
     const int maxY = std::max(minY, workBottom - height);
     PickerPlacement result;
-    result.x = std::clamp(anchorLeft + (anchorRight - anchorLeft) / 2 - width / 2, minX, maxX);
+    result.x = std::clamp(anchorRight + gap, minX, maxX);
     result.aboveAnchor = anchorTop - gap - height >= workTop;
     result.y = result.aboveAnchor ? anchorTop - gap - height : anchorBottom + gap;
     result.y = std::clamp(result.y, minY, maxY);

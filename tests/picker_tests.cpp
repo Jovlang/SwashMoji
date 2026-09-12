@@ -8,9 +8,9 @@ using namespace SwashMoji;
 int main(int argc, char** argv) {
     try {
         auto placement = PlacePickerNearAnchor(900, 600, 902, 620, 0, 0, 1920, 1040, 500, 300, 8);
-        CHECK(placement.x == 651 && placement.y == 292 && placement.aboveAnchor);
+        CHECK(placement.x == 910 && placement.y == 292 && placement.aboveAnchor);
         placement = PlacePickerNearAnchor(20, 100, 22, 120, 0, 0, 1920, 1040, 500, 300, 8);
-        CHECK(placement.x == 0 && placement.y == 128 && !placement.aboveAnchor);
+        CHECK(placement.x == 30 && placement.y == 128 && !placement.aboveAnchor);
         placement = PlacePickerNearAnchor(1900, 1020, 1902, 1038, 0, 0, 1920, 1040, 500, 300, 8);
         CHECK(placement.x == 1420 && placement.y == 712 && placement.aboveAnchor);
         CHECK(GridRows(0, 3) == 1);
