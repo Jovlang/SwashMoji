@@ -45,7 +45,8 @@ void CALLBACK DriveDialog(HWND, UINT, UINT_PTR timer, DWORD) {
     try {
         // Opening the global picker shortcut during a modal editor must not reset it.
         const auto query = g_session.query;
-        SendMessageW(g_window, WM_HOTKEY, kHotkeyId, 0);
+        SendMessageW(g_window, WM_HOTKEY, 1, 0);
+        SendMessageW(g_window, WM_HOTKEY, 2, 0);
         CHECK(g_session.query == query);
         if (action == DialogAction::Favorites) {
             Command(dialog, IDC_PIN_TARGET);

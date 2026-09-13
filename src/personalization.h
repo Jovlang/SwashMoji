@@ -1,5 +1,6 @@
 #pragma once
 #include "models.h"
+#include "activation_settings.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -22,6 +23,7 @@ struct Settings {
     int skinTone{};
     bool learnQueries{true};
     DisplayLanguages displayLanguages;
+    unsigned int activationHotkey{kDefaultActivationHotkey};
 };
 
 struct QueryChoice {

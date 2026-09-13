@@ -15,7 +15,7 @@ add_library(SwashMojiCore STATIC src/catalog.cpp src/text.cpp src/search.cpp src
 target_compile_features(SwashMojiCore PUBLIC cxx_std_17)
 target_include_directories(SwashMojiCore PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(SwashMojiCore PUBLIC UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(SwashMojiCore PUBLIC user32 normaliz comctl32 ole32)
+target_link_libraries(SwashMojiCore PUBLIC user32 normaliz comctl32 ole32 advapi32)
 
 add_executable(SwashMoji WIN32 src/main.cpp src/vocabulary.cpp src/app.rc)
 target_compile_features(SwashMoji PRIVATE cxx_std_17)

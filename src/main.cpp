@@ -19,6 +19,8 @@
 #include "native_emoji.h"
 #include "native_theme.h"
 #include "language_preferences.h"
+#include "activation_preferences.h"
+#include "activation_win32.h"
 #include "picker.h"
 #include <oleacc.h>
 #include <windowsx.h>
@@ -35,7 +37,7 @@ using namespace SwashMoji;
 
 constexpr wchar_t kClassName[] = L"SwashMojiWindow";
 constexpr wchar_t kHelpClassName[] = L"SwashMojiHelpWindow";
-constexpr UINT kHotkeyId = 1;
+ActivationRegistration g_activation;
 constexpr int kPickerWidth = 500;
 constexpr int kPickerHeight = 132;
 constexpr int kInputHeight = 34;
@@ -57,6 +59,7 @@ constexpr int kVocabularyId = 205;
 constexpr int kPinId = 206;
 constexpr int kLearnQueriesId = 207;
 constexpr int kDisplayLanguagesId = 208;
+constexpr int kActivationSettingsId = 209;
 constexpr int kRecoveryHeight = 68;
 constexpr int kExitId = 200;
 constexpr int kSortRecentId = 202;
@@ -747,14 +750,16 @@ void AddTrayIcon(HWND window) {
     g_tray.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     g_tray.uCallbackMessage = kTrayMessage;
     g_tray.hIcon = g_appIcon;
-    lstrcpyW(g_tray.szTip, L"SwashMoji — Alt+E");
+    const auto tip = L"SwashMoji — " + ActivationHotkeyLabel(g_profile.settings.activationHotkey);
+    lstrcpynW(g_tray.szTip, tip.c_str(), static_cast<int>(std::size(g_tray.szTip)));
     Shell_NotifyIconW(NIM_ADD, &g_tray);
 }
 
 void UpdateSortIndicator() {
     const wchar_t* cue = L"";
     SendMessageW(g_edit, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(cue));
-    std::wstring tip = g_sortByUsage ? L"SwashMoji — Most used (Alt+T) — Alt+E" : L"SwashMoji — Most recent (Alt+T) — Alt+E";
+    std::wstring tip = g_sortByUsage ? L"SwashMoji — Most used (Alt+T) — " : L"SwashMoji — Most recent (Alt+T) — ";
+    tip += ActivationHotkeyLabel(g_profile.settings.activationHotkey);
     if (g_profileUnsaved) tip += L" — Changes not saved";
     else if (!g_storageDiagnostic.empty()) tip += L" — " + g_storageDiagnostic;
     lstrcpynW(g_tray.szTip, tip.c_str(), static_cast<int>(std::size(g_tray.szTip)));
@@ -788,7 +793,7 @@ void ConfirmAndClearUsageHistory() {
 
 const wchar_t* HelpText() {
     return L"SwashMoji — keyboard guide\r\n\r\n"
-        L"Alt+E: Open from any app. Search English, Norwegian, German, Italian, French or Spanish names, phrases and aliases.\r\n\r\n"
+        L"Open from any app with your shortcut (default Alt+E; change it in tray Settings). Search English, Norwegian, German, Italian, French or Spanish names, phrases and aliases.\r\n\r\n"
         L"Click or Enter: Insert and close.\r\nCtrl+click or Ctrl+Enter: Insert and keep open.\r\n"
         L"Shift+Enter: Copy and close after success.\r\n"
         L"Tab / Shift+Tab: Move between search, results and available recovery actions.\r\n"
@@ -878,6 +883,49 @@ void ShowHelp() {
     SetForegroundWindow(g_helpWindow);
 }
 
+void OpenActivationSettings() {
+    if (g_vocabularyOpen || g_detailsOpen) return;
+    CloseHover();
+    std::wstring startup;
+    const auto readResult = ReadStartupCommand(startup);
+    ActivationPreferencesState state{g_profile.settings.activationHotkey, !startup.empty(), L"", {}};
+    if (readResult != ERROR_SUCCESS) state.diagnostic = L"Could not read Windows startup settings. Close and try again.";
+    if (g_storage.ReadOnly()) state.diagnostic = L"This profile is read-only. Settings cannot be changed.";
+    state.apply = [](unsigned int hotkey, bool start, std::wstring& error) {
+        if (!g_activation.Prepare(g_window, hotkey)) {
+            error = L"Shortcut unavailable. Choose another. Your previous shortcut is unchanged.";
+            return false;
+        }
+        wchar_t executable[32768]{};
+        const auto length = GetModuleFileNameW(nullptr, executable, static_cast<DWORD>(std::size(executable)));
+        if (!length || length >= std::size(executable)) {
+            g_activation.Cancel(g_window);
+            error = L"Could not locate this executable. No settings changed.";
+            return false;
+        }
+        const auto result = WriteStartupCommand(start ? StartupCommand(executable) : L"");
+        if (result != ERROR_SUCCESS) {
+            g_activation.Cancel(g_window);
+            error = L"Could not update Windows startup (error " + std::to_wstring(result) + L"). No settings changed.";
+            return false;
+        }
+        g_activation.Commit(g_window, hotkey);
+        g_profile.settings.activationHotkey = hotkey;
+        SaveProfile();
+        UpdateSortIndicator();
+        if (g_profileUnsaved) {
+            error = L"Startup updated; shortcut applied for this session but not saved. Try Save again.";
+            return false;
+        }
+        return true;
+    };
+    g_vocabularyOpen = true;
+    const bool opened = ShowActivationPreferences(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), state);
+    g_vocabularyOpen = false;
+    if (!opened) MessageBoxW(g_window, L"Could not open settings.", L"SwashMoji", MB_ICONERROR);
+    if (IsWindowVisible(g_window)) SetFocus(g_edit);
+}
+
 void ShowTrayMenu() {
     CancelPendingReturn();
     const auto target = CaptureExternalTarget(GetForegroundWindow());
@@ -890,6 +938,7 @@ void ShowTrayMenu() {
     AppendMenuW(menu, MF_STRING, kClearUsageHistoryId, L"Clear learned history...");
     AppendMenuW(menu, MF_STRING, kVocabularyId, L"My vocabulary...");
     AppendMenuW(menu, MF_STRING, kDisplayLanguagesId, L"Languages...");
+    AppendMenuW(menu, MF_STRING, kActivationSettingsId, L"Settings...");
     AppendMenuW(menu, MF_STRING | (g_profile.settings.learnQueries ? MF_CHECKED : MF_UNCHECKED),
         kLearnQueriesId, L"Learn from searches");
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
@@ -910,6 +959,8 @@ void ShowTrayMenu() {
         ConfirmAndClearUsageHistory();
     } else if (command == kVocabularyId) {
         OpenVocabulary(false);
+    } else if (command == kActivationSettingsId) {
+        OpenActivationSettings();
     } else if (command == kDisplayLanguagesId) {
         if (g_vocabularyOpen || g_detailsOpen) return;
         CloseHover();
@@ -1488,7 +1539,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         break;
     case WM_HOTKEY:
         if (g_vocabularyOpen || g_detailsOpen) return 0;
-        if (wParam == kHotkeyId) {
+        if (g_activation.Id() && wParam == static_cast<WPARAM>(g_activation.Id())) {
             SetWindowTextW(g_edit, L"");
             CenterOnActiveMonitor();
         }
@@ -1537,7 +1588,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         CloseHover();
         CancelPendingReturn();
         if (g_foregroundHook) { UnhookWinEvent(g_foregroundHook); g_foregroundHook = nullptr; }
-        UnregisterHotKey(window, kHotkeyId);
+        g_activation.Clear(window);
         Shell_NotifyIconW(NIM_DELETE, &g_tray);
         PostQuitMessage(0);
         return 0;
@@ -1617,7 +1668,7 @@ bool ProcessAppMessage(const MSG& message) {
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     // A repeat launch should surface the existing picker, not create a second
-    // process that cannot own the global Alt+E shortcut.
+    // process that cannot own the configured global shortcut.
     if (HWND existing = FindWindowW(kClassName, nullptr)) {
         PostMessageW(existing, kShowPickerMessage, 0, 0);
         return 0;
@@ -1672,8 +1723,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
         nullptr, ForegroundChanged, 0, 0, WINEVENT_OUTOFCONTEXT);
     SendMessageW(g_window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(g_appIcon));
     SendMessageW(g_window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(g_appIcon));
-    if (!RegisterHotKey(g_window, kHotkeyId, MOD_ALT | MOD_NOREPEAT, 'E')) {
-        MessageBoxW(nullptr, L"Alt+E is already in use by another application.", L"SwashMoji", MB_ICONWARNING);
+    if (g_activation.Prepare(g_window, g_profile.settings.activationHotkey)) {
+        g_activation.Commit(g_window, g_profile.settings.activationHotkey);
+    } else {
+        const auto warning = ActivationHotkeyLabel(g_profile.settings.activationHotkey) +
+            L" could not be registered. It may be in use by another application.\n\nOpen Settings from the tray icon to choose another shortcut. You can still click the tray icon to open the picker.";
+        MessageBoxW(nullptr, warning.c_str(), L"SwashMoji", MB_ICONWARNING);
     }
 
     MSG message;

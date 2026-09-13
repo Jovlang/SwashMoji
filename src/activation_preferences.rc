@@ -1,0 +1,17 @@
+#include <windows.h>
+700 DIALOGEX 0, 0, 300, 214
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Settings - SwashMoji"
+FONT 9, "Segoe UI"
+BEGIN
+    AUTOCHECKBOX "Start SwashMoji when I sign in to &Windows", 701, 12, 12, 276, 16
+    LTEXT "Uses this copy of SwashMoji. Save again after moving it. Windows Startup apps must also allow it.", -1, 12, 34, 276, 28
+    LTEXT "Open picker &shortcut:", -1, 12, 72, 100, 12
+    COMBOBOX 702, 116, 68, 172, 180, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT "&Key:", -1, 12, 100, 100, 12
+    COMBOBOX 703, 116, 96, 172, 180, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON "&Reset to Alt+E", 704, 12, 124, 100, 22
+    LTEXT "", 705, 12, 152, 276, 28
+    DEFPUSHBUTTON "&Save", IDOK, 148, 184, 64, 22
+    PUSHBUTTON "&Close", IDCANCEL, 224, 184, 64, 22
+END

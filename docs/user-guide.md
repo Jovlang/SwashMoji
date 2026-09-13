@@ -20,6 +20,31 @@ Left-clicking the tray icon also opens it. Right-click the icon to configure
 sorting, languages, **My vocabulary**, learning, and clearing local
 usage history. **Exit** quits the application; `Esc` closes the picker.
 
+## Startup and shortcut settings
+
+Right-click the tray icon and choose **Settings...**.
+
+- **Start SwashMoji when I sign in to Windows** is off by default. Enabling it
+  registers the current executable for your Windows user, without administrator
+  access. Keep its data files beside it. If you move the folder, run the moved
+  copy and save this setting again. Disable it before deleting the app.
+- Choose the modifiers and letter, digit, or F1–F11 key for **Open picker shortcut**.
+  At least Ctrl, Alt, or Win is required. **Reset to Alt+E** restores the default
+  in the dialog; **Save** applies it. Windows-reserved or occupied shortcuts can
+  be rejected; the previous working shortcut remains registered.
+- **Close** discards changes you have not applied. A failed profile save keeps
+  the new shortcut active for this session and the dialog explains how to retry.
+
+The checkbox reflects SwashMoji's Windows startup registration, independently
+of your profile. Windows **Startup apps** can separately disable that entry;
+re-enable it there if necessary. SwashMoji does not override that Windows control.
+Starting with Windows leaves SwashMoji in the tray until you open the picker.
+The tray tooltip shows your configured shortcut. If it is unavailable at launch,
+a warning explains how to open Settings or use the tray icon instead.
+
+Throughout this guide, `Alt+E` means the default opening shortcut; substitute
+your configured shortcut if you change it.
+
 ## Search and languages
 
 Search English, Norwegian Bokmål, German, Italian, French, and Spanish together. You can use names,

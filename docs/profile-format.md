@@ -3,10 +3,10 @@
 The runtime uses `%LOCALAPPDATA%\SwashMoji\profile.tsv`. All profile tests pass an
 isolated directory explicitly; they never resolve or change the user's profile.
 
-## Version 5
+## Version 6
 
 Files are UTF-8 with LF line endings. The reader also accepts a UTF-8 BOM and CRLF.
-The header is `SwashMoji<TAB>5`. Following lines contain typed records:
+The header is `SwashMoji<TAB>6`. Following lines contain typed records:
 
 | Record | Fields after the record type |
 | --- | --- |
@@ -34,6 +34,22 @@ Counts use decimal digits without signs or suffixes; overflow is rejected.
 Settings are `position_above_text_field` and `sort_by_usage` (0–1), `emoji_rows`
 (1–3), `skin_tone` (0–5), and `learn_queries` (0–1, default 1). Font and
 status-line visibility remain session-only, and are not persisted.
+
+Version 6 adds `setting<TAB>activation_hotkey<TAB>value`. The unsigned value
+packs a Windows virtual key into the low byte and modifier bits into the next
+byte (Alt=1, Ctrl=2, Shift=4, Win=8). Only A–Z, 0–9 and F1–F11 are accepted,
+with at least Alt, Ctrl or Win and no unknown bits. The default is 325 (Alt+E).
+Versions 1–5 migrate with that default. Invalid values are skipped with the
+normal record diagnostic. History clearing retains the shortcut. Version 6
+prevents older writers from silently discarding it.
+
+Startup is machine-local Windows configuration, not a profile field. The app
+reads/writes only the `SwashMoji` REG_SZ value under
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, containing the quoted
+absolute executable path. There is no startup registration on a fresh setup;
+only Save in Settings changes it. Windows Startup apps can separately disable
+this registration. Moving a portable copy requires saving Settings again to
+update the path. No elevated privileges or runtime network access are needed.
 
 Display languages default to `en`, `nb`, including when migrating versions 1–4.
 One locale selects a single display language. Empty, duplicate, unknown or more
@@ -76,7 +92,7 @@ its aliases, pins, history, usage and query counts in one atomic profile save.
 
 ## Migration and persistence
 
-Versions 3 and 4 migrate without changing their typed targets, combinations or settings.
+Versions 3–5 migrate without changing their typed targets, combinations or settings.
 Versions 1 and 2 use exact-glyph `recent` and `usage` records; version 2 also has
 aliases. On load, the catalog resolves known glyphs to stable families, adds their
 usage counts with saturation, and keeps each family's newest history position.
@@ -85,7 +101,7 @@ The mapping is idempotent and also handles catalogs that later recognize an ID.
 Aliases and settings are preserved. The runtime passes its loaded catalog to
 `ProfileStorage::Load`; codec-only consumers may omit that catalog.
 
-Migration atomically writes version 5 and backs up the previous complete file.
+Migration atomically writes version 6 and backs up the previous complete file.
 A failed write leaves the previous format on disk, retains the migrated values
 in memory, and reports unsaved state. Retrying does not double counts. Unsupported
 future versions remain read-only.

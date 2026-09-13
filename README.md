@@ -22,6 +22,7 @@ And because SwashMoji is a **native Windows app**, it launches instantly, stays 
 
 Extract all files into one folder, run `SwashMoji.exe`, and press **Alt+E**.
 Keep the included data and license files beside the executable.
+Use **Settings...** in the tray menu to change `Alt+E` or enable startup with Windows.
 
 See the [v0.2.0 release](https://github.com/Jovlang/SwashMoji/releases/tag/v0.2.0) for release notes and the SHA-256 checksum.
 To build from source, follow [CONTRIBUTING.md](CONTRIBUTING.md#build-on-windows).

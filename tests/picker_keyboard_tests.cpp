@@ -46,6 +46,34 @@ void LanguageDialogControls() {
     DestroyWindow(reopened);
 }
 
+void ActivationDialogControls() {
+    unsigned calls{}, submitted{}; bool startup{};
+    ActivationPreferencesState state{0x0351, false, L"", [&](unsigned int key, bool start, std::wstring& error) {
+        ++calls; submitted = key; startup = start;
+        error = L"Shortcut unavailable."; return false;
+    }};
+    const auto dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(700), nullptr,
+        ActivationPreferencesProc, reinterpret_cast<LPARAM>(&state));
+    CHECK(dialog && !IsWindowVisible(dialog));
+    CHECK(IsDlgButtonChecked(dialog, 701) == BST_UNCHECKED);
+    // Editing controls alone does not apply anything; Save reports callback errors.
+    SendMessageW(dialog, WM_COMMAND, MAKEWPARAM(704, BN_CLICKED), 0);
+    CHECK(calls == 0);
+    CheckDlgButton(dialog, 701, BST_CHECKED);
+    SendMessageW(dialog, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), 0);
+    CHECK(calls == 1 && submitted == kDefaultActivationHotkey && startup);
+    CHECK(GetWindowTextLengthW(GetDlgItem(dialog, 705)) > 0);
+    SelectActivationChoice(dialog, 702, 10); SelectActivationChoice(dialog, 703, '9');
+    SendMessageW(dialog, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), 0);
+    CHECK(calls == 2 && submitted == 0x0A39);
+    DestroyWindow(dialog);
+    state.diagnostic = L"Profile is read-only.";
+    const auto blocked = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(700), nullptr,
+        ActivationPreferencesProc, reinterpret_cast<LPARAM>(&state));
+    CHECK(blocked && !IsWindowEnabled(GetDlgItem(blocked, IDOK)));
+    DestroyWindow(blocked);
+}
+
 struct CombinationInput : InputPlatform {
     bool valid{true}; size_t accepted{SIZE_MAX}; WindowToken foreground{};
     std::vector<std::vector<KeyEvent>> batches;
@@ -133,6 +161,7 @@ int main() {
         CHECK(g_profile.settings.displayLanguages.Set({"en", "nb"}));
         RefreshList();
         LanguageDialogControls();
+        ActivationDialogControls();
         const auto statusStyle=GetWindowLongPtrW(g_status,GWL_STYLE);
         RECT statusBounds{}; GetWindowRect(g_status,&statusBounds);
         SetWindowTextW(g_status,(std::wstring(400,L'E') + L" · " + std::wstring(400,L'N')).c_str());

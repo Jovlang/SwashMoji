@@ -1,6 +1,7 @@
 #include <windows.h>
 #include "test_support.h"
 #include "storage.h"
+#include "activation_win32.h"
 #include "text.h"
 #include "catalog.h"
 #include <fstream>
@@ -59,8 +60,8 @@ void Codec() {
     CHECK(EncodeProfile(decoded.profile) == bytes);
     for (size_t size = 0; size < bytes.size(); ++size) CHECK(DecodeProfile(bytes.substr(0, size)).format != ProfileFormat::Valid);
     CHECK(decoded.profile.aliases.at(L"på vei").target.value == L"🚶");
-    CHECK(DecodeProfile("SwashMoji\t6\nend\t0\n").format == ProfileFormat::Unsupported);
-    CHECK(DecodeProfile("SwashMoji\t6").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t7\nend\t0\n").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t7").format == ProfileFormat::Unsupported);
     CHECK(DecodeProfile("\xEF\xBB\xBF" "SwashMoji\t1\r\nsetting\temoji_rows\t2\r\nend\t1\r\n").profile.settings.emojiRows == 2);
     decoded = DecodeProfile("SwashMoji\t1\nusage\trocket\t4294967296\nrecent\tbad\\q\nsetting\temoji_rows\t99\nusage\tgood\t2\nend\t4\n");
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 3);
@@ -79,6 +80,79 @@ void Codec() {
     CHECK(decoded.profile.queryChoices.size() == kMaxQueryChoices);
 }
 
+void ActivationSettings(const fs::path& root) {
+    Profile profile;
+    CHECK(profile.settings.activationHotkey == kDefaultActivationHotkey);
+    CHECK(ActivationHotkeyLabel(kDefaultActivationHotkey) == L"Alt+E");
+    CHECK(ActivationHotkeyLabel(0x067A) == L"Ctrl+Shift+F11");
+    for (unsigned int invalid : {0u, 0x45u, 0x0445u, 0x0140u, 0x017Bu, 0x1045u, 0x1000145u}) {
+        CHECK(!ValidActivationHotkey(invalid));
+        const auto decoded = DecodeProfile("SwashMoji\t6\nsetting\tactivation_hotkey\t" + std::to_string(invalid) + "\nend\t1\n");
+        CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 1);
+        CHECK(decoded.profile.settings.activationHotkey == kDefaultActivationHotkey);
+    }
+    for (unsigned int value : {0x0145u, 0x0351u, 0x067Au, 0x0A39u}) {
+        profile.settings.activationHotkey = value;
+        auto decoded = DecodeProfile(EncodeProfile(profile));
+        CHECK(decoded.format == ProfileFormat::Valid && !decoded.skippedRecords);
+        CHECK(decoded.profile.settings.activationHotkey == value);
+        ClearHistory(profile);
+        CHECK(profile.settings.activationHotkey == value);
+    }
+    const auto path = root / L"activation";
+    const std::string v5 = "SwashMoji\t5\nsetting\tskin_tone\t3\ndisplay_languages\tes\nend\t2\n";
+    Write(path / L"profile.tsv", v5);
+    ProfileStorage storage(path);
+    auto loaded = storage.Load();
+    CHECK(loaded.migrated && !loaded.unsaved);
+    CHECK(loaded.profile.settings.activationHotkey == kDefaultActivationHotkey);
+    CHECK(loaded.profile.settings.skinTone == 3 && loaded.profile.settings.displayLanguages.Locales() == std::vector<std::string>{"es"});
+    CHECK(Read(path / L"profile.tsv.bak") == v5);
+    loaded.profile.settings.activationHotkey = 0x0351;
+    std::wstring error;
+    CHECK(storage.Save(loaded.profile, error));
+    CHECK(storage.Load().profile.settings.activationHotkey == 0x0351);
+
+    // Simulate a conflicting desktop registration without taking any real hotkeys.
+    std::map<int, UINT> registrations;
+    bool conflict{};
+    ActivationRegistration active([&](HWND, int id, UINT mods, UINT key) -> BOOL {
+        CHECK(mods & MOD_NOREPEAT);
+        if (conflict) return FALSE;
+        registrations[id] = key; return TRUE;
+    }, [&](HWND, int id) -> BOOL { return registrations.erase(id) != 0; });
+    CHECK(active.Prepare(nullptr, 0x0145)); active.Commit(nullptr, 0x0145);
+    const auto original = active.Id();
+    conflict = true;
+    CHECK(!active.Prepare(nullptr, 0x0351));
+    CHECK(active.Id() == original && registrations.size() == 1 && registrations.at(original) == 'E');
+    conflict = false;
+    CHECK(active.Prepare(nullptr, 0x0351));
+    CHECK(registrations.size() == 2);
+    active.Cancel(nullptr); // e.g. a failed startup write
+    CHECK(active.Id() == original && registrations.size() == 1);
+    CHECK(active.Prepare(nullptr, 0x0351)); active.Commit(nullptr, 0x0351);
+    CHECK(active.Id() != original && registrations.size() == 1 && registrations.at(active.Id()) == 'Q');
+    CHECK(active.Prepare(nullptr, 0x0351)); active.Commit(nullptr, 0x0351);
+    CHECK(registrations.size() == 1);
+    active.Clear(nullptr); CHECK(registrations.empty());
+
+    // Never touch the Run key: this adapter fixture has its own disposable key.
+    const auto key = L"Software\\SwashMoji-test-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(GetTickCount64());
+    struct Cleanup { std::wstring key; ~Cleanup() { RegDeleteKeyW(HKEY_CURRENT_USER, key.c_str()); } } cleanup{key};
+    std::wstring command;
+    CHECK(ReadStartupCommand(command, key.c_str()) == ERROR_SUCCESS && command.empty());
+    const auto expected = StartupCommand(L"C:\\Emoji tools\\æøå\\SwashMoji.exe");
+    CHECK(expected == L"\"C:\\Emoji tools\\æøå\\SwashMoji.exe\"");
+    CHECK(WriteStartupCommand(expected, key.c_str()) == ERROR_SUCCESS);
+    CHECK(ReadStartupCommand(command, key.c_str()) == ERROR_SUCCESS && command == expected);
+    CHECK(WriteStartupCommand(StartupCommand(L"D:\\Moved\\SwashMoji.exe"), key.c_str()) == ERROR_SUCCESS);
+    CHECK(ReadStartupCommand(command, key.c_str()) == ERROR_SUCCESS && command == StartupCommand(L"D:\\Moved\\SwashMoji.exe"));
+    CHECK(WriteStartupCommand(L"", key.c_str()) == ERROR_SUCCESS);
+    CHECK(ReadStartupCommand(command, key.c_str()) == ERROR_SUCCESS && command.empty());
+    CHECK(WriteStartupCommand(L"", key.c_str()) == ERROR_SUCCESS);
+}
+
 void FamilyMigration(const fs::path& root) {
     std::istringstream data("👍\tthumbs up\tgood\n👍🏽\tthumbs up medium skin tone\tgood\n🚀\trocket\tlaunch\n");
     Catalog catalog;
@@ -94,7 +168,7 @@ void FamilyMigration(const fs::path& root) {
     CHECK(UsageCount(loaded.profile, L"👍") == 15);
     CHECK(loaded.profile.aliases.at(L"launch").target.value == L"🚀");
     CHECK(Read(directory / L"profile.tsv.bak") == v2);
-    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 5);
+    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 6);
     loaded = store.Load(&catalog);
     CHECK(!loaded.migrated && UsageCount(loaded.profile, L"👍") == 15);
     RecordChoice(loaded.profile, {ResultKind::Emoji, L"👍"}, L"good");
@@ -127,7 +201,7 @@ void LanguageSettings(const fs::path& root) {
     for (const auto& selection : std::vector<std::vector<std::string>>{{"en"}, {"nb"}, {"nb", "en"}, {"en", "nb"}, {"it"}, {"de"}, {"it", "de"}, {"de", "it"}}) {
         CHECK(profile.settings.displayLanguages.Set(selection));
         const auto decoded = DecodeProfile(EncodeProfile(profile));
-        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 5 && !decoded.skippedRecords);
+        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 6 && !decoded.skippedRecords);
         CHECK(decoded.profile.settings.displayLanguages.Locales() == selection);
         ClearHistory(profile);
         CHECK(profile.settings.displayLanguages.Locales() == selection);
@@ -149,7 +223,7 @@ void LanguageSettings(const fs::path& root) {
     CHECK(loaded.profile.settings.skinTone == 3 && loaded.profile.combinations.at(L"combo-1").payload == L"🚀✨");
     CHECK(loaded.profile.aliases.at(L"launch").target.value == L"combo-1");
     CHECK(Read(path / L"profile.tsv.bak") == v4);
-    CHECK(DecodeProfile(Read(path / L"profile.tsv")).version == 5);
+    CHECK(DecodeProfile(Read(path / L"profile.tsv")).version == 6);
     CHECK(!storage.Load().migrated);
     CHECK(loaded.profile.settings.displayLanguages.Set({"nb"}));
     std::wstring diagnostic;
@@ -171,7 +245,7 @@ void Migration(const fs::path& root) {
     CHECK(upgraded.profile.settings.skinTone == 3 && UsageCount(upgraded.profile, L"👍🏽") == 8);
     CHECK(upgraded.profile.history == (std::vector<ResultId>{{ResultKind::Emoji, L"👍🏽"}}));
     CHECK(Read(v1Directory / L"profile.tsv.bak") == v1);
-    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 5);
+    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 6);
     CHECK(!oldStore.Load().migrated);
     const auto directory = root / L"migration";
     const auto fallback = root / L"WinMoji";
@@ -274,7 +348,7 @@ void FailedWrites(const fs::path& root) {
 int main() {
     try {
         TestDirectory directory;
-        Codec(); Migration(directory.path); FamilyMigration(directory.path); LanguageSettings(directory.path); Recovery(directory.path);
+        Codec(); ActivationSettings(directory.path); Migration(directory.path); FamilyMigration(directory.path); LanguageSettings(directory.path); Recovery(directory.path);
         ProtectFutureAndCorrupt(directory.path); FailedWrites(directory.path);
         std::cout << "Profile codec, migration, recovery and write-failure checks passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

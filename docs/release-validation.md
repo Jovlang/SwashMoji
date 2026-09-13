@@ -4,6 +4,22 @@ SwashMoji has a repeatable automated release workflow. Release acceptance remain
 open: automated and hidden-control checks cannot establish actual delivery to
 all target apps, visible opening time, accessibility or user-study outcomes.
 
+## Startup and shortcut settings — 2026-09-13
+
+`build-agent` builds successfully with the new Settings dialog. All 12 C++ suites
+passed across the full run and a targeted storage rerun. The sandboxed storage
+run could not write its isolated registry fixture; running that suite outside
+the sandbox passed. The fixture never accesses the real Windows Run key or user
+profile. Tests cover shortcut validation, conflict retention and cancellation
+with an injected registration adapter, profile v5-to-v6 migration and round trips,
+hidden dialog controls, and actual registry enable/update/disable operations under
+a disposable test key, including paths with spaces and Unicode.
+
+The Python generator suite still fails on the pre-existing duplicate `bien` → 👍
+in `intent_phrases.tsv`. Actual global shortcut activation, visible Settings
+layout/accessibility, sign-in startup, and Windows Startup apps overrides still
+need desktop acceptance. No real startup entry was enabled during verification.
+
 ## Current verification — 2026-09-10
 
 `build-search-policy` is the retained build. The application build and all 13 CTest

@@ -18,6 +18,8 @@ or insertion. Localization scope and search policy are documented in
 - `src/vocabulary.cpp/.h`, `src/vocabulary.rc`, `src/vocabulary_ids.h`: vocabulary editor UI.
 - `src/language_preferences.h`, `src/language_preferences.rc`: native **Languages...**
   preferences dialog; `DisplayLanguages` in `src/models.h` validates the selection.
+- `src/activation_settings.h`, `src/activation_win32.h`, `src/activation_preferences.h/.rc`:
+  activation shortcut validation, registration, per-user startup and Settings UI.
 - `src/catalog.cpp/.h`, `src/text.cpp/.h`, `src/search.cpp/.h`, `src/ranking.h`: catalog loading,
   locale-keyed names and search caches, shared name formatting, Unicode
   normalization, multilingual matching and ranking.
@@ -113,9 +115,10 @@ to unlock a build; use another build directory.
 - Preserve profile migration, backup recovery and unsupported-version protection.
   Use isolated directories for tests, never the user's real
   `%LOCALAPPDATA%\SwashMoji` or legacy `%LOCALAPPDATA%\WinMoji` data.
-  Profile version 5 stores `display_languages`; versions 1–4 migrate with `en`,
-  `nb` defaults. History clearing retains aliases, combinations, favorites,
-  appearance settings and display languages.
+  Profile version 6 adds `activation_hotkey` (Alt+E by default for versions 1–5).
+  Version 5 added `display_languages`; versions 1–4 migrate with `en`, `nb` defaults.
+  Startup registration is per-user Windows configuration, not a profile field. History clearing retains aliases, combinations, favorites,
+  appearance settings, display languages and the activation shortcut.
   Consult `docs/profile-format.md` before changing the file format.
 
 ## Catalog and documentation

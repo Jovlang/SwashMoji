@@ -14,7 +14,7 @@ namespace {
 constexpr size_t kMaxFileBytes = 4 * 1024 * 1024;
 constexpr size_t kMaxRecordBytes = 16384;
 constexpr size_t kMaxRecords = 50000;
-constexpr unsigned int kVersion = 5;
+constexpr unsigned int kVersion = 6;
 
 bool Number(const std::string& text, unsigned int& result) {
     if (text.empty()) return false;
@@ -92,6 +92,7 @@ bool SetSetting(Settings& settings, const std::string& name, const std::string& 
     else if (name == "sort_by_usage" && number <= 1) settings.sortByUsage = number != 0;
     else if (name == "emoji_rows" && number >= 1 && number <= 3) settings.emojiRows = static_cast<int>(number);
     else if (name == "skin_tone" && number <= 5) settings.skinTone = static_cast<int>(number);
+    else if (name == "activation_hotkey" && ValidActivationHotkey(number)) settings.activationHotkey = number;
     else if (name == "learn_queries" && number <= 1) settings.learnQueries = number != 0;
     else return false;
     return true;
@@ -160,7 +161,8 @@ std::string EncodeProfile(const Profile& profile) {
         "setting\tsort_by_usage\t" + std::to_string(profile.settings.sortByUsage),
         "setting\temoji_rows\t" + std::to_string(profile.settings.emojiRows),
         "setting\tskin_tone\t" + std::to_string(profile.settings.skinTone),
-        "setting\tlearn_queries\t" + std::to_string(profile.settings.learnQueries)
+        "setting\tlearn_queries\t" + std::to_string(profile.settings.learnQueries),
+        "setting\tactivation_hotkey\t" + std::to_string(profile.settings.activationHotkey)
     };
     std::string languages = "display_languages";
     for (const auto& locale : profile.settings.displayLanguages.Locales()) languages += '\t' + locale;
