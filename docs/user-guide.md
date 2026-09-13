@@ -43,7 +43,8 @@ still searches all available languages regardless of your display selection:
 are preferred when matches are otherwise equal; an exact name in another language
 ranks above a weaker match in a selected language. Personal aliases and built-in
 phrases retain phrase matching and typo tolerance regardless of the language
-selection. This setting does not translate menus or buttons.
+selection. Menus, buttons, and messages remain in English; this setting only
+changes displayed emoji names.
 
 Names in results, previews, and variant choices use the same language preferences.
 The selected variant's names appear below the results, separated by “·”. Identical
@@ -128,6 +129,8 @@ when usage history is cleared.
 The window is resizable. The left panel contains saved aliases and pinned
 favorites. In **Alias editor**, use **Search emoji** and **Choose an emoji** to
 search and select from a single list with names in your display languages.
+The alias and combination editors use the hint "Search emoji across languages"
+because search includes all supported languages.
 The selected row identifies the target for **Save alias** and **Pin favorite**.
 **Close** and the combination editor entry point are at the bottom of the window.
 

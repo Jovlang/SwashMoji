@@ -1673,7 +1673,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     SendMessageW(g_window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(g_appIcon));
     SendMessageW(g_window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(g_appIcon));
     if (!RegisterHotKey(g_window, kHotkeyId, MOD_ALT | MOD_NOREPEAT, 'E')) {
-        MessageBoxW(nullptr, L"Alt+E er allerede i bruk av et annet program.", L"SwashMoji", MB_ICONWARNING);
+        MessageBoxW(nullptr, L"Alt+E is already in use by another application.", L"SwashMoji", MB_ICONWARNING);
     }
 
     MSG message;

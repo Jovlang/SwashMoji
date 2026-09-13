@@ -98,7 +98,7 @@ inline void Apply(HWND dialog) {
         SetWindowPos(control,nullptr,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
         SetWindowSubclass(control,ControlProc,1,id==IDC_COMBO_NAME||id==IDC_COMBO_QUERY ? 3 : 2);
     }
-    SendDlgItemMessageW(dialog,IDC_COMBO_QUERY,EM_SETCUEBANNER,TRUE,reinterpret_cast<LPARAM>(L"Search emoji in English or Norwegian"));
+    SendDlgItemMessageW(dialog,IDC_COMBO_QUERY,EM_SETCUEBANNER,TRUE,reinterpret_cast<LPARAM>(SearchHint));
     Layout(dialog);
 }
 }

@@ -7,6 +7,7 @@
 // Native controls retain their input, mnemonic and accessibility implementations.
 // This layer owns only surfaces, spacing and interaction-state painting.
 namespace SwashMoji::VocabularyStyle {
+inline constexpr wchar_t SearchHint[] = L"Search emoji across languages";
 inline int Px(HWND window, int value) { return MulDiv(value, GetDpiForWindow(window), 96); }
 inline COLORREF Panel() { return NativeTheme::HighContrast() ? GetSysColor(COLOR_WINDOW) : RGB(30, 32, 36); }
 inline COLORREF Input() { return NativeTheme::HighContrast() ? GetSysColor(COLOR_WINDOW) : RGB(39, 42, 47); }
@@ -106,7 +107,7 @@ inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LP
         FillRect(dc,&r,InputBrush());
         auto old=SelectObject(dc,reinterpret_cast<HFONT>(SendMessageW(window,WM_GETFONT,0,0)));
         SetBkMode(dc,TRANSPARENT); SetTextColor(dc,NativeTheme::SecondaryText());
-        DrawTextW(dc,L"Search emoji in English or Norwegian",-1,&r,DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS);
+        DrawTextW(dc,SearchHint,-1,&r,DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS);
         SelectObject(dc,old); ReleaseDC(window,dc);
     }
     if (message == WM_PAINT && kind == 2 && SendMessageW(window, LB_GETCOUNT, 0, 0) == 0) {
@@ -191,7 +192,7 @@ inline void Apply(HWND dialog) {
         SetWindowPos(control,nullptr,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
         SetWindowSubclass(control,ControlProc,1,id==IDC_PHRASE||id==IDC_TARGET_QUERY ? 3 : 2);
     }
-    SendDlgItemMessageW(dialog,IDC_TARGET_QUERY,EM_SETCUEBANNER,TRUE,reinterpret_cast<LPARAM>(L"Search emoji in English or Norwegian"));
+    SendDlgItemMessageW(dialog,IDC_TARGET_QUERY,EM_SETCUEBANNER,TRUE,reinterpret_cast<LPARAM>(SearchHint));
     Layout(dialog);
 }
 }
