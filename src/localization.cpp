@@ -20,6 +20,28 @@ const std::map<std::string, Table>& Tables() {
             {L"Sort: Most used", L"Sorter: Mest brukt"}, {L"Details...", L"Detaljer …"}, {L"Add alias...", L"Legg til alias …"},
             {L"Copy instead", L"Kopier i stedet"}, {L"Cancel", L"Avbryt"}, {L"Delete", L"Slett"}, {L"New", L"Ny"}
             ,{L"No matches. Teach this phrase (Alt+A)", L"Ingen treff. Lær denne frasen (Alt+A)"}
+            ,{L"My vocabulary - SwashMoji", L"Mitt ordforråd – SwashMoji"}, {L"Save phrases and emoji combinations for quick access.", L"Lagre fraser og emojikombinasjoner for rask tilgang."}
+            ,{L"Saved aliases", L"Lagrede aliaser"}, {L"Pinned favorites", L"Festede favoritter"}, {L"Alias editor", L"Aliaseditor"}
+            ,{L"Phrase", L"Frase"}, {L"Search emoji", L"Søk etter emoji"}, {L"Choose an emoji", L"Velg en emoji"}, {L"Save alias", L"Lagre alias"}
+            ,{L"Pin favorite", L"Fest favoritt"}, {L"Unpin favorite", L"Løsne favoritt"}, {L"Up", L"Opp"}, {L"Down", L"Ned"}, {L"Unpin", L"Løsne"}
+            ,{L"New combination / edit...", L"Ny kombinasjon / rediger …"}, {L"Combinations - SwashMoji", L"Kombinasjoner – SwashMoji"}
+            ,{L"Create reusable emoji sequences triggered by a short phrase.", L"Lag gjenbrukbare emojisekvenser som utløses av en kort frase."}
+            ,{L"Saved combinations", L"Lagrede kombinasjoner"}, {L"Combination editor", L"Kombinasjonseditor"}, {L"Name / trigger", L"Navn / utløser"}
+            ,{L"Short phrase used to find this combination.", L"Kort frase som brukes til å finne kombinasjonen."}, {L"Add emoji", L"Legg til emoji"}
+            ,{L"Results", L"Resultater"}, {L"Variant", L"Variant"}, {L"Add", L"Legg til"}, {L"Sequence", L"Sekvens"}
+            ,{L"2-8 emoji, in insertion order", L"2–8 emojier i innsettingsrekkefølge"}, {L"Move left", L"Flytt til venstre"}
+            ,{L"Move right", L"Flytt til høyre"}, {L"Remove", L"Fjern"}, {L"Save combination", L"Lagre kombinasjon"}
+            ,{L"Combination details - SwashMoji", L"Kombinasjonsdetaljer – SwashMoji"}, {L"Exact sequence", L"Nøyaktig sekvens"}
+            ,{L"Emoji in insertion order", L"Emojier i innsettingsrekkefølge"}, {L"Delete combination", L"Slett kombinasjon"}
+            ,{L"Affected aliases", L"Berørte aliaser"}, {L"Delete this combination, its favorites, learned history, and the aliases listed below?", L"Slette denne kombinasjonen, favorittene, den lærte historikken og aliasene nedenfor?"}
+            ,{L"Unsaved changes", L"Ulagrede endringer"}, {L"Favorites saved.", L"Favoritter lagret."}, {L"Alias saved.", L"Alias lagret."}
+            ,{L"Alias deleted.", L"Alias slettet."}, {L"Combination saved.", L"Kombinasjon lagret."}, {L"Combination deleted.", L"Kombinasjon slettet."}
+            ,{L"No dependent aliases.", L"Ingen avhengige aliaser."}
+            ,{L"+ New", L"+ Ny"}, {L"+ New combination / edit...", L"+ Ny kombinasjon / rediger …"}
+            ,{L"Search emoji across languages", L"Søk etter emoji på alle språk"}
+            ,{L"No pinned favorites yet", L"Ingen festede favoritter ennå"}, {L"Your saved phrases appear here", L"De lagrede frasene vises her"}
+            ,{L"No saved combinations yet", L"Ingen lagrede kombinasjoner ennå"}, {L"No emoji added yet", L"Ingen emojier lagt til ennå"}
+            ,{L"No matching emoji", L"Ingen samsvarende emojier"}, {L"Create one to get started.", L"Opprett en for å komme i gang."}
         }},
         {"de", {
             {L"English", L"Englisch"}, {L"Norwegian", L"Norwegisch"}, {L"German", L"Deutsch"}, {L"Italian", L"Italienisch"}, {L"French", L"Französisch"}, {L"Spanish", L"Spanisch"},

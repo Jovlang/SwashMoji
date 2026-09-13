@@ -174,7 +174,14 @@ std::wstring Text(HWND dialog, int id) {
 
 void EditCombinations(HWND dialog, Editor& editor);
 
-void Status(HWND dialog, const wchar_t* message) { SetDlgItemTextW(dialog, IDC_VOCABULARY_STATUS, message); }
+std::wstring DialogText(HWND dialog, const wchar_t* message) {
+    const auto* locale = reinterpret_cast<const char*>(GetPropW(dialog, L"SwashMojiUiLocale"));
+    return locale ? UiText(locale, message) : message;
+}
+void Status(HWND dialog, const wchar_t* message) {
+    const auto text = DialogText(dialog, message);
+    SetDlgItemTextW(dialog, IDC_VOCABULARY_STATUS, text.c_str());
+}
 
 void PinButtons(HWND dialog, const Editor& editor) {
     const auto selected = SendDlgItemMessageW(dialog, IDC_PINS, LB_GETCURSEL, 0, 0);
@@ -222,7 +229,9 @@ void TargetButtons(HWND dialog, Editor& editor) {
     SearchResult result;
     const bool valid = ResolveResult(editor.catalog, editor.profile, editor.target, result);
     EnableWindow(GetDlgItem(dialog, IDC_PIN_TARGET), valid);
-    SetDlgItemTextW(dialog, IDC_PIN_TARGET, IsPinned(editor.profile, editor.target) ? L"Unpin &favorite" : L"Pin &favorite");
+    const auto pinLabel = UiText(editor.profile.settings.uiLanguage,
+        IsPinned(editor.profile, editor.target) ? L"Unpin favorite" : L"Pin favorite");
+    SetDlgItemTextW(dialog, IDC_PIN_TARGET, pinLabel.c_str());
 }
 
 void FindTargets(HWND dialog, Editor& editor) {
@@ -300,6 +309,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         EnableWordDeletion(GetDlgItem(dialog, IDC_PHRASE));
         EnableWordDeletion(GetDlgItem(dialog, IDC_TARGET_QUERY));
         NativeTheme::Apply(dialog);
+        SetPropW(dialog, L"SwashMojiUiLocale", const_cast<char*>(editor->profile.settings.uiLanguage.c_str()));
         LocalizeDialog(dialog, editor->profile.settings.uiLanguage);
         VocabularyStyle::Apply(dialog);
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_VOCABULARY_INTRO));
@@ -405,7 +415,10 @@ struct CombinationEditor {
     std::vector<const Emoji*> variants;
     bool loading{};
 };
-void ComboStatus(HWND dialog, const std::wstring& text) { SetDlgItemTextW(dialog, IDC_COMBO_STATUS, text.c_str()); }
+void ComboStatus(HWND dialog, const std::wstring& text) {
+    const auto localized = DialogText(dialog, text.c_str());
+    SetDlgItemTextW(dialog, IDC_COMBO_STATUS, localized.c_str());
+}
 void Sequence(HWND dialog, const Catalog& catalog, const Combination& c, int selection = 0, const DisplayLanguages& languages = {}) {
     const auto list = GetDlgItem(dialog, IDC_COMBO_ENTRIES);
     SendMessageW(list, WM_SETREDRAW, FALSE, 0);
@@ -440,7 +453,7 @@ void ComboSaved(HWND dialog, CombinationEditor& e) {
     }
     SendMessageW(list, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(list, nullptr, FALSE);
-    const auto heading = L"&Saved combinations (" + std::to_wstring(e.keys.size()) + L")";
+    const auto heading = UiText(e.parent.profile.settings.uiLanguage, L"Saved combinations") + L" (" + std::to_wstring(e.keys.size()) + L")";
     SetDlgItemTextW(dialog, IDC_COMBO_SAVED_HEADING, heading.c_str());
     ComboButtons(dialog, e);
 }
@@ -509,6 +522,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
     auto* e = reinterpret_cast<CombinationEditor*>(GetWindowLongPtrW(dialog, DWLP_USER));
     if (message == WM_INITDIALOG) {
         e = reinterpret_cast<CombinationEditor*>(lParam); SetWindowLongPtrW(dialog, DWLP_USER, lParam);
+        SetPropW(dialog, L"SwashMojiUiLocale", const_cast<char*>(e->parent.profile.settings.uiLanguage.c_str()));
         LocalizeDialog(dialog, e->parent.profile.settings.uiLanguage);
         SendDlgItemMessageW(dialog, IDC_COMBO_NAME, EM_SETLIMITTEXT, kMaxAliasLength, 0);
         SendDlgItemMessageW(dialog, IDC_COMBO_QUERY, EM_SETLIMITTEXT, 255, 0);

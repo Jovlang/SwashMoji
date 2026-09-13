@@ -1,5 +1,6 @@
 #pragma once
 #include "native_theme.h"
+#include "localization.h"
 #include "native_emoji.h"
 #include "vocabulary_ids.h"
 #include <commctrl.h>
@@ -107,21 +108,26 @@ inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LP
         FillRect(dc,&r,InputBrush());
         auto old=SelectObject(dc,reinterpret_cast<HFONT>(SendMessageW(window,WM_GETFONT,0,0)));
         SetBkMode(dc,TRANSPARENT); SetTextColor(dc,NativeTheme::SecondaryText());
-        DrawTextW(dc,SearchHint,-1,&r,DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS);
+        const auto* locale = reinterpret_cast<const char*>(GetPropW(GetParent(window), L"SwashMojiUiLocale"));
+        const auto hint = UiText(locale ? locale : "en", SearchHint);
+        DrawTextW(dc,hint.c_str(),-1,&r,DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS);
         SelectObject(dc,old); ReleaseDC(window,dc);
     }
     if (message == WM_PAINT && kind == 2 && SendMessageW(window, LB_GETCOUNT, 0, 0) == 0) {
         auto dc = GetDC(window); RECT r{}; GetClientRect(window, &r); InflateRect(&r, -Px(window,12), 0);
         auto old = SelectObject(dc, reinterpret_cast<HFONT>(SendMessageW(window, WM_GETFONT,0,0)));
         SetBkMode(dc, TRANSPARENT); SetTextColor(dc, NativeTheme::SecondaryText());
-        const auto text = GetDlgCtrlID(window) == IDC_PINS ? L"No pinned favorites yet" : GetDlgCtrlID(window) == IDC_ALIASES ? L"Your saved phrases appear here" : GetDlgCtrlID(window) == IDC_COMBO_SAVED ? L"No saved combinations yet" : GetDlgCtrlID(window) == IDC_COMBO_ENTRIES ? L"No emoji added yet" : L"No matching emoji";
+        const auto source = GetDlgCtrlID(window) == IDC_PINS ? L"No pinned favorites yet" : GetDlgCtrlID(window) == IDC_ALIASES ? L"Your saved phrases appear here" : GetDlgCtrlID(window) == IDC_COMBO_SAVED ? L"No saved combinations yet" : GetDlgCtrlID(window) == IDC_COMBO_ENTRIES ? L"No emoji added yet" : L"No matching emoji";
+        const auto* locale = reinterpret_cast<const char*>(GetPropW(GetParent(window), L"SwashMojiUiLocale"));
+        const auto text = UiText(locale ? locale : "en", source);
         if(GetDlgCtrlID(window)==IDC_COMBO_SAVED) {
             const int middle=(r.top+r.bottom)/2;
             r.top=middle-Px(window,22); r.bottom=middle;
-            DrawTextW(dc,text,-1,&r,DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);
+            DrawTextW(dc,text.c_str(),-1,&r,DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);
             r.top=middle; r.bottom=middle+Px(window,22);
-            DrawTextW(dc,L"Create one to get started.",-1,&r,DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);
-        } else DrawTextW(dc, text, -1, &r, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
+            const auto create = UiText(locale ? locale : "en", L"Create one to get started.");
+            DrawTextW(dc,create.c_str(),-1,&r,DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);
+        } else DrawTextW(dc, text.c_str(), -1, &r, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
         SelectObject(dc, old); ReleaseDC(window, dc);
     }
     return result;
@@ -192,7 +198,9 @@ inline void Apply(HWND dialog) {
         SetWindowPos(control,nullptr,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
         SetWindowSubclass(control,ControlProc,1,id==IDC_PHRASE||id==IDC_TARGET_QUERY ? 3 : 2);
     }
-    SendDlgItemMessageW(dialog,IDC_TARGET_QUERY,EM_SETCUEBANNER,TRUE,reinterpret_cast<LPARAM>(SearchHint));
+    const auto* locale = reinterpret_cast<const char*>(GetPropW(dialog, L"SwashMojiUiLocale"));
+    const auto hint = UiText(locale ? locale : "en", SearchHint);
+    SendDlgItemMessageW(dialog,IDC_TARGET_QUERY,EM_SETCUEBANNER,TRUE,reinterpret_cast<LPARAM>(hint.c_str()));
     Layout(dialog);
 }
 }

@@ -98,7 +98,9 @@ inline void Apply(HWND dialog) {
         SetWindowPos(control,nullptr,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
         SetWindowSubclass(control,ControlProc,1,id==IDC_COMBO_NAME||id==IDC_COMBO_QUERY ? 3 : 2);
     }
-    SendDlgItemMessageW(dialog,IDC_COMBO_QUERY,EM_SETCUEBANNER,TRUE,reinterpret_cast<LPARAM>(SearchHint));
+    const auto* locale = reinterpret_cast<const char*>(GetPropW(dialog, L"SwashMojiUiLocale"));
+    const auto hint = UiText(locale ? locale : "en", SearchHint);
+    SendDlgItemMessageW(dialog,IDC_COMBO_QUERY,EM_SETCUEBANNER,TRUE,reinterpret_cast<LPARAM>(hint.c_str()));
     Layout(dialog);
 }
 }

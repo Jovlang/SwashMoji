@@ -186,6 +186,9 @@ void Localization() {
         CHECK(UiText(locale, L"Save") != L"Save");
     }
     CHECK(UiText("zz", L"Settings...") == L"Settings...");
+    for (const auto* text : {L"Saved combinations", L"+ New", L"+ New combination / edit...",
+             L"Search emoji across languages", L"No pinned favorites yet", L"No emoji added yet"})
+        CHECK(UiText("nb", text) != text);
 }
 
 void FamilyMigration(const fs::path& root) {
