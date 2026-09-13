@@ -186,9 +186,12 @@ void Localization() {
         CHECK(UiText(locale, L"Save") != L"Save");
     }
     CHECK(UiText("zz", L"Settings...") == L"Settings...");
-    for (const auto* text : {L"Saved combinations", L"+ New", L"+ New combination / edit...",
-             L"Search emoji across languages", L"No pinned favorites yet", L"No emoji added yet"})
-        CHECK(UiText("nb", text) != text);
+    for (const auto* locale : {"nb", "de", "it", "fr", "es"})
+        for (const auto* text : {L"My vocabulary - SwashMoji", L"Saved aliases", L"Pinned favorites",
+                 L"Alias editor", L"+ New", L"+ New combination / edit...", L"Combinations - SwashMoji",
+                 L"Saved combinations", L"Combination editor", L"Search emoji across languages",
+                 L"No pinned favorites yet", L"No saved combinations yet", L"No emoji added yet"})
+            CHECK(UiText(locale, text) != text);
 }
 
 void FamilyMigration(const fs::path& root) {
