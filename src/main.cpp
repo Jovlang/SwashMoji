@@ -2,6 +2,7 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+#include <commdlg.h>
 #include <shlobj.h>
 #include <shellapi.h>
 #include <uxtheme.h>
@@ -902,6 +903,58 @@ void OpenActivationSettings() {
             error = L"Startup updated; shortcut applied for this session but not saved. Try Save again.";
             return false;
         }
+        return true;
+    };
+    state.exportProfile = [](std::wstring& error) {
+        wchar_t path[32768] = L"SwashMoji-profile.tsv";
+        OPENFILENAMEW dialog{sizeof(dialog)};
+        dialog.hwndOwner = g_window;
+        dialog.lpstrFilter = L"SwashMoji profile (*.tsv)\0*.tsv\0All files (*.*)\0*.*\0\0";
+        dialog.lpstrFile = path;
+        dialog.nMaxFile = static_cast<DWORD>(std::size(path));
+        dialog.lpstrDefExt = L"tsv";
+        dialog.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+        if (!GetSaveFileNameW(&dialog)) {
+            if (CommDlgExtendedError()) error = L"Could not open the export file dialog.";
+            return false;
+        }
+        if (!WriteProfileExport(path, g_profile, error)) return false;
+        error = L"Profile exported successfully.";
+        return true;
+    };
+    state.importProfile = [](std::wstring& error) {
+        wchar_t path[32768]{};
+        OPENFILENAMEW dialog{sizeof(dialog)};
+        dialog.hwndOwner = g_window;
+        dialog.lpstrFilter = L"SwashMoji profile (*.tsv)\0*.tsv\0All files (*.*)\0*.*\0\0";
+        dialog.lpstrFile = path;
+        dialog.nMaxFile = static_cast<DWORD>(std::size(path));
+        dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+        if (!GetOpenFileNameW(&dialog)) {
+            if (CommDlgExtendedError()) error = L"Could not open the import file dialog.";
+            return false;
+        }
+        Profile imported;
+        if (!ReadProfileExport(path, imported, error, &g_catalog)) return false;
+        if (MessageBoxW(g_window,
+                L"Importing replaces your current settings, vocabulary, combinations, favorites, and history.\n\nContinue?",
+                L"Import SwashMoji profile", MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES) return false;
+        if (!g_activation.Prepare(g_window, imported.settings.activationHotkey)) {
+            error = L"The imported shortcut is unavailable. No profile data was changed.";
+            return false;
+        }
+        if (!g_storage.Save(imported, error)) {
+            g_activation.Cancel(g_window);
+            return false;
+        }
+        g_activation.Commit(g_window, imported.settings.activationHotkey);
+        g_profile = std::move(imported);
+        g_profileUnsaved = false;
+        g_storageDiagnostic.clear();
+        g_rankingPreferences = g_profile;
+        RefreshList();
+        UpdateSortIndicator();
+        MessageBoxW(g_window, L"Profile imported successfully.", L"SwashMoji", MB_OK | MB_ICONINFORMATION);
         return true;
     };
     g_vocabularyOpen = true;

@@ -153,6 +153,25 @@ void ActivationSettings(const fs::path& root) {
     CHECK(WriteStartupCommand(L"", key.c_str()) == ERROR_SUCCESS);
 }
 
+void ImportExport(const fs::path& root) {
+    const auto directory = root / L"import-export";
+    Profile original;
+    original.settings.skinTone = 4;
+    original.aliases[L"launch"] = {L"launch", {ResultKind::Emoji, L"rocket"}};
+    std::wstring diagnostic;
+    const auto exported = directory / L"SwashMoji-profile.tsv";
+    CHECK(WriteProfileExport(exported, original, diagnostic));
+    Profile imported;
+    CHECK(ReadProfileExport(exported, imported, diagnostic));
+    CHECK(imported.settings.skinTone == 4 && imported.aliases.at(L"launch").target.value == L"rocket");
+    Write(directory / L"truncated.tsv", "SwashMoji\t6\nsetting\tskin_tone\t2\n");
+    CHECK(!ReadProfileExport(directory / L"truncated.tsv", imported, diagnostic) && !diagnostic.empty());
+    Write(directory / L"future.tsv", "SwashMoji\t99\nend\t0\n");
+    CHECK(!ReadProfileExport(directory / L"future.tsv", imported, diagnostic) && !diagnostic.empty());
+    Write(directory / L"skipped.tsv", "SwashMoji\t6\nbogus\nend\t1\n");
+    CHECK(!ReadProfileExport(directory / L"skipped.tsv", imported, diagnostic) && !diagnostic.empty());
+}
+
 void FamilyMigration(const fs::path& root) {
     std::istringstream data("👍\tthumbs up\tgood\n👍🏽\tthumbs up medium skin tone\tgood\n🚀\trocket\tlaunch\n");
     Catalog catalog;
@@ -348,7 +367,7 @@ void FailedWrites(const fs::path& root) {
 int main() {
     try {
         TestDirectory directory;
-        Codec(); ActivationSettings(directory.path); Migration(directory.path); FamilyMigration(directory.path); LanguageSettings(directory.path); Recovery(directory.path);
+        Codec(); ImportExport(directory.path); ActivationSettings(directory.path); Migration(directory.path); FamilyMigration(directory.path); LanguageSettings(directory.path); Recovery(directory.path);
         ProtectFutureAndCorrupt(directory.path); FailedWrites(directory.path);
         std::cout << "Profile codec, migration, recovery and write-failure checks passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

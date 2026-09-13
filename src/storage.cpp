@@ -298,6 +298,45 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
     return result;
 }
 
+bool ReadProfileExport(const std::filesystem::path& path, Profile& profile, std::wstring& diagnostic,
+                       const Catalog* catalog) {
+    diagnostic.clear();
+    std::string bytes;
+    if (ReadFileBytes(path, bytes) != ReadStatus::Ok) {
+        diagnostic = L"Could not read the selected profile file.";
+        return false;
+    }
+    auto decoded = DecodeProfile(bytes);
+    if (decoded.format == ProfileFormat::Unsupported) {
+        diagnostic = L"This profile was created by an unsupported SwashMoji version.";
+        return false;
+    }
+    if (decoded.format != ProfileFormat::Valid || decoded.skippedRecords) {
+        diagnostic = L"The selected file is not a complete, valid SwashMoji profile.";
+        return false;
+    }
+    if (catalog) NormalizeFamilyHistory(decoded.profile, *catalog);
+    profile = std::move(decoded.profile);
+    return true;
+}
+
+bool WriteProfileExport(const std::filesystem::path& path, const Profile& profile, std::wstring& diagnostic) {
+    diagnostic.clear();
+    const auto bytes = EncodeProfile(profile);
+    const auto decoded = DecodeProfile(bytes);
+    if (decoded.format != ProfileFormat::Valid || decoded.skippedRecords) {
+        diagnostic = L"The current profile contains invalid data and cannot be exported.";
+        return false;
+    }
+    std::error_code error;
+    if (!path.parent_path().empty()) std::filesystem::create_directories(path.parent_path(), error);
+    if (error || !AtomicWrite(path, bytes)) {
+        diagnostic = L"Could not write the selected profile file.";
+        return false;
+    }
+    return true;
+}
+
 ProfileStorage::ProfileStorage(std::filesystem::path directory, std::filesystem::path legacyDirectory)
     : directory_(std::move(directory)), legacyDirectory_(std::move(legacyDirectory)) {}
 

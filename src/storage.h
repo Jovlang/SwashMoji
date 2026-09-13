@@ -13,6 +13,9 @@ struct DecodedProfile {
 
 std::string EncodeProfile(const Profile& profile);
 DecodedProfile DecodeProfile(const std::string& bytes);
+bool ReadProfileExport(const std::filesystem::path& path, Profile& profile, std::wstring& diagnostic,
+                       const Catalog* catalog = nullptr);
+bool WriteProfileExport(const std::filesystem::path& path, const Profile& profile, std::wstring& diagnostic);
 
 struct ProfileLoad {
     Profile profile;

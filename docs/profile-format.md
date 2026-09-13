@@ -92,6 +92,16 @@ its aliases, pins, history, usage and query counts in one atomic profile save.
 
 ## Migration and persistence
 
+The Settings dialog can export the current in-memory profile as a complete
+version 6 `.tsv` file and import a complete supported profile. Import rejects
+files containing skipped invalid records rather than silently accepting a
+partial profile. Supported older versions are decoded and written back in the
+current format; catalog family IDs are normalized before saving. Import replaces
+all profile-backed data only after confirmation and only if the imported
+activation shortcut can be registered. It then follows the normal atomic save
+and backup rotation. Export uses an atomic replacement at the chosen destination.
+Windows startup registration is intentionally neither exported nor imported.
+
 Versions 3–5 migrate without changing their typed targets, combinations or settings.
 Versions 1 and 2 use exact-glyph `recent` and `usage` records; version 2 also has
 aliases. On load, the catalog resolves known glyphs to stable families, adds their

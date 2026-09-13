@@ -195,6 +195,15 @@ Settings and usage history are stored in
 `history.txt`, and `usage.txt` are imported automatically; the originals are kept.
 Missing older files can be imported from `%LOCALAPPDATA%\WinMoji`.
 
+Use **Settings... > Export profile...** to save a portable `.tsv` copy containing
+settings, display languages, aliases, combinations, favorites, learning data, and
+history. Windows startup registration is specific to the current computer and is
+not included. Use **Import profile...** to replace the current profile after a
+confirmation. SwashMoji validates the complete file before changing anything,
+rejects damaged or unsupported profiles, and applies the imported activation
+shortcut only if Windows can register it. A successful import uses the normal
+atomic save and backup process.
+
 The application saves through a temporary file and keeps the previous complete
 profile as `profile.tsv.bak`. If the profile is incomplete, it attempts recovery
 from the backup. Save failures appear in the status line and tray icon text;

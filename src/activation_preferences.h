@@ -9,6 +9,8 @@ struct ActivationPreferencesState {
     bool startup;
     std::wstring diagnostic;
     std::function<bool(unsigned int, bool, std::wstring&)> apply;
+    std::function<bool(std::wstring&)> importProfile;
+    std::function<bool(std::wstring&)> exportProfile;
 };
 inline void SelectActivationChoice(HWND dialog, int control, unsigned int value) {
     const auto count = SendDlgItemMessageW(dialog, control, CB_GETCOUNT, 0, 0);
@@ -48,6 +50,14 @@ inline INT_PTR CALLBACK ActivationPreferencesProc(HWND dialog, UINT message, WPA
         const int id = LOWORD(wParam);
         if (id == 704) {
             SelectActivationChoice(dialog, 702, 1); SelectActivationChoice(dialog, 703, 'E'); return TRUE;
+        }
+        if (id == 706 || id == 707) {
+            std::wstring error;
+            const bool imported = id == 706;
+            const bool ok = imported ? state->importProfile(error) : state->exportProfile(error);
+            SetDlgItemTextW(dialog, 705, error.c_str());
+            if (ok && imported) EndDialog(dialog, IDOK);
+            return TRUE;
         }
         if (id == IDOK) {
             const auto get = [&](int control) { return static_cast<unsigned int>(SendDlgItemMessageW(dialog, control, CB_GETITEMDATA,
