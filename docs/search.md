@@ -58,7 +58,7 @@ preview. See [contributor workflow](../CONTRIBUTING.md) for building the preview
 
 ## Existing behavior
 
-Search English, Norwegian Bokmål, German, Italian, French and Spanish together, without a language switch or runtime
+Search English, Norwegian, German, Italian, French and Spanish together, without a language switch or runtime
 network access. Exact personal aliases rank first, then exact English/localized
 names or a pasted known emoji, exact curated intent phrases, name prefixes,
 all-token lexical matches, and finally preferred-locale catalog fuzzy matches only
@@ -95,7 +95,7 @@ be alias targets. Their authored payload is independent of global tone. See
 ## Catalog provenance and regeneration
 
 `emojis.txt` starts with five tab-separated UTF-8 columns: glyph, English name,
-English keywords, Bokmål name, Bokmål keywords. Additional languages use repeated
+English keywords, Norwegian name, Norwegian keywords. Additional languages use repeated
 triples of locale code, localized name and localized keywords. The current catalog
 appends `de`, `it`, `fr` and `es` triples. The loader accepts arbitrary locale triples and older
 three/five-column catalogs; incomplete triples or duplicate locale codes invalidate
@@ -151,7 +151,7 @@ The checked-in `tests/search_corpus.tsv` has 111 cases: 40 names/keywords, 51 in
 phrases, seven normalization cases, four typos, three glyphs, three aliases and
 three intentional misses. All 111 meet the expected top-three/no-result outcome;
 the intent subset is 51/51. Tests also enforce the exact-name tier for every
-untoned English and Bokmål catalog name, explicit alias priority, duplicate/rename
+untoned English and Norwegian catalog name, explicit alias priority, duplicate/rename
 transactions, limits, codec restart, and version 1 migration with backup retention.
 Python fixture tests cover locale inheritance, English fallback, offline missing
 sources, curated data references and deterministic regeneration without a network.

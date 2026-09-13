@@ -11,7 +11,7 @@ endif()
 # Share the self-contained native runtime between application and tests.
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
-add_library(SwashMojiCore STATIC src/catalog.cpp src/text.cpp src/search.cpp src/personalization.cpp src/storage.cpp src/insertion.cpp src/insertion_win32.cpp src/edit_controls.cpp src/picker.cpp)
+add_library(SwashMojiCore STATIC src/catalog.cpp src/text.cpp src/search.cpp src/personalization.cpp src/storage.cpp src/localization.cpp src/insertion.cpp src/insertion_win32.cpp src/edit_controls.cpp src/picker.cpp)
 target_compile_features(SwashMojiCore PUBLIC cxx_std_17)
 target_include_directories(SwashMojiCore PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(SwashMojiCore PUBLIC UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)

@@ -1,12 +1,14 @@
 #pragma once
 #include "activation_settings.h"
 #include "native_theme.h"
+#include "localization.h"
 #include <functional>
 
 namespace SwashMoji {
 struct ActivationPreferencesState {
     unsigned int hotkey;
     bool startup;
+    std::string uiLanguage{"en"};
     std::wstring diagnostic;
     std::function<bool(unsigned int, bool, std::wstring&)> apply;
     std::function<bool(std::wstring&)> importProfile;
@@ -26,6 +28,7 @@ inline INT_PTR CALLBACK ActivationPreferencesProc(HWND dialog, UINT message, WPA
         state = reinterpret_cast<ActivationPreferencesState*>(lParam);
         SetWindowLongPtrW(dialog, DWLP_USER, lParam);
         NativeTheme::Apply(dialog);
+        LocalizeDialog(dialog, state->uiLanguage);
         CheckDlgButton(dialog, 701, state->startup ? BST_CHECKED : BST_UNCHECKED);
         const auto add = [&](int control, const std::wstring& label, unsigned int value) {
             auto row = SendDlgItemMessageW(dialog, control, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));

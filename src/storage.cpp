@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "storage.h"
+#include "catalog.h"
 #include "text.h"
 #include <algorithm>
 #include <atomic>
@@ -14,7 +15,7 @@ namespace {
 constexpr size_t kMaxFileBytes = 4 * 1024 * 1024;
 constexpr size_t kMaxRecordBytes = 16384;
 constexpr size_t kMaxRecords = 50000;
-constexpr unsigned int kVersion = 6;
+constexpr unsigned int kVersion = 7;
 
 bool Number(const std::string& text, unsigned int& result) {
     if (text.empty()) return false;
@@ -167,6 +168,7 @@ std::string EncodeProfile(const Profile& profile) {
     std::string languages = "display_languages";
     for (const auto& locale : profile.settings.displayLanguages.Locales()) languages += '\t' + locale;
     records.push_back(languages);
+    records.push_back("ui_language\t" + profile.settings.uiLanguage);
     const auto targetFields = [](const ResultId& id) {
         return std::string(id.kind == ResultKind::Emoji ? "emoji\t" : "combination\t") + Escape(id.value);
     };
@@ -209,7 +211,7 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
     if (firstLine == std::string::npos || bytes.back() != '\n') return result;
     size_t position = firstLine + 1;
     size_t recordCount = 0;
-    bool haveDisplayLanguages = false;
+    bool haveDisplayLanguages = false, haveUiLanguage = false;
     std::set<std::pair<std::wstring, ResultId>> queryKeys;
     while (position < bytes.size()) {
         const size_t end = bytes.find('\n', position);
@@ -244,6 +246,13 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
             valid = !haveDisplayLanguages && (fields.size() == 2 || fields.size() == 3) &&
                 result.profile.settings.displayLanguages.Set(std::vector<std::string>(fields.begin() + 1, fields.end()));
             if (valid) haveDisplayLanguages = true;
+        } else if (valid && fields[0] == "ui_language" && version >= 7) {
+            valid = !haveUiLanguage && fields.size() == 2;
+            if (valid) {
+                valid = false;
+                for (const auto& locale : SupportedLocales()) if (fields[1] == locale.code) { valid = true; break; }
+            }
+            if (valid) { result.profile.settings.uiLanguage = fields[1]; haveUiLanguage = true; }
         } else if (valid && fields[0] == "recent") {
             ResultId id;
             valid = version < 3 ? (fields.size() == 2 && Unescape(fields[1], id.value) && !id.value.empty()) :

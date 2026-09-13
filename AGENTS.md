@@ -81,7 +81,7 @@ to unlock a build; use another build directory.
 
 ## Behavior to preserve
 
-- English (`en`), Norwegian Bokmål (`nb`), German (`de`), Italian (`it`), French (`fr`) and Spanish (`es`) search
+- English (`en`), Norwegian (`nb`), German (`de`), Italian (`it`), French (`fr`) and Spanish (`es`) search
   together. Search locale filters are independent of display preferences; an empty
   filter searches all available localizations for non-fuzzy matches. Search uses
   display locales as default preferences, not a hard filter: catalog fuzzy matching
@@ -131,7 +131,7 @@ python tools\update_emoji_catalog.py --download --cldr-dir build\cldr
 python tools\update_emoji_catalog.py --cldr-dir build\cldr
 ```
 
-The catalog retains five legacy columns (glyph, English name/keywords, Bokmål
+The catalog retains five legacy columns (glyph, English name/keywords, Norwegian
 name/keywords), followed by locale/name/keywords triples for additional languages.
 Keep older three/five-column loading compatible. To add a language, register its
 metadata in `SupportedLocales` and its source in the generator's `EXTRA_LOCALES`;

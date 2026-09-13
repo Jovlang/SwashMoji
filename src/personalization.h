@@ -23,6 +23,7 @@ struct Settings {
     int skinTone{};
     bool learnQueries{true};
     DisplayLanguages displayLanguages;
+    std::string uiLanguage{"en"};
     unsigned int activationHotkey{kDefaultActivationHotkey};
 };
 

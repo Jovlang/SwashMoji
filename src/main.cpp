@@ -22,6 +22,7 @@
 #include "language_preferences.h"
 #include "activation_preferences.h"
 #include "activation_win32.h"
+#include "localization.h"
 #include "picker.h"
 #include <oleacc.h>
 #include <windowsx.h>
@@ -874,7 +875,7 @@ void OpenActivationSettings() {
     CloseHover();
     std::wstring startup;
     const auto readResult = ReadStartupCommand(startup);
-    ActivationPreferencesState state{g_profile.settings.activationHotkey, !startup.empty(), L"", {}};
+    ActivationPreferencesState state{g_profile.settings.activationHotkey, !startup.empty(), g_profile.settings.uiLanguage, L"", {}};
     if (readResult != ERROR_SUCCESS) state.diagnostic = L"Could not read Windows startup settings. Close and try again.";
     if (g_storage.ReadOnly()) state.diagnostic = L"This profile is read-only. Settings cannot be changed.";
     state.apply = [](unsigned int hotkey, bool start, std::wstring& error) {
@@ -969,17 +970,17 @@ void ShowTrayMenu() {
     const auto target = CaptureExternalTarget(GetForegroundWindow());
     if (target.window) { g_inputTarget = target; g_session.originalTarget = target.window; }
     HMENU menu = CreatePopupMenu();
-    AppendMenuW(menu, MF_STRING, kSortRecentId, L"Sort: Most recent");
-    AppendMenuW(menu, MF_STRING, kSortMostUsedId, L"Sort: Most used");
+    AppendMenuW(menu, MF_STRING, kSortRecentId, UiText(g_profile.settings.uiLanguage, L"Sort: Most recent").c_str());
+    AppendMenuW(menu, MF_STRING, kSortMostUsedId, UiText(g_profile.settings.uiLanguage, L"Sort: Most used").c_str());
     CheckMenuRadioItem(menu, kSortRecentId, kSortMostUsedId,
                        g_sortByUsage ? kSortMostUsedId : kSortRecentId, MF_BYCOMMAND);
-    AppendMenuW(menu, MF_STRING, kVocabularyId, L"My vocabulary...");
-    AppendMenuW(menu, MF_STRING, kDisplayLanguagesId, L"Languages...");
-    AppendMenuW(menu, MF_STRING, kActivationSettingsId, L"Settings...");
+    AppendMenuW(menu, MF_STRING, kVocabularyId, UiText(g_profile.settings.uiLanguage, L"My vocabulary...").c_str());
+    AppendMenuW(menu, MF_STRING, kDisplayLanguagesId, UiText(g_profile.settings.uiLanguage, L"Languages...").c_str());
+    AppendMenuW(menu, MF_STRING, kActivationSettingsId, UiText(g_profile.settings.uiLanguage, L"Settings...").c_str());
     AppendMenuW(menu, MF_STRING | (g_profile.settings.learnQueries ? MF_CHECKED : MF_UNCHECKED),
-        kLearnQueriesId, L"Learn from searches");
+        kLearnQueriesId, UiText(g_profile.settings.uiLanguage, L"Learn from searches").c_str());
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
-    AppendMenuW(menu, MF_STRING, kExitId, L"Exit");
+    AppendMenuW(menu, MF_STRING, kExitId, UiText(g_profile.settings.uiLanguage, L"Exit").c_str());
     POINT point{};
     GetCursorPos(&point);
     SetForegroundWindow(g_window);
@@ -1012,6 +1013,8 @@ void ShowTrayMenu() {
             break;
         }
         UpdateStatusLine();
+        SetWindowTextW(g_copyInstead, UiText(g_profile.settings.uiLanguage, L"Copy instead").c_str());
+        SetWindowTextW(g_teachPhrase, UiText(g_profile.settings.uiLanguage, L"No matches. Teach this phrase (Alt+A)").c_str());
         if (IsWindowVisible(g_window)) SetFocus(g_edit);
     } else if (command == kLearnQueriesId) {
         g_profile.settings.learnQueries = !g_profile.settings.learnQueries;
@@ -1178,6 +1181,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         NativeTheme::Apply(dialog);
         state = reinterpret_cast<DetailsState*>(lParam);
         SetWindowLongPtrW(dialog, DWLP_USER, lParam);
+        LocalizeDialog(dialog, g_profile.settings.uiLanguage);
         NativeTheme::ApplyEmojiFont(dialog, {402, 403});
         int width = 0;
         HDC dc = GetDC(dialog);
@@ -1343,8 +1347,8 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
         if (g_displayVisible.empty()) return 0;
         CloseHover();
         HMENU menu = CreatePopupMenu();
-        AppendMenuW(menu, MF_STRING, kDetailsId, L"Details...");
-        AppendMenuW(menu, MF_STRING, kVocabularyId, L"Add alias...\tAlt+A");
+        AppendMenuW(menu, MF_STRING, kDetailsId, UiText(g_profile.settings.uiLanguage, L"Details...").c_str());
+        AppendMenuW(menu, MF_STRING, kVocabularyId, (UiText(g_profile.settings.uiLanguage, L"Add alias...") + L"\tAlt+A").c_str());
         const auto index = SendMessageW(control, LB_GETCURSEL, 0, 0);
         if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size())
             AppendMenuW(menu, MF_STRING, kPinId, IsPinned(g_profile, g_displayVisible[index].id)

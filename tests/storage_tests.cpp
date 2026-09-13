@@ -4,6 +4,7 @@
 #include "activation_win32.h"
 #include "text.h"
 #include "catalog.h"
+#include "localization.h"
 #include <fstream>
 #include <iterator>
 #include <sstream>
@@ -60,8 +61,8 @@ void Codec() {
     CHECK(EncodeProfile(decoded.profile) == bytes);
     for (size_t size = 0; size < bytes.size(); ++size) CHECK(DecodeProfile(bytes.substr(0, size)).format != ProfileFormat::Valid);
     CHECK(decoded.profile.aliases.at(L"på vei").target.value == L"🚶");
-    CHECK(DecodeProfile("SwashMoji\t7\nend\t0\n").format == ProfileFormat::Unsupported);
-    CHECK(DecodeProfile("SwashMoji\t7").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t8\nend\t0\n").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t8").format == ProfileFormat::Unsupported);
     CHECK(DecodeProfile("\xEF\xBB\xBF" "SwashMoji\t1\r\nsetting\temoji_rows\t2\r\nend\t1\r\n").profile.settings.emojiRows == 2);
     decoded = DecodeProfile("SwashMoji\t1\nusage\trocket\t4294967296\nrecent\tbad\\q\nsetting\temoji_rows\t99\nusage\tgood\t2\nend\t4\n");
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 3);
@@ -177,6 +178,16 @@ void ImportExport(const fs::path& root) {
     CHECK(!ReadProfileExport(directory / L"skipped.tsv", imported, diagnostic) && !diagnostic.empty());
 }
 
+void Localization() {
+    CHECK(UiText("en", L"Settings...") == L"Settings...");
+    for (const auto* locale : {"nb", "de", "it", "fr", "es"}) {
+        CHECK(UiText(locale, L"Settings...") != L"Settings...");
+        CHECK(UiText(locale, L"Languages...") != L"Languages...");
+        CHECK(UiText(locale, L"Save") != L"Save");
+    }
+    CHECK(UiText("zz", L"Settings...") == L"Settings...");
+}
+
 void FamilyMigration(const fs::path& root) {
     std::istringstream data("👍\tthumbs up\tgood\n👍🏽\tthumbs up medium skin tone\tgood\n🚀\trocket\tlaunch\n");
     Catalog catalog;
@@ -192,7 +203,7 @@ void FamilyMigration(const fs::path& root) {
     CHECK(UsageCount(loaded.profile, L"👍") == 15);
     CHECK(loaded.profile.aliases.at(L"launch").target.value == L"🚀");
     CHECK(Read(directory / L"profile.tsv.bak") == v2);
-    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 6);
+    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 7);
     loaded = store.Load(&catalog);
     CHECK(!loaded.migrated && UsageCount(loaded.profile, L"👍") == 15);
     RecordChoice(loaded.profile, {ResultKind::Emoji, L"👍"}, L"good");
@@ -218,6 +229,7 @@ void LanguageSettings(const fs::path& root) {
     Profile profile;
     const std::vector<std::string> defaults{"en", "nb"};
     CHECK(profile.settings.displayLanguages.Locales() == defaults);
+    CHECK(profile.settings.uiLanguage == "en");
     for (const auto& invalid : std::vector<std::vector<std::string>>{{}, {"en", "en"}, {"en", "nb", "de"}, {"zz"}, {"en", ""}}) {
         CHECK(!profile.settings.displayLanguages.Set(invalid));
         CHECK(profile.settings.displayLanguages.Locales() == defaults);
@@ -225,11 +237,20 @@ void LanguageSettings(const fs::path& root) {
     for (const auto& selection : std::vector<std::vector<std::string>>{{"en"}, {"nb"}, {"nb", "en"}, {"en", "nb"}, {"it"}, {"de"}, {"it", "de"}, {"de", "it"}}) {
         CHECK(profile.settings.displayLanguages.Set(selection));
         const auto decoded = DecodeProfile(EncodeProfile(profile));
-        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 6 && !decoded.skippedRecords);
+        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 7 && !decoded.skippedRecords);
         CHECK(decoded.profile.settings.displayLanguages.Locales() == selection);
         ClearHistory(profile);
         CHECK(profile.settings.displayLanguages.Locales() == selection);
     }
+    for (const auto* locale : {"en", "nb", "de", "it", "fr", "es"}) {
+        profile.settings.uiLanguage = locale;
+        const auto decoded = DecodeProfile(EncodeProfile(profile));
+        CHECK(decoded.format == ProfileFormat::Valid && decoded.profile.settings.uiLanguage == locale);
+        ClearHistory(profile);
+        CHECK(profile.settings.uiLanguage == locale);
+    }
+    const auto invalidUi = DecodeProfile("SwashMoji\t7\nui_language\tzz\nend\t1\n");
+    CHECK(invalidUi.format == ProfileFormat::Valid && invalidUi.skippedRecords == 1 && invalidUi.profile.settings.uiLanguage == "en");
     for (const auto& record : {"display_languages", "display_languages\ten\ten", "display_languages\ten\tnb\tde", "display_languages\tzz", "display_languages\ten\t"}) {
         const auto decoded = DecodeProfile(std::string("SwashMoji\t5\n") + record + "\nend\t1\n");
         CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 1);
@@ -247,7 +268,7 @@ void LanguageSettings(const fs::path& root) {
     CHECK(loaded.profile.settings.skinTone == 3 && loaded.profile.combinations.at(L"combo-1").payload == L"🚀✨");
     CHECK(loaded.profile.aliases.at(L"launch").target.value == L"combo-1");
     CHECK(Read(path / L"profile.tsv.bak") == v4);
-    CHECK(DecodeProfile(Read(path / L"profile.tsv")).version == 6);
+    CHECK(DecodeProfile(Read(path / L"profile.tsv")).version == 7);
     CHECK(!storage.Load().migrated);
     CHECK(loaded.profile.settings.displayLanguages.Set({"nb"}));
     std::wstring diagnostic;
@@ -269,7 +290,7 @@ void Migration(const fs::path& root) {
     CHECK(upgraded.profile.settings.skinTone == 3 && UsageCount(upgraded.profile, L"👍🏽") == 8);
     CHECK(upgraded.profile.history == (std::vector<ResultId>{{ResultKind::Emoji, L"👍🏽"}}));
     CHECK(Read(v1Directory / L"profile.tsv.bak") == v1);
-    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 6);
+    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 7);
     CHECK(!oldStore.Load().migrated);
     const auto directory = root / L"migration";
     const auto fallback = root / L"WinMoji";
@@ -372,7 +393,7 @@ void FailedWrites(const fs::path& root) {
 int main() {
     try {
         TestDirectory directory;
-        Codec(); ImportExport(directory.path); ActivationSettings(directory.path); Migration(directory.path); FamilyMigration(directory.path); LanguageSettings(directory.path); Recovery(directory.path);
+        Codec(); ImportExport(directory.path); Localization(); ActivationSettings(directory.path); Migration(directory.path); FamilyMigration(directory.path); LanguageSettings(directory.path); Recovery(directory.path);
         ProtectFutureAndCorrupt(directory.path); FailedWrites(directory.path);
         std::cout << "Profile codec, migration, recovery and write-failure checks passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

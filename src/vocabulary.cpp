@@ -1,4 +1,5 @@
 #include "vocabulary.h"
+#include "localization.h"
 #include "vocabulary_ids.h"
 #include "edit_controls.h"
 #include "native_emoji.h"
@@ -299,6 +300,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         EnableWordDeletion(GetDlgItem(dialog, IDC_PHRASE));
         EnableWordDeletion(GetDlgItem(dialog, IDC_TARGET_QUERY));
         NativeTheme::Apply(dialog);
+        LocalizeDialog(dialog, editor->profile.settings.uiLanguage);
         VocabularyStyle::Apply(dialog);
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_VOCABULARY_INTRO));
         StyleHeading(dialog, IDC_ALIAS_HEADING);
@@ -507,6 +509,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
     auto* e = reinterpret_cast<CombinationEditor*>(GetWindowLongPtrW(dialog, DWLP_USER));
     if (message == WM_INITDIALOG) {
         e = reinterpret_cast<CombinationEditor*>(lParam); SetWindowLongPtrW(dialog, DWLP_USER, lParam);
+        LocalizeDialog(dialog, e->parent.profile.settings.uiLanguage);
         SendDlgItemMessageW(dialog, IDC_COMBO_NAME, EM_SETLIMITTEXT, kMaxAliasLength, 0);
         SendDlgItemMessageW(dialog, IDC_COMBO_QUERY, EM_SETLIMITTEXT, 255, 0);
         EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_NAME)); EnableWordDeletion(GetDlgItem(dialog, IDC_COMBO_QUERY));

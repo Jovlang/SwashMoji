@@ -46,7 +46,7 @@ your configured shortcut if you change it.
 
 ## Search and languages
 
-Search English, Norwegian Bokmål, German, Italian, French, and Spanish together. You can use names,
+Search English, Norwegian, German, Italian, French, and Spanish together. You can use names,
 Unicode keywords, and phrases such as `bra jobbet` (well done), `på vei` (on my way),
 and `thank you`. Both `Rakete` and `razzo` find 🚀. Typos in catalog names and
 keywords are tolerated in your display languages when there are no regular matches.
@@ -59,6 +59,12 @@ Your own aliases give you more ways to find an emoji.
 - You cannot select the same language twice. If you change the primary language
   to the previous secondary language, **Secondary** is set to **None**.
 - **Save** saves the selection; **Close** discards unapplied changes.
+
+The same dialog has an independent **Interface language** setting. Choose English,
+Norwegian, German, Italian, French, or Spanish for SwashMoji's menus,
+dialogs, buttons, and messages. The change is saved with the profile and applies
+to subsequently opened UI; it does not restrict search or change the selected
+languages used for emoji names.
 
 English and Norwegian are the defaults. **Italian**, **German**, **French**, and **Spanish** also have
 translated names for all 3598 emoji variants in the catalog. Regular matching

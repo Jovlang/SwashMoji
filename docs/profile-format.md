@@ -3,15 +3,16 @@
 The runtime uses `%LOCALAPPDATA%\SwashMoji\profile.tsv`. All profile tests pass an
 isolated directory explicitly; they never resolve or change the user's profile.
 
-## Version 6
+## Version 7
 
 Files are UTF-8 with LF line endings. The reader also accepts a UTF-8 BOM and CRLF.
-The header is `SwashMoji<TAB>6`. Following lines contain typed records:
+The header is `SwashMoji<TAB>7`. Following lines contain typed records:
 
 | Record | Fields after the record type |
 | --- | --- |
 | `setting` | setting name, unsigned integer value |
 | `display_languages` | one or two registered locale codes, primary first (for example `en<TAB>nb`) |
+| `ui_language` | one registered locale code for application interface text |
 | `recent` | target kind, stable target ID; newest records first |
 | `usage` | target kind, stable target ID, nonzero unsigned 32-bit count |
 | `query` | normalized complete query, target kind, stable target ID, nonzero unsigned 32-bit count; most recently chosen pair first |
@@ -43,6 +44,10 @@ Versions 1–5 migrate with that default. Invalid values are skipped with the
 normal record diagnostic. History clearing retains the shortcut. Version 6
 prevents older writers from silently discarding it.
 
+Version 7 adds `ui_language`, independently of the emoji-name display languages.
+It accepts one registered locale code and defaults to English when absent in
+versions 1–6. History clearing retains it.
+
 Startup is machine-local Windows configuration, not a profile field. The app
 reads/writes only the `SwashMoji` REG_SZ value under
 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, containing the quoted
@@ -55,7 +60,7 @@ Display languages default to `en`, `nb`, including when migrating versions 1–4
 One locale selects a single display language. Empty, duplicate, unknown or more
 than two locales invalidate the entire record; defaults remain unless an earlier
 valid record was read. The first valid record wins. Codes come from the shared
-locale registry and are written literally (currently `en`, `nb`, `de`, `it` and `fr`). Search locale
+locale registry and are written literally (currently `en`, `nb`, `de`, `it`, `fr` and `es`). Search locale
 selection is independent and is not persisted by this feature. History clearing
 retains display languages. Version 5 protects this new record from older writers.
 
@@ -93,7 +98,7 @@ its aliases, pins, history, usage and query counts in one atomic profile save.
 ## Migration and persistence
 
 The Settings dialog can export the current in-memory profile as a complete
-version 6 `.tsv` file and import a complete supported profile. Import rejects
+version 7 `.tsv` file and import a complete supported profile. Import rejects
 files containing skipped invalid records rather than silently accepting a
 partial profile. Supported older versions are decoded and written back in the
 current format; catalog family IDs are normalized before saving. Import replaces
@@ -111,7 +116,7 @@ The mapping is idempotent and also handles catalogs that later recognize an ID.
 Aliases and settings are preserved. The runtime passes its loaded catalog to
 `ProfileStorage::Load`; codec-only consumers may omit that catalog.
 
-Migration atomically writes version 6 and backs up the previous complete file.
+Migration atomically writes version 7 and backs up the previous complete file.
 A failed write leaves the previous format on disk, retains the migrated values
 in memory, and reports unsaved state. Retrying does not double counts. Unsupported
 future versions remain read-only.

@@ -1,6 +1,6 @@
 #include <windows.h>
 
-600 DIALOGEX 0, 0, 260, 176
+600 DIALOGEX 0, 0, 260, 204
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Languages - SwashMoji"
 FONT 9, "Segoe UI"
@@ -11,7 +11,9 @@ BEGIN
     LTEXT "&Secondary:", -1, 12, 62, 66, 12
     COMBOBOX 602, 82, 58, 166, 90, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT "Search continues to use all available languages.", -1, 12, 88, 236, 14
-    LTEXT "", 603, 12, 108, 236, 28
-    DEFPUSHBUTTON "&Save", IDOK, 112, 144, 64, 20
-    PUSHBUTTON "&Close", IDCANCEL, 184, 144, 64, 20
+    LTEXT "&Interface language:", 604, 12, 112, 100, 12
+    COMBOBOX 605, 116, 108, 132, 90, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT "", 603, 12, 136, 236, 28
+    DEFPUSHBUTTON "&Save", IDOK, 112, 172, 64, 20
+    PUSHBUTTON "&Close", IDCANCEL, 184, 172, 64, 20
 END

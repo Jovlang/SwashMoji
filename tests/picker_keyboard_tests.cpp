@@ -48,7 +48,7 @@ void LanguageDialogControls() {
 
 void ActivationDialogControls() {
     unsigned calls{}, submitted{}; bool startup{};
-    ActivationPreferencesState state{0x0351, false, L"", [&](unsigned int key, bool start, std::wstring& error) {
+    ActivationPreferencesState state{0x0351, false, "en", L"", [&](unsigned int key, bool start, std::wstring& error) {
         ++calls; submitted = key; startup = start;
         error = L"Shortcut unavailable."; return false;
     }};

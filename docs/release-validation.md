@@ -73,7 +73,7 @@ not a representative distribution of changing keystrokes.
 The fixture contains 500 aliases, 200 two-emoji combinations, 1,000 query pairs,
 40 recent entries, ten pins and usage for every catalog family. It is codec-validated
 and never saved to the user's profile. Queries cover a broad prefix, English,
-Bokmål, intent, alias, combination, typo and miss. Timings include matching,
+Norwegian, intent, alias, combination, typo and miss. Timings include matching,
 ranking and native list/status updates, but exclude painting, foreground activation,
 monitor placement, cold catalog load, disk writes and human interaction.
 
@@ -124,7 +124,7 @@ Do not check a row merely because the corresponding state test passes.
 | Consented user trials | Baseline and candidate, same device and task set, counterbalanced order; opening-to-insertion time, intended rank and abandonment | Open; no participants recruited |
 
 For trials, obtain participant consent before collecting observations. Use a small
-fixed English/Bokmål task set plus favorites, aliases and combinations; record
+fixed English/Norwegian task set plus favorites, aliases and combinations; record
 training, task order, sample size and familiarity. Report paired timings/ranks,
 abandonment counts and limitations rather than inferring improvement from synthetic
 benchmarks. Store only consented, anonymized results locally; no production telemetry.

@@ -2,6 +2,7 @@
 #include "personalization.h"
 #include "catalog.h"
 #include "native_theme.h"
+#include "localization.h"
 #include <functional>
 
 namespace SwashMoji {
@@ -9,6 +10,7 @@ inline constexpr int kLanguageDialog = 600;
 inline constexpr int kPrimaryLanguage = 601;
 inline constexpr int kSecondaryLanguage = 602;
 inline constexpr int kLanguageStatus = 603;
+inline constexpr int kUiLanguage = 605;
 
 struct LanguagePreferencesState {
     Profile& profile;
@@ -20,16 +22,17 @@ inline int SelectedLocale(HWND dialog, int control) {
     return selection == CB_ERR ? -1 : static_cast<int>(SendDlgItemMessageW(dialog, control, CB_GETITEMDATA, selection, 0));
 }
 
-inline void FillLanguageChoices(HWND dialog, int control, int selected, int excluded = -1) {
+inline void FillLanguageChoices(HWND dialog, int control, int selected, int excluded, const std::string& uiLocale) {
     SendDlgItemMessageW(dialog, control, CB_RESETCONTENT, 0, 0);
     const auto add = [&](const wchar_t* label, int locale) {
         const auto row = SendDlgItemMessageW(dialog, control, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label));
         SendDlgItemMessageW(dialog, control, CB_SETITEMDATA, row, locale);
         if (locale == selected) SendDlgItemMessageW(dialog, control, CB_SETCURSEL, row, 0);
     };
-    if (control == kSecondaryLanguage) add(L"None", -1);
+    if (control == kSecondaryLanguage) add(UiText(uiLocale, L"None").c_str(), -1);
     const auto& locales = SupportedLocales();
-    for (size_t i = 0; i < locales.size(); ++i) if (static_cast<int>(i) != excluded) add(locales[i].label, static_cast<int>(i));
+    for (size_t i = 0; i < locales.size(); ++i) if (static_cast<int>(i) != excluded)
+        add(UiText(uiLocale, locales[i].label).c_str(), static_cast<int>(i));
     if (SendDlgItemMessageW(dialog, control, CB_GETCURSEL, 0, 0) == CB_ERR)
         SendDlgItemMessageW(dialog, control, CB_SETCURSEL, 0, 0);
 }
@@ -41,6 +44,9 @@ inline bool ApplyLanguageChoices(HWND dialog, LanguagePreferencesState& state) {
     std::vector<std::string> selected{locales[primary].code};
     if (secondary >= 0 && static_cast<size_t>(secondary) < locales.size()) selected.push_back(locales[secondary].code);
     if (!state.profile.settings.displayLanguages.Set(selected)) return false;
+    const int ui = SelectedLocale(dialog, kUiLanguage);
+    if (ui < 0 || static_cast<size_t>(ui) >= locales.size()) return false;
+    state.profile.settings.uiLanguage = locales[ui].code;
     if (state.persist()) return true;
     SetDlgItemTextW(dialog, kLanguageStatus, L"Applied for this session, but could not save. Try Save again.");
     return false;
@@ -54,6 +60,7 @@ inline INT_PTR CALLBACK LanguagePreferencesProc(HWND dialog, UINT message, WPARA
         state = reinterpret_cast<LanguagePreferencesState*>(lParam);
         SetWindowLongPtrW(dialog, DWLP_USER, lParam);
         NativeTheme::Apply(dialog);
+        LocalizeDialog(dialog, state->profile.settings.uiLanguage);
         const auto& selected = state->profile.settings.displayLanguages.Locales();
         const auto index = [&](const std::string& code) {
             const auto& locales = SupportedLocales();
@@ -61,15 +68,16 @@ inline INT_PTR CALLBACK LanguagePreferencesProc(HWND dialog, UINT message, WPARA
             return -1;
         };
         const int primary = index(selected[0]);
-        FillLanguageChoices(dialog, kPrimaryLanguage, primary);
-        FillLanguageChoices(dialog, kSecondaryLanguage, selected.size() == 2 ? index(selected[1]) : -1, primary);
+        FillLanguageChoices(dialog, kPrimaryLanguage, primary, -1, state->profile.settings.uiLanguage);
+        FillLanguageChoices(dialog, kSecondaryLanguage, selected.size() == 2 ? index(selected[1]) : -1, primary, state->profile.settings.uiLanguage);
+        FillLanguageChoices(dialog, kUiLanguage, index(state->profile.settings.uiLanguage), -1, state->profile.settings.uiLanguage);
         return TRUE;
     }
     if (!state) return FALSE;
     if (message == WM_COMMAND) {
         const int id = LOWORD(wParam);
         if (id == kPrimaryLanguage && HIWORD(wParam) == CBN_SELCHANGE) {
-            FillLanguageChoices(dialog, kSecondaryLanguage, SelectedLocale(dialog, kSecondaryLanguage), SelectedLocale(dialog, kPrimaryLanguage));
+            FillLanguageChoices(dialog, kSecondaryLanguage, SelectedLocale(dialog, kSecondaryLanguage), SelectedLocale(dialog, kPrimaryLanguage), state->profile.settings.uiLanguage);
             return TRUE;
         }
         if (id == IDOK) { if (ApplyLanguageChoices(dialog, *state)) EndDialog(dialog, IDOK); return TRUE; }
