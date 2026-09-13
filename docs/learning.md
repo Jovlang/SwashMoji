@@ -17,8 +17,8 @@ its prefixes or unrelated searches. Ordinary usage/recency still applies globall
 
 `Learn from searches` in the tray is enabled by default. Turning it off stops
 collecting and applying query counts; existing counts remain stored for re-enabling.
-Recency and usage continue working. `Clear learned history` removes recency, usage,
-and all query counts after confirmation, preserving aliases, favorites and settings.
+Recency and usage continue working. The core `ClearHistory` operation remains
+available for isolated tests, but there is no history-clearing command in the UI.
 There is no network service: the profile remains on this PC.
 
 ## Stable sessions
@@ -31,7 +31,7 @@ session. Font, tone and row changes preserve the selected ID while it remains
 available. A changed query starts at its best result.
 
 Explicit edits to aliases, favorites and sort/learning settings take effect
-immediately. Clearing learned history also clears the open session's snapshot.
+immediately.
 Opening the vocabulary dialog preserves the original external insertion target.
 
 ## Favorites and families

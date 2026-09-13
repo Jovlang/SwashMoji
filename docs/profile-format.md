@@ -130,8 +130,8 @@ No writes occur while the user types a search.
 To inspect a broken profile, exit SwashMoji and preserve a copy of both profile
 files before editing. To deliberately start fresh, move both profile files and
 the three legacy files out of the SwashMoji data directory; also account for any
-legacy WinMoji files, which otherwise remain eligible for import. The tray's
-clear-history command is the normal way to reset history while retaining settings.
+legacy WinMoji files, which otherwise remain eligible for import. There is no
+history-clearing command in the application UI.
 
 ## Validation
 

@@ -17,8 +17,7 @@ Settings and history are stored separately in your user profile.
 `Alt+E` opens the picker immediately after the active text cursor, falling back
 to the mouse pointer when an application does not expose a text cursor.
 Left-clicking the tray icon also opens it. Right-click the icon to configure
-sorting, languages, **My vocabulary**, learning, and clearing local
-usage history. **Exit** quits the application; `Esc` closes the picker.
+sorting, languages, **My vocabulary**, learning, and startup/shortcut settings. **Exit** quits the application; `Esc` closes the picker.
 
 ## Startup and shortcut settings
 
@@ -148,8 +147,7 @@ query is suggested as your own phrase. With no results, choose **Teach this phra
 and find the emoji you want.
 
 **My vocabulary** in the tray menu lets you create, edit, and delete aliases.
-**Save alias** saves; **Close** discards the draft. Saved aliases are retained
-when usage history is cleared.
+**Save alias** saves; **Close** discards the draft.
 
 The window is resizable. The left panel contains saved aliases and pinned
 favorites. In **Alias editor**, use **Search emoji** and **Choose an emoji** to
@@ -188,10 +186,7 @@ the next time the picker opens, so repeated insertion does not move results.
 You can also choose sorting in the tray menu, which shows the active mode.
 Most recent use is the default. Previous choices and usage counts are stored locally.
 
-**Clear learned history** deletes recent choices, usage counts, and learned
-queries after confirmation. Aliases, combinations, favorites, appearance settings,
-and display languages are retained. See [learning, favorites, and stable results](learning.md)
-for ranking rules.
+See [learning, favorites, and stable results](learning.md) for ranking rules.
 
 ## Local data and backups
 

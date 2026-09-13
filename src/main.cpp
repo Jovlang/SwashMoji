@@ -64,7 +64,6 @@ constexpr int kRecoveryHeight = 68;
 constexpr int kExitId = 200;
 constexpr int kSortRecentId = 202;
 constexpr int kSortMostUsedId = 203;
-constexpr int kClearUsageHistoryId = 204;
 constexpr int kAppIconId = 101;
 constexpr UINT kTrayMessage = WM_APP + 1;
 constexpr UINT kShowPickerMessage = WM_APP + 2;
@@ -777,20 +776,6 @@ void ToggleSortMode() {
     SetSortMode(!g_sortByUsage);
 }
 
-void ConfirmAndClearUsageHistory() {
-    const int result = MessageBoxW(
-        g_window,
-        L"Clear recent choices, usage counts, and learned search preferences?\n\nYour aliases, favorites, and appearance settings will stay. This cannot be undone.",
-        L"Clear learned history",
-        MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
-    if (result != IDYES) return;
-
-    ClearHistory(g_profile);
-    g_rankingPreferences = g_profile;
-    SaveProfile();
-    RefreshList();
-}
-
 const wchar_t* HelpText() {
     return L"SwashMoji — keyboard guide\r\n\r\n"
         L"Open from any app with your shortcut (default Alt+E; change it in tray Settings). Search English, Norwegian, German, Italian, French or Spanish names, phrases and aliases.\r\n\r\n"
@@ -811,7 +796,7 @@ const wchar_t* HelpText() {
         L"Alt+A: Add alias, or teach an unmatched phrase.\r\nAlt+P: Pin/unpin favorite.\r\n"
         L"My vocabulary in the tray edits aliases and orders up to ten favorites. Save alias saves; Close discards drafts.\r\n\r\n"
         L"Failures preserve your query and choice. Alt+C: Copy instead. Partial input is never automatically retried; check the destination. Direct insertion leaves the clipboard untouched.\r\n\r\n"
-        L"Learning changes future sessions; repeated insertion keeps results stable. Learn from searches toggles query learning. Clear learned history retains aliases, combinations, favorites and appearance.\r\n\r\n"
+        L"Learning changes future sessions; repeated insertion keeps results stable. Learn from searches toggles query learning.\r\n\r\n"
         L"Preferences stay locally in %LOCALAPPDATA%\\SwashMoji. No runtime network access.";
 }
 
@@ -935,7 +920,6 @@ void ShowTrayMenu() {
     AppendMenuW(menu, MF_STRING, kSortMostUsedId, L"Sort: Most used");
     CheckMenuRadioItem(menu, kSortRecentId, kSortMostUsedId,
                        g_sortByUsage ? kSortMostUsedId : kSortRecentId, MF_BYCOMMAND);
-    AppendMenuW(menu, MF_STRING, kClearUsageHistoryId, L"Clear learned history...");
     AppendMenuW(menu, MF_STRING, kVocabularyId, L"My vocabulary...");
     AppendMenuW(menu, MF_STRING, kDisplayLanguagesId, L"Languages...");
     AppendMenuW(menu, MF_STRING, kActivationSettingsId, L"Settings...");
@@ -955,8 +939,6 @@ void ShowTrayMenu() {
         SetSortMode(false);
     } else if (command == kSortMostUsedId) {
         SetSortMode(true);
-    } else if (command == kClearUsageHistoryId) {
-        ConfirmAndClearUsageHistory();
     } else if (command == kVocabularyId) {
         OpenVocabulary(false);
     } else if (command == kActivationSettingsId) {
