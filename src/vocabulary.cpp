@@ -415,6 +415,20 @@ struct CombinationEditor {
     std::vector<const Emoji*> variants;
     bool loading{};
 };
+struct VocabularyPages {
+    Editor& editor;
+    CombinationEditor& combinations;
+    HWND vocabulary{};
+    HWND combination{};
+};
+void SelectVocabularyPage(HWND dialog, VocabularyPages& pages, bool combinations) {
+    CheckDlgButton(dialog, IDC_ALIASES_TAB, combinations ? BST_UNCHECKED : BST_CHECKED);
+    CheckDlgButton(dialog, IDC_COMBINATIONS_TAB, combinations ? BST_CHECKED : BST_UNCHECKED);
+    ShowWindow(pages.vocabulary, combinations ? SW_HIDE : SW_SHOW);
+    ShowWindow(pages.combination, combinations ? SW_SHOW : SW_HIDE);
+    InvalidateRect(GetDlgItem(dialog, IDC_ALIASES_TAB), nullptr, FALSE);
+    InvalidateRect(GetDlgItem(dialog, IDC_COMBINATIONS_TAB), nullptr, FALSE);
+}
 void ComboStatus(HWND dialog, const std::wstring& text) {
     const auto localized = DialogText(dialog, text.c_str());
     SetDlgItemTextW(dialog, IDC_COMBO_STATUS, localized.c_str());
@@ -618,6 +632,84 @@ void EditCombinations(HWND dialog, Editor& editor) {
     DialogBoxParamW(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE)), MAKEINTRESOURCEW(IDD_COMBINATIONS),
         dialog, CombinationProc, reinterpret_cast<LPARAM>(&state));
 }
+
+INT_PTR CALLBACK VocabularyPagesProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
+    auto* pages = reinterpret_cast<VocabularyPages*>(GetWindowLongPtrW(dialog, DWLP_USER));
+    if (message == WM_INITDIALOG) {
+        pages = reinterpret_cast<VocabularyPages*>(lParam);
+        SetWindowLongPtrW(dialog, DWLP_USER, lParam);
+        const auto instance = reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE));
+        pages->vocabulary = CreateDialogParamW(instance, MAKEINTRESOURCEW(IDD_VOCABULARY), dialog, DialogProc,
+                                               reinterpret_cast<LPARAM>(&pages->editor));
+        pages->combination = CreateDialogParamW(instance, MAKEINTRESOURCEW(IDD_COMBINATIONS), dialog, CombinationProc,
+                                                reinterpret_cast<LPARAM>(&pages->combinations));
+        if (!pages->vocabulary || !pages->combination) { EndDialog(dialog, -1); return TRUE; }
+        for (const auto page : {pages->vocabulary, pages->combination}) {
+            SetWindowLongPtrW(page, GWL_STYLE, (GetWindowLongPtrW(page, GWL_STYLE) &
+                ~(WS_POPUP | WS_CAPTION | WS_THICKFRAME | WS_SYSMENU | WS_MAXIMIZEBOX)) | WS_CHILD | DS_CONTROL);
+            SetWindowLongPtrW(page, GWL_EXSTYLE, (GetWindowLongPtrW(page, GWL_EXSTYLE) &
+                ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE)) | WS_EX_CONTROLPARENT);
+            SetParent(page, dialog);
+            SetWindowPos(page, nullptr, 0, 0, 0, 0,
+                         SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+        }
+        SetWindowLongPtrW(pages->vocabulary, GWLP_ID, IDC_VOCABULARY_PAGE);
+        SetWindowLongPtrW(pages->combination, GWLP_ID, IDC_COMBINATIONS_PAGE);
+        ShowWindow(GetDlgItem(pages->vocabulary, IDCANCEL), SW_HIDE);
+        ShowWindow(GetDlgItem(pages->vocabulary, IDC_COMBINATIONS), SW_HIDE);
+        ShowWindow(GetDlgItem(pages->combination, IDCANCEL), SW_HIDE);
+        LocalizeDialog(dialog, pages->editor.profile.settings.uiLanguage);
+        NativeTheme::Apply(dialog);
+        SetWindowSubclass(GetDlgItem(dialog, IDC_ALIASES_TAB), VocabularyStyle::ControlProc, 1, 5);
+        SetWindowSubclass(GetDlgItem(dialog, IDC_COMBINATIONS_TAB), VocabularyStyle::ControlProc, 1, 5);
+        SetWindowSubclass(GetDlgItem(dialog, IDCANCEL), VocabularyStyle::ControlProc, 1, 1);
+        PostMessageW(dialog, WM_SIZE, 0, 0);
+        SelectVocabularyPage(dialog, *pages, false);
+        return TRUE;
+    }
+    if (!pages) return FALSE;
+    INT_PTR themeResult{};
+    if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
+    if (message == WM_ERASEBKGND) {
+        RECT client{}; GetClientRect(dialog, &client);
+        FillRect(reinterpret_cast<HDC>(wParam), &client, NativeTheme::BackgroundBrush()); return TRUE;
+    }
+    if (message == WM_SIZE) {
+        RECT client{}; GetClientRect(dialog, &client);
+        const int margin = VocabularyStyle::Px(dialog, 10);
+        const int tabHeight=VocabularyStyle::Px(dialog,32);
+        MoveWindow(GetDlgItem(dialog,IDC_ALIASES_TAB),margin,margin,VocabularyStyle::Px(dialog,136),tabHeight,TRUE);
+        MoveWindow(GetDlgItem(dialog,IDC_COMBINATIONS_TAB),margin+VocabularyStyle::Px(dialog,136),margin,
+                   VocabularyStyle::Px(dialog,176),tabHeight,TRUE);
+        RECT page{margin,margin+tabHeight,client.right-margin,client.bottom-margin*2-VocabularyStyle::Px(dialog,32)};
+        for (const auto child : {pages->vocabulary, pages->combination})
+            MoveWindow(child, page.left, page.top, page.right - page.left, page.bottom - page.top, TRUE);
+        MoveWindow(GetDlgItem(dialog, IDCANCEL), client.right - margin - VocabularyStyle::Px(dialog, 88),
+                   client.bottom - margin - VocabularyStyle::Px(dialog, 24), VocabularyStyle::Px(dialog, 88),
+                   VocabularyStyle::Px(dialog, 24), TRUE);
+        return TRUE;
+    }
+    if (message == WM_COMMAND && (LOWORD(wParam) == IDC_ALIASES_TAB || LOWORD(wParam) == IDC_COMBINATIONS_TAB)) {
+        const bool combinations = LOWORD(wParam) == IDC_COMBINATIONS_TAB;
+        SelectVocabularyPage(dialog, *pages, combinations);
+        if (!combinations) {
+            RefreshAliases(pages->vocabulary, pages->editor);
+            RefreshPins(pages->vocabulary, pages->editor);
+            FindTargets(pages->vocabulary, pages->editor);
+        }
+        SetFocus(GetNextDlgTabItem(combinations ? pages->combination : pages->vocabulary, nullptr, FALSE));
+        return TRUE;
+    }
+    if (message == WM_GETMINMAXINFO) {
+        RECT bounds{0, 0, 608, 506}; MapDialogRect(dialog, &bounds);
+        reinterpret_cast<MINMAXINFO*>(lParam)->ptMinTrackSize = {bounds.right, bounds.bottom};
+        return TRUE;
+    }
+    if (message == WM_CLOSE || (message == WM_COMMAND && LOWORD(wParam) == IDCANCEL)) {
+        EndDialog(dialog, IDCANCEL); return TRUE;
+    }
+    return FALSE;
+}
 struct CombinationDetails { const Catalog& catalog; const Combination& combination; const DisplayLanguages& languages; };
 INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
     INT_PTR themeResult{};
@@ -648,7 +740,9 @@ void ShowCombinationDetails(HWND owner, HINSTANCE instance, const Catalog& catal
 bool ShowVocabulary(HWND owner, HINSTANCE instance, const Catalog& catalog, Profile& profile,
                     const std::wstring& phrase, const ResultId& target, const std::function<bool()>& persist) {
     Editor editor{catalog, profile, phrase, target, persist};
-    return DialogBoxParamW(instance, MAKEINTRESOURCEW(IDD_VOCABULARY), owner, DialogProc,
-                          reinterpret_cast<LPARAM>(&editor)) != -1;
+    CombinationEditor combinations{editor};
+    VocabularyPages pages{editor, combinations};
+    return DialogBoxParamW(instance, MAKEINTRESOURCEW(IDD_VOCABULARY_TABS), owner, VocabularyPagesProc,
+                           reinterpret_cast<LPARAM>(&pages)) != -1;
 }
 }

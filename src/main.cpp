@@ -1503,6 +1503,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
     case WM_HOTKEY:
         if (g_vocabularyOpen || g_detailsOpen) return 0;
         if (g_activation.Id() && wParam == static_cast<WPARAM>(g_activation.Id())) {
+            if (IsWindowVisible(window)) return 0;
             SetWindowTextW(g_edit, L"");
             CenterOnActiveMonitor();
         }

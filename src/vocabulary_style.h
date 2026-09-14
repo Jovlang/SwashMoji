@@ -45,6 +45,11 @@ inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LP
         }
     }
     if (message == WM_MOUSELEAVE && kind != 2) { RemovePropW(window, L"VocabularyHover"); InvalidateRect(window, nullptr, FALSE); }
+    if (kind == 5 && message == WM_KEYDOWN && (wParam == VK_LEFT || wParam == VK_RIGHT)) {
+        const int target = GetDlgCtrlID(window) == IDC_ALIASES_TAB ? IDC_COMBINATIONS_TAB : IDC_ALIASES_TAB;
+        const auto sibling = GetDlgItem(GetParent(window), target);
+        SetFocus(sibling); SendMessageW(sibling, BM_CLICK, 0, 0); return 0;
+    }
     if (message == WM_SETFOCUS || message == WM_KILLFOCUS || message == WM_ENABLE || message == BM_SETSTATE || message == BM_SETSTYLE || message == WM_UPDATEUISTATE) {
         auto result = DefSubclassProc(window, message, wParam, lParam);
         if (kind != 2) {
@@ -75,6 +80,25 @@ inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LP
         auto arrow=r; arrow.left=arrow.right-Px(window,28);
         NativeEmoji::DrawLine(dc,arrow,L"⌄",static_cast<float>(Px(window,16)),NativeTheme::SecondaryText(),true,false,true);
         EndPaint(window,&paint); return 0;
+    }
+    if (message == WM_PAINT && kind == 5 && !NativeTheme::HighContrast()) {
+        PAINTSTRUCT paint{}; auto dc=BeginPaint(window,&paint); RECT r{}; GetClientRect(window,&r);
+        const bool active=SendMessageW(window,BM_GETCHECK,0,0)==BST_CHECKED;
+        const bool hover=GetPropW(window,L"VocabularyHover")!=nullptr;
+        FillRect(dc,&r,NativeTheme::BackgroundBrush());
+        auto tab=r; tab.bottom-=Px(window,3);
+        const auto fill=active ? Panel() : hover ? RGB(35,37,40) : NativeTheme::Background;
+        auto tabBrush=CreateSolidBrush(fill); FillRect(dc,&tab,tabBrush); DeleteObject(tabBrush);
+        if(active) {
+            RECT accent{r.left,r.bottom-Px(window,3),r.right,r.bottom};
+            auto brush=CreateSolidBrush(RGB(133,180,244)); FillRect(dc,&accent,brush); DeleteObject(brush);
+        }
+        wchar_t label[128]{}; GetWindowTextW(window,label,128);
+        auto old=SelectObject(dc,reinterpret_cast<HFONT>(SendMessageW(window,WM_GETFONT,0,0)));
+        SetBkMode(dc,TRANSPARENT); SetTextColor(dc,active ? NativeTheme::Foreground() : NativeTheme::SecondaryText());
+        DrawTextW(dc,label,-1,&tab,DT_CENTER|DT_VCENTER|DT_SINGLELINE|DT_HIDEPREFIX);
+        if(GetFocus()==window) { auto focus=tab; InflateRect(&focus,-Px(window,5),-Px(window,5)); DrawFocusRect(dc,&focus); }
+        SelectObject(dc,old); EndPaint(window,&paint); return 0;
     }
     if (message == WM_PAINT && kind == 1 && !NativeTheme::HighContrast()) {
         PAINTSTRUCT paint{}; auto dc = BeginPaint(window, &paint); RECT r{}; GetClientRect(window, &r);

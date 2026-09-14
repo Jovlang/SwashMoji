@@ -39,7 +39,9 @@ void CALLBACK Confirm(HWND, UINT, UINT_PTR timer, DWORD) {
 }
 
 void CALLBACK DriveDialog(HWND, UINT, UINT_PTR timer, DWORD) {
-    const auto dialog = OwnDialog(L"My vocabulary - SwashMoji");
+    const auto host = OwnDialog(L"My vocabulary - SwashMoji");
+    if (!host) return;
+    const auto dialog = GetDlgItem(host, IDC_VOCABULARY_PAGE);
     if (!dialog) return;
     KillTimer(nullptr, timer);
     try {
@@ -104,7 +106,7 @@ void CALLBACK DriveDialog(HWND, UINT, UINT_PTR timer, DWORD) {
             }
         }
     } catch (const std::exception& error) { dialogFailure = error.what(); }
-    Command(dialog, IDCANCEL);
+    Command(host, IDCANCEL);
 }
 
 void ExerciseDialog(DialogAction next) {

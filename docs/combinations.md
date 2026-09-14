@@ -1,6 +1,6 @@
 # Saved combinations
 
-Open **My vocabulary → New combination / edit...**. Enter a name/trigger, search
+Open **My vocabulary → Saved combinations**. Enter a name/trigger, search
 for a catalog emoji, choose its explicit variant, and select **Add**. Build a
 sequence of 2–8 entries with **Remove**, **Move left**, and **Move right**. The
 ordered tiles serve as both editor and visual preview. **Save combination** applies the draft;

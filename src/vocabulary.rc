@@ -1,6 +1,16 @@
 #include <windows.h>
 #include "vocabulary_ids.h"
 
+IDD_VOCABULARY_TABS DIALOGEX 0, 0, 608, 506
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MAXIMIZEBOX
+CAPTION "My vocabulary - SwashMoji"
+FONT 10, "Segoe UI"
+BEGIN
+    CONTROL "Saved aliases", IDC_ALIASES_TAB, "BUTTON", BS_AUTORADIOBUTTON | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, 16, 8, 132, 28
+    CONTROL "Saved combinations", IDC_COMBINATIONS_TAB, "BUTTON", BS_AUTORADIOBUTTON | BS_PUSHLIKE | WS_TABSTOP, 152, 8, 164, 28
+    DEFPUSHBUTTON "&Close", IDCANCEL, 510, 474, 88, 24
+END
+
 // Compact dialog-unit rhythm shared by these native editors:
 // 12 outer margin, 12 section gap, 4 label-to-control gap,
 // 6 related-control gap, 8 button gap, and 20-22 button height.

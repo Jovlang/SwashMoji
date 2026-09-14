@@ -145,7 +145,25 @@ int main(int argc, char** argv) {
         SetDlgItemTextW(dialog, IDC_PHRASE, L"draft");
         CHECK(Text(dialog, IDC_VOCABULARY_STATUS) == L"Unsaved changes");
         DestroyWindow(dialog); dialog = nullptr;
+        CombinationEditor tabCombination{vocabulary};
+        VocabularyPages pages{vocabulary, tabCombination};
+        dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDD_VOCABULARY_TABS), nullptr,
+                                    VocabularyPagesProc, reinterpret_cast<LPARAM>(&pages));
+        CHECK(dialog && pages.vocabulary && pages.combination);
+        CHECK(GetDlgItem(dialog, IDC_ALIASES_TAB) && GetDlgItem(dialog, IDC_COMBINATIONS_TAB));
+        CHECK(IsDlgButtonChecked(dialog, IDC_ALIASES_TAB) == BST_CHECKED);
+        CHECK((GetWindowLongPtrW(pages.vocabulary, GWL_STYLE) & WS_VISIBLE) != 0);
+        CHECK((GetWindowLongPtrW(pages.combination, GWL_STYLE) & WS_VISIBLE) == 0);
+        SendMessageW(GetDlgItem(dialog, IDC_ALIASES_TAB), WM_KEYDOWN, VK_RIGHT, 0);
+        CHECK(IsDlgButtonChecked(dialog, IDC_COMBINATIONS_TAB) == BST_CHECKED);
+        CHECK((GetWindowLongPtrW(pages.vocabulary, GWL_STYLE) & WS_VISIBLE) == 0);
+        CHECK((GetWindowLongPtrW(pages.combination, GWL_STYLE) & WS_VISIBLE) != 0);
+        CHECK((GetWindowLongPtrW(pages.combination, GWL_STYLE) & WS_CHILD) != 0);
+        constexpr LONG_PTR pageEdges = WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE;
+        CHECK((GetWindowLongPtrW(pages.vocabulary, GWL_EXSTYLE) & pageEdges) == 0);
+        CHECK((GetWindowLongPtrW(pages.combination, GWL_EXSTYLE) & pageEdges) == 0);
+        DestroyWindow(dialog); dialog = nullptr;
         CHECK(saves == 3);
-        std::cout << "PASS: native editor layout, controls, validation, ordering, variants, rename and discarded drafts\n";
+        std::cout << "PASS: native tabbed editor layout, controls, validation, ordering, variants, rename and discarded drafts\n";
     } catch (const std::exception& e) { if (dialog) DestroyWindow(dialog); std::cerr << e.what() << '\n'; return 1; }
 }

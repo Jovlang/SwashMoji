@@ -143,8 +143,7 @@ share usage history, so they are not learned or counted as separate families.
 **Details** (`Alt+D` or the result menu) shows a larger preview and valid catalog
 variants, including mixed skin tones. **Use once** selects the variant for the
 next successful insertion or copy without changing the global skin tone.
-**Cancel** discards the draft. Hold the pointer over a result for about 350 ms
-to preview it without moving the keyboard selection.
+**Cancel** discards the draft.
 
 ## Aliases and learned phrases
 
@@ -152,7 +151,8 @@ Right-click a result and choose **Add alias**, or press `Alt+A`. The current
 query is suggested as your own phrase. With no results, choose **Teach this phrase**
 and find the emoji you want.
 
-**My vocabulary** in the tray menu lets you create, edit, and delete aliases.
+**My vocabulary** in the tray menu opens one window with tabs for aliases and
+favorites, and for saved combinations. Use the first tab to create, edit, and delete aliases.
 **Save alias** saves; **Close** discards the draft.
 
 The window is resizable. The left panel contains saved aliases and pinned
@@ -161,7 +161,7 @@ search and select from a single list with names in your display languages.
 The alias and combination editors use the hint "Search emoji across languages"
 because search includes all supported languages.
 The selected row identifies the target for **Save alias** and **Pin favorite**.
-**Close** and the combination editor entry point are at the bottom of the window.
+The shared **Close** action is at the bottom of the window.
 
 ## Favorites and combinations
 
@@ -169,15 +169,15 @@ The selected row identifies the target for **Save alias** and **Pin favorite**.
 Up to ten favorites appear first when the query is empty. **My vocabulary** lets
 you move them up/down or remove them.
 
-**New combination / edit...** in **My vocabulary** saves sequences of 2–8 emoji
+The **Saved combinations** tab in **My vocabulary** saves sequences of 2–8 emoji
 under a custom name, for example `launch` → 🚀✨. Choose each emoji's skin tone
 and the sequence order before saving. Global skin-tone changes do not affect
 saved sequences. The variant field appears only when the selected emoji has
 multiple variants. Otherwise, **Add** uses the sole variant automatically.
 
 The combination editor displays the sequence as horizontal emoji tiles. Arrow
-buttons move the selected emoji, **Save combination** saves, and **Close** at the
-bottom closes the window and discards the draft. The saved-combination and result
+buttons move the selected emoji, and **Save combination** saves. The shared **Close**
+button closes the window and discards the draft. The saved-combination and result
 lists adapt to the window size.
 
 See [combinations](combinations.md) for editing, limits, and test status.

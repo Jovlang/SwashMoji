@@ -26,6 +26,7 @@ Alt+F replaces the old Tab font shortcut. Other existing
 Alt shortcuts and Ctrl+Backspace/undo remain available. Escape closes an active
 dialog or help first; otherwise it dismisses the picker and requests focus for
 the still-valid original target. Vocabulary uses Save alias as its default button.
+Pressing the configured activation shortcut while the picker is already open is a no-op.
 
 The picker shows only an unlabelled, empty search control, the grid, and a
 compact selected-name line using the exact variant's catalog names and the
