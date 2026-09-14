@@ -4,7 +4,20 @@ SwashMoji has a repeatable automated release workflow. Release acceptance remain
 open: automated and hidden-control checks cannot establish actual delivery to
 all target apps, visible opening time, accessibility or user-study outcomes.
 
-## Startup and shortcut settings — 2026-09-13
+## Version 0.3 automated candidate — 2026-09-14
+
+The `build-release-0.3` Release build and all 13 CTest suites passed, including
+the offline catalog generator. Staged-package and extracted-ZIP smoke checks also
+passed. The portable payload contains the expected five files and round-tripped
+without hash changes.
+
+Hidden-control performance p95 values were 21.135 ms for empty-session preparation,
+29.119 ms for the broad `r` query, and 11.358–17.858 ms for the other recorded
+queries. These measurements do not close the visible-performance gate below.
+Desktop insertion, compatibility, DPI, accessibility and user acceptance remain
+open as documented in the acceptance protocol.
+
+## Historical: startup and shortcut settings — 2026-09-13
 
 `build-agent` builds successfully with the new Settings dialog. All 12 C++ suites
 passed across the full run and a targeted storage rerun. The sandboxed storage
@@ -20,7 +33,7 @@ in `intent_phrases.tsv`. Actual global shortcut activation, visible Settings
 layout/accessibility, sign-in startup, and Windows Startup apps overrides still
 need desktop acceptance. No real startup entry was enabled during verification.
 
-## Current verification — 2026-09-10
+## Historical: search-policy verification — 2026-09-10
 
 `build-search-policy` is the retained build. The application build and all 13 CTest
 suites passed, including the 111-case search corpus, multilingual exact-name
