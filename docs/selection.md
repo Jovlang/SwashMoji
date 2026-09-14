@@ -41,11 +41,7 @@ balance real items across columns without synthetic empty items; every ranked
 result appears exactly once. Navigation uses physical row/column coordinates
 instead of assuming adjacent ranking indices are spatial neighbors.
 
-## Preview and variants
-
-A deliberate hover of roughly 350 ms opens a larger, nonactivating preview.
-Moving away, scrolling, changing results, opening a dialog or losing activation
-cancels it. Hover does not alter selection or the original insertion target.
+## Variants
 
 Details (Alt+D or context menu) opens an accessible native modal dialog.
 The variant list contains complete catalog sequences from the selected family,
@@ -93,4 +89,4 @@ Do not run desktop input tests while a user is typing or holding modifiers.
 
 See [contributor workflow](../CONTRIBUTING.md) for builds and
 [release validation](release-validation.md) for current results and the remaining
-visual, keyboard, hover, target-app, DPI and accessibility acceptance checklist.
+visual, keyboard, target-app, DPI and accessibility acceptance checklist.

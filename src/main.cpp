@@ -56,7 +56,6 @@ constexpr int kRecoveryId = 103;
 constexpr int kCopyInsteadId = 104;
 constexpr int kTeachPhraseId = 105;
 constexpr int kDetailsId = 106;
-constexpr UINT_PTR kHoverTimerId = 2;
 constexpr int kVocabularyId = 205;
 constexpr int kPinId = 206;
 constexpr int kLearnQueriesId = 207;
@@ -91,10 +90,8 @@ HWND g_helpWindow{};
 HWND g_recoveryLabel{};
 HWND g_copyInstead{};
 HWND g_teachPhrase{};
-HWND g_hoverWindow{};
 bool g_detailsOpen{};
-int g_hoverIndex{-1}, g_pressedIndex{-1};
-POINT g_hoverPoint{};
+int g_pressedIndex{-1};
 UINT g_dpi{96};
 ResultId g_variantTarget;
 std::wstring g_variantPayload;
@@ -105,7 +102,6 @@ bool HighContrast() {
 }
 COLORREF Background() { return HighContrast() ? GetSysColor(COLOR_WINDOW) : kBackground; }
 COLORREF Foreground() { return HighContrast() ? GetSysColor(COLOR_WINDOWTEXT) : kText; }
-void CloseHover();
 void OpenDetails();
 void UpdateDpi(UINT dpi);
 void ClampWindow(HWND window);
@@ -211,7 +207,6 @@ void RefreshList() {
     const auto oldIndex = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
     const auto previous = oldIndex >= 0 && static_cast<size_t>(oldIndex) < g_displayVisible.size()
         ? g_displayVisible[oldIndex].id : g_session.selected;
-    CloseHover();
     const bool preserveSelection = g_session.query == input;
     if (!preserveSelection) { g_variantTarget = {}; g_variantPayload.clear(); }
     g_session.query = input;
@@ -281,7 +276,6 @@ void CancelPendingReturn() {
 
 void OpenVocabulary(bool prefill) {
     if (g_vocabularyOpen || g_detailsOpen) return;
-    CloseHover();
     CancelPendingReturn();
     const int index = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     const auto selected = index >= 0 && index < static_cast<int>(g_displayVisible.size())
@@ -304,7 +298,6 @@ void OpenVocabulary(bool prefill) {
 }
 
 void DismissPicker() {
-    CloseHover();
     g_variantTarget = {}; g_variantPayload.clear();
     CancelPendingReturn();
     ShowWindow(g_window, SW_HIDE);
@@ -369,7 +362,6 @@ void CopySelection(ClipboardPlatform* platformOverride = nullptr) {
 }
 
 void InsertSelection(bool keepOpen = false, InputPlatform* platformOverride = nullptr) {
-    CloseHover();
     CancelPendingReturn();
     const int selected = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
     if (selected < 0 || selected >= static_cast<int>(g_displayVisible.size())) return;
@@ -872,7 +864,6 @@ void ShowHelp() {
 
 void OpenActivationSettings() {
     if (g_vocabularyOpen || g_detailsOpen) return;
-    CloseHover();
     std::wstring startup;
     const auto readResult = ReadStartupCommand(startup);
     ActivationPreferencesState state{g_profile.settings.activationHotkey, !startup.empty(), g_profile.settings.uiLanguage, L"", {}};
@@ -999,7 +990,6 @@ void ShowTrayMenu() {
         OpenActivationSettings();
     } else if (command == kDisplayLanguagesId) {
         if (g_vocabularyOpen || g_detailsOpen) return;
-        CloseHover();
         const auto selected = g_session.selected;
         g_vocabularyOpen = true;
         const bool opened = ShowLanguagePreferences(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)),
@@ -1038,12 +1028,6 @@ void LayoutChildren(HWND window) {
     const int recoveryY = footerY + (g_statusVisible ? Px(34) : Px(8));
     MoveWindow(g_recoveryLabel, margin, recoveryY, area.right - margin * 2 - Px(132), Px(kRecoveryHeight - 12), TRUE);
     MoveWindow(g_copyInstead, area.right - margin - Px(126), recoveryY + Px(8), Px(126), Px(30), TRUE);
-}
-
-void CloseHover() {
-    if (g_window) KillTimer(g_window, kHoverTimerId);
-    g_hoverIndex = -1;
-    if (g_hoverWindow) { DestroyWindow(g_hoverWindow); g_hoverWindow = nullptr; }
 }
 
 void SelectionChanged() {
@@ -1119,7 +1103,6 @@ void UpdateDpi(UINT dpi) {
         SendMessageW(g_list, LB_SETITEMHEIGHT, 0, Px(kResultSize));
         SendMessageW(g_list, LB_SETCOLUMNWIDTH, Px(kResultSize), 0);
     }
-    CloseHover();
 }
 
 void DrawLargePreview(HDC dc, RECT area, const std::wstring& payload, UINT dpi, int fontSize = 56, COLORREF color = CLR_INVALID) {
@@ -1232,7 +1215,7 @@ void OpenDetails() {
     if (result.id.kind == ResultKind::Combination) {
         const auto found = g_profile.combinations.find(result.id.value);
         if (found == g_profile.combinations.end()) return;
-        CloseHover(); CancelPendingReturn();
+        CancelPendingReturn();
         HWND focus = GetFocus(); g_detailsOpen = true;
         ShowCombinationDetails(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), g_catalog, found->second, g_profile.settings.displayLanguages);
         g_detailsOpen = false;
@@ -1243,7 +1226,7 @@ void OpenDetails() {
     if (state.variants.empty()) return;
     const auto payload = result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload;
     for (size_t i = 0; i < state.variants.size(); ++i) if (state.variants[i]->glyph == payload) state.selected = i;
-    CloseHover(); CancelPendingReturn();
+    CancelPendingReturn();
     HWND focus = GetFocus();
     g_detailsOpen = true;
     const auto answer = DialogBoxParamW(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)),
@@ -1255,49 +1238,6 @@ void OpenDetails() {
         RefreshList();
     }
     if (IsWindowVisible(g_window)) SetFocus(IsWindow(focus) ? focus : g_list);
-}
-
-LRESULT CALLBACK HoverProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
-    if (message == WM_NCHITTEST) return HTTRANSPARENT;
-    if (message == WM_MOUSEACTIVATE) return MA_NOACTIVATE;
-    if (message == WM_PAINT) {
-        PAINTSTRUCT paint{};
-        HDC dc = BeginPaint(window, &paint);
-        RECT area{}; GetClientRect(window, &area);
-        FillRect(dc, &area, GetSysColorBrush(COLOR_INFOBK));
-        if (g_hoverIndex >= 0 && static_cast<size_t>(g_hoverIndex) < g_displayVisible.size()) {
-            const auto& result = g_displayVisible[g_hoverIndex];
-            const auto payload = result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload;
-            RECT glyph = area; glyph.bottom = Px(80);
-            const auto combo = result.id.kind == ResultKind::Combination ? g_profile.combinations.find(result.id.value) : g_profile.combinations.end();
-            const int size = combo == g_profile.combinations.end() ? 56 : std::min<int>(56, (glyph.right - glyph.left) * 96 / static_cast<int>(g_dpi * combo->second.entries.size()));
-            DrawLargePreview(dc, glyph, payload, g_dpi, size);
-            RECT label{Px(10), Px(82), area.right - Px(10), area.bottom - Px(8)};
-            const auto* exact = g_catalog.Find(payload);
-            auto old = SelectObject(dc, g_statusFont);
-            SetTextColor(dc, GetSysColor(COLOR_INFOTEXT));
-            DrawTextW(dc, exact ? FormatEmojiDisplayName(*exact, g_profile.settings.displayLanguages).c_str() : result.label.c_str(), -1, &label, DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
-            SelectObject(dc, old);
-        }
-        EndPaint(window, &paint); return 0;
-    }
-    return DefWindowProcW(window, message, wParam, lParam);
-}
-
-void ShowHover() {
-    KillTimer(g_window, kHoverTimerId);
-    POINT cursor{}; GetCursorPos(&cursor);
-    POINT local = cursor; ScreenToClient(g_list, &local);
-    if (g_hoverIndex < 0 || HitResult(local) != g_hoverIndex || !IsWindowVisible(g_window) ||
-        g_detailsOpen || g_vocabularyOpen || GetForegroundWindow() != g_window) { CloseHover(); return; }
-    WNDCLASSW cls{}; cls.hInstance = GetModuleHandleW(nullptr); cls.lpszClassName = L"SwashMojiHover";
-    cls.lpfnWndProc = HoverProc; cls.hCursor = LoadCursorW(nullptr, IDC_ARROW);
-    RegisterClassW(&cls);
-    g_hoverWindow = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT,
-        cls.lpszClassName, L"Emoji preview", WS_POPUP | WS_BORDER, cursor.x + Px(14), cursor.y + Px(20),
-        Px(300), Px(150), g_window, nullptr, cls.hInstance, nullptr);
-    ClampWindow(g_hoverWindow);
-    ShowWindow(g_hoverWindow, SW_SHOWNOACTIVATE);
 }
 
 [[maybe_unused]] void MoveSelection(int direction) {
@@ -1314,19 +1254,7 @@ void ShowHover() {
 LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lParam) {
     const WNDPROC original = control == g_edit ? g_editProc : g_listProc;
     if (message == WM_GETDLGCODE) return CallWindowProcW(original, control, message, wParam, lParam) | DLGC_WANTARROWS;
-    if (control == g_list && message == WM_MOUSEMOVE) {
-        POINT point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-        const int index = HitResult(point);
-        if (index != g_hoverIndex || abs(point.x - g_hoverPoint.x) > Px(3) || abs(point.y - g_hoverPoint.y) > Px(3)) {
-            CloseHover();
-            g_hoverIndex = index; g_hoverPoint = point;
-            if (index >= 0) SetTimer(g_window, kHoverTimerId, 350, nullptr);
-        }
-        TRACKMOUSEEVENT track{sizeof(track), TME_LEAVE, control, 0}; TrackMouseEvent(&track);
-    }
-    if (control == g_list && (message == WM_MOUSELEAVE || message == WM_MOUSEWHEEL || message == WM_HSCROLL)) CloseHover();
     if (control == g_list && message == WM_LBUTTONDOWN) {
-        CloseHover();
         g_pressedIndex = HitResult({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
         if (g_pressedIndex < 0) return 0;
     }
@@ -1345,7 +1273,6 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
             SelectionChanged();
         }
         if (g_displayVisible.empty()) return 0;
-        CloseHover();
         HMENU menu = CreatePopupMenu();
         AppendMenuW(menu, MF_STRING, kDetailsId, UiText(g_profile.settings.uiLanguage, L"Details...").c_str());
         AppendMenuW(menu, MF_STRING, kVocabularyId, (UiText(g_profile.settings.uiLanguage, L"Add alias...") + L"\tAlt+A").c_str());
@@ -1373,7 +1300,7 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
         return result;
     }
     if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN) {
-        if (wParam == VK_TAB) { CloseHover(); FocusNext((GetKeyState(VK_SHIFT) & 0x8000) != 0); return 0; }
+        if (wParam == VK_TAB) { FocusNext((GetKeyState(VK_SHIFT) & 0x8000) != 0); return 0; }
         if (wParam == 'I' && (GetKeyState(VK_MENU) & 0x8000)) {
             CycleSkinTone();
             return 0;
@@ -1408,7 +1335,6 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
             if (wParam == VK_PRIOR) dx = -kEmojiColumns;
             if (wParam == VK_NEXT) dx = kEmojiColumns;
             if (dx || dy || wParam == VK_HOME || wParam == VK_END) {
-                CloseHover();
                 const auto old = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
                 auto next = GridMove(old < 0 ? 0 : old, g_displayVisible.size(), rows, dx, dy);
                 if (wParam == VK_HOME) next = 0;
@@ -1478,7 +1404,6 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
     }
     case WM_SETTINGCHANGE:
     case WM_SYSCOLORCHANGE:
-        CloseHover();
         SetWindowTheme(g_edit, HighContrast() ? L"" : L"DarkMode_Explorer", nullptr);
         SetWindowTheme(g_list, HighContrast() ? L"" : L"DarkMode_Explorer", nullptr);
         RedrawWindow(window, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
@@ -1489,7 +1414,6 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         return 1;
     }
     case WM_ACTIVATE:
-        if (LOWORD(wParam) == WA_INACTIVE) CloseHover();
         break;
     case WM_SIZE: LayoutChildren(window); return 0;
     case WM_MEASUREITEM:
@@ -1584,7 +1508,6 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         }
         return 0;
     case WM_TIMER:
-        if (wParam == kHoverTimerId) { ShowHover(); return 0; }
         if (wParam == kStatusTimerId) {
             KillTimer(window, kStatusTimerId);
             UpdateStatusLine();
@@ -1624,7 +1547,6 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         if ((wParam & 0xFFF0) == SC_CLOSE) { DismissPicker(); return 0; }
         break;
     case WM_DESTROY:
-        CloseHover();
         CancelPendingReturn();
         if (g_foregroundHook) { UnhookWinEvent(g_foregroundHook); g_foregroundHook = nullptr; }
         g_activation.Clear(window);
@@ -1678,7 +1600,7 @@ bool ProcessAppMessage(const MSG& message) {
             return true;
         }
         if (pickerKey && message.wParam == VK_TAB) {
-            CloseHover(); FocusNext((GetKeyState(VK_SHIFT) & 0x8000) != 0);
+            FocusNext((GetKeyState(VK_SHIFT) & 0x8000) != 0);
             return true;
         }
         if (pickerKey && altPressed && firstKeyPress) {

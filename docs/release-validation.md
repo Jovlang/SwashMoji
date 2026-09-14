@@ -112,7 +112,7 @@ Do not check a row merely because the corresponding state test passes.
 
 | Gate | Required exercise | Status |
 | --- | --- | --- |
-| Picker walkthrough | Selected-language footer, long/missing names, favorites, hover versus keyboard selection, Details and one-use variants; all shortcuts and 1–3 rows including partial pages | Open |
+| Picker walkthrough | Selected-language footer, long/missing names, favorites, pointer versus keyboard selection, Details and one-use variants; all shortcuts and 1–3 rows including partial pages | Open |
 | Combination walkthrough | Create launch → 🚀✨ and please → 🥺🙏; reorder, tone/ZWJ variants, rename, alias, pin, copy, insert, restart, delete cascade and cancellation | Open |
 | Controlled Win32 target | Run both native harnesses in an interactive foreground-capable session; check exact UTF-16 and unchanged clipboard for direct input | Skipped here |
 | Target applications | Notepad, browser input and contenteditable, Chromium desktop editor/chat app and terminal: Enter, Ctrl+Enter repeats, copy/paste, editor round trip and failure recovery | Open; record actual versions |
