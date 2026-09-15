@@ -17,6 +17,21 @@ queries. These measurements do not close the visible-performance gate below.
 Desktop insertion, compatibility, DPI, accessibility and user acceptance remain
 open as documented in the acceptance protocol.
 
+## Version 0.3 desktop follow-up — 2026-09-15
+
+Both interactive harnesses passed when run in a foreground-capable desktop session.
+`SwashMojiNativeInputTests.exe` verified exact multi-code-point emoji and repeat
+input into a native Win32 edit, an unchanged clipboard, and rejection of stale and
+internal targets. `SwashMojiPickerVocabularyTests.exe` verified persisted alias and
+favorite edits, failure recovery without learning, one-time learning after successful
+insert/copy, stable selection across repeat insertion, rows, tone and font changes,
+next-session ranking, exact delivery to the original target, and an unchanged clipboard.
+
+The executable from the extracted 0.3 ZIP also remained running after launch from
+the release workflow's path containing spaces and `æøå`, using an isolated
+`LOCALAPPDATA`; the test process was then stopped. This verifies packaged executable
+startup on the release machine, but not hotkey/tray behavior or clean-Windows startup.
+
 ## Historical: startup and shortcut settings — 2026-09-13
 
 `build-agent` builds successfully with the new Settings dialog. All 12 C++ suites
@@ -127,13 +142,13 @@ Do not check a row merely because the corresponding state test passes.
 | --- | --- | --- |
 | Picker walkthrough | Selected-language footer, long/missing names, favorites, pointer versus keyboard selection, Details and one-use variants; all shortcuts and 1–3 rows including partial pages | Open |
 | Combination walkthrough | Create launch → 🚀✨ and please → 🥺🙏; reorder, tone/ZWJ variants, rename, alias, pin, copy, insert, restart, delete cascade and cancellation | Open |
-| Controlled Win32 target | Run both native harnesses in an interactive foreground-capable session; check exact UTF-16 and unchanged clipboard for direct input | Skipped here |
+| Controlled Win32 target | Run both native harnesses in an interactive foreground-capable session; check exact UTF-16 and unchanged clipboard for direct input | Passed 2026-09-15 |
 | Target applications | Notepad, browser input and contenteditable, Chromium desktop editor/chat app and terminal: Enter, Ctrl+Enter repeats, copy/paste, editor round trip and failure recovery | Open; record actual versions |
 | Elevated target boundary | Normal-integrity picker over elevated synthetic target; record blocked/accepted behavior and copy recovery, without elevating the picker | Open |
 | DPI/monitors | 100%, 125%, 150%, 200%, mixed-DPI transitions and screen edges across picker, both editors, help and Details | Open; requires suitable displays |
 | Accessibility | High contrast, keyboard focus, Inspect names/selection semantics, Narrator variants, empty state and recovery announcements | Open |
 | Visible performance | Idle documented machine; populated fixture; at least 200 warm opens and query updates through first paint; retain raw samples and p95 | Open |
-| Portable application | Launch extracted executable on clean Windows with isolated LOCALAPPDATA (both SwashMoji and WinMoji roots); hotkey/tray, fresh profile, restart/migration, backup and future version | Core/data checks passed; application launch open |
+| Portable application | Launch extracted executable on clean Windows with isolated LOCALAPPDATA (both SwashMoji and WinMoji roots); hotkey/tray, fresh profile, restart/migration, backup and future version | Extracted app launch passed on release machine; core/data checks passed; clean-Windows and visible behavior open |
 | Consented user trials | Baseline and candidate, same device and task set, counterbalanced order; opening-to-insertion time, intended rank and abandonment | Open; no participants recruited |
 
 For trials, obtain participant consent before collecting observations. Use a small
