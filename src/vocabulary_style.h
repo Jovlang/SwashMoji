@@ -70,7 +70,8 @@ inline LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LP
         FillRect(dc,&r,PanelBrush());
         Round(dc,r,Input(),Px(window,8),GetFocus()==window ? RGB(133,180,244) : CLR_INVALID);
         const auto selected=SendMessageW(window,CB_GETCURSEL,0,0);
-        std::wstring label=L"Choose an emoji";
+        const auto* locale = reinterpret_cast<const char*>(GetPropW(GetParent(window), L"SwashMojiUiLocale"));
+        std::wstring label = UiText(locale ? locale : "en", L"Choose an emoji");
         if(selected>=0) {
             const auto length=SendMessageW(window,CB_GETLBTEXTLEN,selected,0);
             if(length>=0) { label.resize(static_cast<size_t>(length)+1); SendMessageW(window,CB_GETLBTEXT,selected,reinterpret_cast<LPARAM>(label.data())); label.resize(static_cast<size_t>(length)); }

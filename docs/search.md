@@ -58,6 +58,20 @@ preview. See [contributor workflow](../CONTRIBUTING.md) for building the preview
 
 ## Existing behavior
 
+Interface language is independent of catalog search and displayed emoji names.
+Profile version 7 stores `ui_language`; older profiles default to English.
+`UiText` supplies interface translations with English fallback. Dialog localization
+preserves resource keyboard mnemonics and translates only static labels and
+buttons, never edit or list contents. Settings and Details labels and combination
+status messages have translations in all five non-English interface locales.
+F1 help, recovery messages, profile diagnostics and confirmations also use the
+selected interface language. Core storage diagnostics remain language-neutral;
+the UI translates complete known messages, including joined recovery/save notices,
+without translating user text. Unknown diagnostics fall back to English. Fatal
+catalog-loading errors before profile loading use the default English interface;
+native Windows dialogs/buttons follow the OS language. Translated layout and
+screen-reader acceptance remain open.
+
 Search English, Norwegian, German, Italian, French and Spanish together, without a language switch or runtime
 network access. Exact personal aliases rank first, then exact English/localized
 names or a pasted known emoji, exact curated intent phrases, name prefixes,

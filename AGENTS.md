@@ -100,7 +100,9 @@ to unlock a build; use another build directory.
   preferences through picker, vocabulary, combination and details views. Omit
   missing/duplicate names and dangling separators; fall back to English when
   neither selected name exists. Matching another locale must not change display
-  languages. Localized emoji names do not translate the app's interface strings.
+  languages. The independent `uiLanguage` preference selects interface translations;
+  missing interface translations fall back to English. Preserve dialog mnemonics
+  and never translate user-entered text as an interface label.
 - Query learning stays within match classes and uses the complete normalized
   query. Ranking snapshots keep repeated insertions stable within a session.
   Preserve family IDs across skin tones; see `docs/learning.md`.
@@ -115,10 +117,11 @@ to unlock a build; use another build directory.
 - Preserve profile migration, backup recovery and unsupported-version protection.
   Use isolated directories for tests, never the user's real
   `%LOCALAPPDATA%\SwashMoji` or legacy `%LOCALAPPDATA%\WinMoji` data.
-  Profile version 6 adds `activation_hotkey` (Alt+E by default for versions 1–5).
+  Profile version 7 adds `ui_language` (English by default for versions 1–6).
+  Version 6 adds `activation_hotkey` (Alt+E by default for versions 1–5).
   Version 5 added `display_languages`; versions 1–4 migrate with `en`, `nb` defaults.
   Startup registration is per-user Windows configuration, not a profile field. History clearing retains aliases, combinations, favorites,
-  appearance settings, display languages and the activation shortcut.
+  appearance settings, display languages, interface language and the activation shortcut.
   Consult `docs/profile-format.md` before changing the file format.
 
 ## Catalog and documentation

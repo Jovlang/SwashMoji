@@ -154,6 +154,17 @@ void LayoutChildren(HWND window);
 void SetRecoveryMessage(const std::wstring& message);
 void ResizePicker(int height);
 
+int LocalizedMessageBox(HWND owner, const wchar_t* message, const wchar_t* title, UINT flags) {
+    return MessageBoxW(owner, UiDiagnostic(g_profile.settings.uiLanguage, message).c_str(),
+        UiText(g_profile.settings.uiLanguage, title).c_str(), flags);
+}
+
+void RefreshInterfaceLabels() {
+    SetWindowTextW(g_list, UiText(g_profile.settings.uiLanguage, L"Matching emoji").c_str());
+    SetWindowTextW(g_copyInstead, UiText(g_profile.settings.uiLanguage, L"Copy instead").c_str());
+    SetWindowTextW(g_teachPhrase, UiText(g_profile.settings.uiLanguage, L"No matches. Teach this phrase (Alt+A)").c_str());
+}
+
 void CaptureInputTarget(HWND active) {
     const auto target = CaptureExternalTarget(active);
     g_inputTarget = target;
@@ -252,7 +263,7 @@ void ToggleSelectedPin() {
     else {
         const auto result = Pin(g_profile, g_catalog, id);
         if (result == PinResult::LimitReached) {
-            MessageBoxW(g_window, L"You can pin up to ten favorites. Unpin one in My vocabulary to make room.", L"Favorites", MB_ICONINFORMATION);
+            LocalizedMessageBox(g_window, L"You can pin up to ten favorites. Unpin one in My vocabulary to make room.", L"Favorites", MB_ICONINFORMATION);
             return;
         }
         if (result != PinResult::Pinned) return;
@@ -285,7 +296,7 @@ void OpenVocabulary(bool prefill) {
         g_catalog, g_profile, prefill ? g_session.query : L"", prefill ? selected : ResultId{},
         [] { SaveProfile(); return !g_profileUnsaved; });
     g_vocabularyOpen = false;
-    if (!opened) MessageBoxW(g_window, L"Could not open My vocabulary.", L"SwashMoji", MB_ICONERROR);
+    if (!opened) LocalizedMessageBox(g_window, L"Could not open My vocabulary.", L"SwashMoji", MB_ICONERROR);
     RefreshList();
     for (size_t i = 0; i < g_displayVisible.size(); ++i) {
         if (g_displayVisible[i].id == selected) {
@@ -304,9 +315,9 @@ void DismissPicker() {
 }
 
 void SetRecoveryMessage(const std::wstring& message) {
-    g_recoveryMessage = message;
+    g_recoveryMessage = UiDiagnostic(g_profile.settings.uiLanguage, message);
     const bool visible = !message.empty();
-    SetWindowTextW(g_recoveryLabel, message.c_str());
+    SetWindowTextW(g_recoveryLabel, g_recoveryMessage.c_str());
     if (visible) NotifyWinEvent(EVENT_SYSTEM_ALERT, g_recoveryLabel, OBJID_CLIENT, CHILDID_SELF);
     ShowWindow(g_recoveryLabel, visible ? SW_SHOW : SW_HIDE);
     ShowWindow(g_copyInstead, visible ? SW_SHOW : SW_HIDE);
@@ -554,15 +565,15 @@ void CenterOnActiveMonitor() {
 
 void UpdateStatusLine() {
     if (!g_status) return;
-    if (!g_storageDiagnostic.empty()) { SetWindowTextW(g_status, g_storageDiagnostic.c_str()); return; }
+    if (!g_storageDiagnostic.empty()) { SetWindowTextW(g_status, UiDiagnostic(g_profile.settings.uiLanguage, g_storageDiagnostic).c_str()); return; }
     const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
-    std::wstring label = L"No matches. Teach this phrase with Alt+A.";
+    std::wstring label = UiText(g_profile.settings.uiLanguage, L"No matches. Teach this phrase with Alt+A.");
     if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size()) {
         const auto& result = g_displayVisible[index];
         const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
         label = exact && result.id.kind == ResultKind::Emoji
             ? FormatEmojiDisplayName(*exact, g_profile.settings.displayLanguages) : result.label;
-        if (result.id == g_variantTarget && !g_variantPayload.empty()) label += L" (once)";
+        if (result.id == g_variantTarget && !g_variantPayload.empty()) label += UiText(g_profile.settings.uiLanguage, L" (once)");
     }
     SetWindowTextW(g_status, label.c_str());
 }
@@ -570,8 +581,8 @@ void UpdateStatusLine() {
 void ShowFontToast() {
     if (!g_status || g_emojiFonts.empty()) return;
     const EmojiFont& font = g_emojiFonts[g_emojiFontIndex];
-    const std::wstring text = std::wstring(L"Font: ") + font.name +
-                              (font.color ? L" · Color" : L" · Monochrome");
+    const std::wstring text = UiText(g_profile.settings.uiLanguage, L"Font: ") + font.name +
+                              (font.color ? UiText(g_profile.settings.uiLanguage, L" · Color") : UiText(g_profile.settings.uiLanguage, L" · Monochrome"));
     SetWindowTextW(g_status, text.c_str());
     KillTimer(g_window, kStatusTimerId);
     SetTimer(g_window, kStatusTimerId, 800, nullptr);
@@ -601,7 +612,7 @@ void CycleSkinTone() {
     SaveSettings();
     RefreshList();
     if (g_statusVisible) {
-        const std::wstring text = std::wstring(L"Skin tone: ") + names[g_skinToneIndex];
+        const std::wstring text = UiText(g_profile.settings.uiLanguage, L"Skin tone: ") + UiText(g_profile.settings.uiLanguage, names[g_skinToneIndex]);
         SetWindowTextW(g_status, text.c_str());
         KillTimer(g_window, kStatusTimerId);
         SetTimer(g_window, kStatusTimerId, 800, nullptr);
@@ -632,7 +643,7 @@ void SelectEmojiFont(size_t index) {
     }
     if (g_window) {
         const std::wstring title = std::wstring(L"SwashMoji — ") + font.name +
-                                   (font.color ? L" · Color" : L" · Monochrome");
+                                   (font.color ? UiText(g_profile.settings.uiLanguage, L" · Color") : UiText(g_profile.settings.uiLanguage, L" · Monochrome"));
         SetWindowTextW(g_window, title.c_str());
     }
     if (g_list) InvalidateRect(g_list, nullptr, TRUE);
@@ -751,10 +762,10 @@ void AddTrayIcon(HWND window) {
 void UpdateSortIndicator() {
     const wchar_t* cue = L"";
     SendMessageW(g_edit, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(cue));
-    std::wstring tip = g_sortByUsage ? L"SwashMoji — Most used (Alt+T) — " : L"SwashMoji — Most recent (Alt+T) — ";
+    std::wstring tip = g_sortByUsage ? UiText(g_profile.settings.uiLanguage, L"SwashMoji — Most used (Alt+T) — ") : UiText(g_profile.settings.uiLanguage, L"SwashMoji — Most recent (Alt+T) — ");
     tip += ActivationHotkeyLabel(g_profile.settings.activationHotkey);
-    if (g_profileUnsaved) tip += L" — Changes not saved";
-    else if (!g_storageDiagnostic.empty()) tip += L" — " + g_storageDiagnostic;
+    if (g_profileUnsaved) tip += UiText(g_profile.settings.uiLanguage, L" — Changes not saved");
+    else if (!g_storageDiagnostic.empty()) tip += L" — " + UiDiagnostic(g_profile.settings.uiLanguage, g_storageDiagnostic);
     lstrcpynW(g_tray.szTip, tip.c_str(), static_cast<int>(std::size(g_tray.szTip)));
     Shell_NotifyIconW(NIM_MODIFY, &g_tray);
 }
@@ -770,28 +781,8 @@ void ToggleSortMode() {
     SetSortMode(!g_sortByUsage);
 }
 
-const wchar_t* HelpText() {
-    return L"SwashMoji — keyboard guide\r\n\r\n"
-        L"Open from any app with your shortcut (default Alt+E; change it in tray Settings). Search English, Norwegian, German, Italian, French or Spanish names, phrases and aliases.\r\n\r\n"
-        L"Click or Enter: Insert and close.\r\nCtrl+click or Ctrl+Enter: Insert and keep open.\r\n"
-        L"Shift+Enter: Copy and close after success.\r\n"
-        L"Tab / Shift+Tab: Move between search, results and available recovery actions.\r\n"
-        L"Arrows and Ctrl+arrows navigate results, including while searching. Keep typing to refine the query. Shift+arrows and Home/End edit the query.\r\n"
-        L"Arrows in results: Move spatially. Page Up/Down: Previous/next page. Home/End: First/last result.\r\n"
-        L"Ctrl+Backspace: Delete the previous word or selection. Ctrl+Z: Undo.\r\n"
-        L"Esc: Close Details, vocabulary or help first; otherwise dismiss and return to the original app.\r\n\r\n"
-        L"My vocabulary: Create named combinations of 2–8 emoji, with explicit variants and insertion order. Global tone does not change a saved combination.\r\n"
-        L"Details (Alt+D or right-click): Larger preview and valid catalog variants. Use once applies to the next successful insertion or copy; Cancel discards the draft. Your global tone stays unchanged.\r\n"
-        L"Hover briefly over a result for a preview without changing keyboard selection.\r\n\r\n"
-        L"Languages in the tray selects one or two languages for emoji names. Search still uses all available languages. Long names are shortened visually. Combination sequence tiles show the authored order. Save combination saves; Close discards the draft.\r\n\r\n"
-        L"Alt+F: Cycle emoji fonts (formerly Tab).\r\nAlt+I: Cycle global skin tone.\r\n"
-        L"Alt+1 / 2 / 3: One, two or three rows.\r\nAlt+T: Recent / most-used sorting.\r\n"
-        L"Alt+S: Show/hide selected-result text. F1: This guide.\r\n\r\n"
-        L"Alt+A: Add alias, or teach an unmatched phrase.\r\nAlt+P: Pin/unpin favorite.\r\n"
-        L"My vocabulary in the tray edits aliases and orders up to ten favorites. Save alias saves; Close discards drafts.\r\n\r\n"
-        L"Failures preserve your query and choice. Alt+C: Copy instead. Partial input is never automatically retried; check the destination. Direct insertion leaves the clipboard untouched.\r\n\r\n"
-        L"Learning changes future sessions; repeated insertion keeps results stable. Learn from searches toggles query learning.\r\n\r\n"
-        L"Preferences stay locally in %LOCALAPPDATA%\\SwashMoji. No runtime network access.";
+std::wstring HelpText() {
+    return UiHelpText(g_profile.settings.uiLanguage);
 }
 
 void LayoutHelp(HWND window) {
@@ -811,7 +802,7 @@ void HelpFont(HWND window) {
 LRESULT CALLBACK HelpWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_CREATE:
-        CreateWindowExW(0, L"EDIT", HelpText(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL |
+        CreateWindowExW(0, L"EDIT", HelpText().c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL |
             ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL, 0, 0, 0, 0, window, reinterpret_cast<HMENU>(1), nullptr, nullptr);
         HelpFont(window); LayoutHelp(window); return 0;
     case WM_SIZE: LayoutHelp(window); return 0;
@@ -852,7 +843,7 @@ void ShowHelp() {
     const int y = area.top + ((area.bottom - area.top) - height) / 2;
 
     g_helpWindow = CreateWindowExW(
-        WS_EX_TOOLWINDOW, kHelpClassName, L"SwashMoji Help", WS_CAPTION | WS_SYSMENU,
+        WS_EX_TOOLWINDOW, kHelpClassName, UiText(g_profile.settings.uiLanguage, L"SwashMoji Help").c_str(), WS_CAPTION | WS_SYSMENU,
         x, y, width, height, g_window, nullptr,
         reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), nullptr);
     if (!g_helpWindow) return;
@@ -884,7 +875,7 @@ void OpenActivationSettings() {
         const auto result = WriteStartupCommand(start ? StartupCommand(executable) : L"");
         if (result != ERROR_SUCCESS) {
             g_activation.Cancel(g_window);
-            error = L"Could not update Windows startup (error " + std::to_wstring(result) + L"). No settings changed.";
+            error = UiText(g_profile.settings.uiLanguage, L"Could not update Windows startup (error ") + std::to_wstring(result) + UiText(g_profile.settings.uiLanguage, L"). No settings changed.");
             return false;
         }
         g_activation.Commit(g_window, hotkey);
@@ -901,7 +892,8 @@ void OpenActivationSettings() {
         wchar_t path[32768] = L"SwashMoji-profile.tsv";
         OPENFILENAMEW dialog{sizeof(dialog)};
         dialog.hwndOwner = g_window;
-        dialog.lpstrFilter = L"SwashMoji profile (*.tsv)\0*.tsv\0All files (*.*)\0*.*\0\0";
+        const auto filter = UiProfileFilter(g_profile.settings.uiLanguage);
+        dialog.lpstrFilter = filter.c_str();
         dialog.lpstrFile = path;
         dialog.nMaxFile = static_cast<DWORD>(std::size(path));
         dialog.lpstrDefExt = L"tsv";
@@ -918,7 +910,8 @@ void OpenActivationSettings() {
         wchar_t path[32768]{};
         OPENFILENAMEW dialog{sizeof(dialog)};
         dialog.hwndOwner = g_window;
-        dialog.lpstrFilter = L"SwashMoji profile (*.tsv)\0*.tsv\0All files (*.*)\0*.*\0\0";
+        const auto filter = UiProfileFilter(g_profile.settings.uiLanguage);
+        dialog.lpstrFilter = filter.c_str();
         dialog.lpstrFile = path;
         dialog.nMaxFile = static_cast<DWORD>(std::size(path));
         dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
@@ -928,7 +921,7 @@ void OpenActivationSettings() {
         }
         Profile imported;
         if (!ReadProfileExport(path, imported, error, &g_catalog)) return false;
-        if (MessageBoxW(g_window,
+        if (LocalizedMessageBox(g_window,
                 L"Importing replaces your current settings, vocabulary, combinations, favorites, and history.\n\nContinue?",
                 L"Import SwashMoji profile", MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES) return false;
         if (!g_activation.Prepare(g_window, imported.settings.activationHotkey)) {
@@ -941,18 +934,19 @@ void OpenActivationSettings() {
         }
         g_activation.Commit(g_window, imported.settings.activationHotkey);
         g_profile = std::move(imported);
+        RefreshInterfaceLabels();
         g_profileUnsaved = false;
         g_storageDiagnostic.clear();
         g_rankingPreferences = g_profile;
         RefreshList();
         UpdateSortIndicator();
-        MessageBoxW(g_window, L"Profile imported successfully.", L"SwashMoji", MB_OK | MB_ICONINFORMATION);
+        LocalizedMessageBox(g_window, L"Profile imported successfully.", L"SwashMoji", MB_OK | MB_ICONINFORMATION);
         return true;
     };
     g_vocabularyOpen = true;
     const bool opened = ShowActivationPreferences(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), state);
     g_vocabularyOpen = false;
-    if (!opened) MessageBoxW(g_window, L"Could not open settings.", L"SwashMoji", MB_ICONERROR);
+    if (!opened) LocalizedMessageBox(g_window, L"Could not open settings.", L"SwashMoji", MB_ICONERROR);
     if (IsWindowVisible(g_window)) SetFocus(g_edit);
 }
 
@@ -995,7 +989,7 @@ void ShowTrayMenu() {
         const bool opened = ShowLanguagePreferences(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)),
             g_profile, [] { SaveProfile(); return !g_profileUnsaved; });
         g_vocabularyOpen = false;
-        if (!opened) MessageBoxW(g_window, L"Could not open language preferences.", L"SwashMoji", MB_ICONERROR);
+        if (!opened) LocalizedMessageBox(g_window, L"Could not open language preferences.", L"SwashMoji", MB_ICONERROR);
         RefreshList();
         for (size_t i = 0; i < g_displayVisible.size(); ++i) if (g_displayVisible[i].id == selected) {
             SendMessageW(g_list, LB_SETCURSEL, i, 0);
@@ -1003,8 +997,8 @@ void ShowTrayMenu() {
             break;
         }
         UpdateStatusLine();
-        SetWindowTextW(g_copyInstead, UiText(g_profile.settings.uiLanguage, L"Copy instead").c_str());
-        SetWindowTextW(g_teachPhrase, UiText(g_profile.settings.uiLanguage, L"No matches. Teach this phrase (Alt+A)").c_str());
+        RefreshInterfaceLabels();
+        UpdateSortIndicator();
         if (IsWindowVisible(g_window)) SetFocus(g_edit);
     } else if (command == kLearnQueriesId) {
         g_profile.settings.learnQueries = !g_profile.settings.learnQueries;
@@ -1278,8 +1272,8 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
         AppendMenuW(menu, MF_STRING, kVocabularyId, (UiText(g_profile.settings.uiLanguage, L"Add alias...") + L"\tAlt+A").c_str());
         const auto index = SendMessageW(control, LB_GETCURSEL, 0, 0);
         if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size())
-            AppendMenuW(menu, MF_STRING, kPinId, IsPinned(g_profile, g_displayVisible[index].id)
-                ? L"Unpin favorite\tAlt+P" : L"Pin favorite\tAlt+P");
+            AppendMenuW(menu, MF_STRING, kPinId, (UiText(g_profile.settings.uiLanguage,
+                IsPinned(g_profile, g_displayVisible[index].id) ? L"Unpin favorite" : L"Pin favorite") + L"\tAlt+P").c_str());
         const auto command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON,
             point.x, point.y, 0, g_window, nullptr);
         DestroyMenu(menu);
@@ -1385,7 +1379,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         g_listProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(g_list, GWLP_WNDPROC,
                                                                   reinterpret_cast<LONG_PTR>(InputProc)));
         EnableWordDeletion(g_edit);
-        SetWindowTextW(g_list, L"Matching emoji");
+        RefreshInterfaceLabels();
         LayoutChildren(window);
         RefreshList();
         AddTrayIcon(window);
@@ -1636,7 +1630,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
         return 0;
     }
     if (!LoadEmojis()) {
-        MessageBoxW(nullptr, L"Could not read emojis.txt or intent_phrases.tsv beside SwashMoji.exe.", L"SwashMoji", MB_ICONERROR);
+        LocalizedMessageBox(nullptr, L"Could not read emojis.txt or intent_phrases.tsv beside SwashMoji.exe.", L"SwashMoji", MB_ICONERROR);
         return 1;
     }
     LoadProfile();
@@ -1689,8 +1683,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
         g_activation.Commit(g_window, g_profile.settings.activationHotkey);
     } else {
         const auto warning = ActivationHotkeyLabel(g_profile.settings.activationHotkey) +
-            L" could not be registered. It may be in use by another application.\n\nOpen Settings from the tray icon to choose another shortcut. You can still click the tray icon to open the picker.";
-        MessageBoxW(nullptr, warning.c_str(), L"SwashMoji", MB_ICONWARNING);
+            UiText(g_profile.settings.uiLanguage, L" could not be registered. It may be in use by another application.\n\nOpen Settings from the tray icon to choose another shortcut. You can still click the tray icon to open the picker.");
+        LocalizedMessageBox(nullptr, warning.c_str(), L"SwashMoji", MB_ICONWARNING);
     }
 
     MSG message;

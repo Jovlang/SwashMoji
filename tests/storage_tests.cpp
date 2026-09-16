@@ -5,6 +5,9 @@
 #include "text.h"
 #include "catalog.h"
 #include "localization.h"
+#include "localization_messages.h"
+#include "localization_diagnostics.h"
+#include "localization_help.h"
 #include <fstream>
 #include <iterator>
 #include <sstream>
@@ -179,6 +182,65 @@ void ImportExport(const fs::path& root) {
 }
 
 void Localization() {
+    const char* locales[]{"en", "nb", "de", "it", "fr", "es"};
+    const auto checkCatalog = [&](const auto& rows) {
+        for (const auto& row : rows)
+            for (size_t i = 0; i < std::size(locales); ++i) {
+                CHECK(row[i] && *row[i]);
+                CHECK(UiText(locales[i], row[0]) == row[i]);
+            }
+    };
+    checkCatalog(kMessageTranslations);
+    checkCatalog(kDiagnosticTranslations);
+    checkCatalog(kHelpTranslations);
+    const std::wstring recovered = L"Profile recovered from the last complete backup.";
+    const std::wstring unsaved = L"Cannot save the profile. Changes remain in memory.";
+    for (const auto* locale : locales) {
+        CHECK(UiDiagnostic(locale, recovered + L" " + unsaved) ==
+            UiText(locale, recovered.c_str()) + L" " + UiText(locale, unsaved.c_str()));
+        const std::wstring skipped = L"Some invalid profile records were skipped.";
+        CHECK(UiDiagnostic(locale, L" " + skipped) == L" " + UiText(locale, skipped.c_str()));
+        CHECK(UiDiagnostic(locale, L"Unknown diagnostic 🚀") == L"Unknown diagnostic 🚀");
+        CHECK(UiDiagnostic(locale, recovered + L" custom text") == recovered + L" custom text");
+        const auto help = UiHelpText(locale);
+        for (const auto* key : {L"Alt+E", L"Ctrl+Enter", L"Shift+Enter", L"Alt+C", L"Alt+D", L"Alt+F", L"Alt+I",
+                 L"Alt+1", L"Alt+2", L"Alt+3", L"Alt+T", L"Alt+S", L"Alt+A", L"Alt+P", L"F1", L"Ctrl+Backspace", L"Ctrl+Z"})
+            CHECK(help.find(key) != std::wstring::npos);
+        CHECK(help.find(L"Hover") == std::wstring::npos);
+        CHECK(help.find(L"%LOCALAPPDATA%\\SwashMoji") != std::wstring::npos);
+        const auto filter = UiProfileFilter(locale);
+        CHECK(filter.size() > 2 && filter[filter.size() - 1] == 0 && filter[filter.size() - 2] == 0);
+        const auto first = filter.find(L'\0');
+        CHECK(filter.substr(first + 1, 5) == L"*.tsv");
+        CHECK(UiDiagnostic(locale, L"").empty());
+    }
+    CHECK(UiHelpText("zz") == UiHelpText("en"));
+    const auto window = CreateWindowExW(0, L"STATIC", L"Settings - SwashMoji", WS_POPUP,
+        0, 0, 400, 200, nullptr, nullptr, GetModuleHandleW(nullptr), nullptr);
+    CHECK(window);
+    const auto save = CreateWindowExW(0, L"BUTTON", L"&Save", WS_CHILD,
+        0, 0, 100, 20, window, nullptr, GetModuleHandleW(nullptr), nullptr);
+    const auto edit = CreateWindowExW(0, L"EDIT", L"Save", WS_CHILD,
+        0, 30, 100, 20, window, nullptr, GetModuleHandleW(nullptr), nullptr);
+    CHECK(save && edit);
+    for (const auto* locale : {"en", "nb", "de", "it", "fr", "es"}) {
+        SetWindowTextW(save, L"&Save");
+        LocalizeDialog(window, locale);
+        wchar_t caption[128]{};
+        GetWindowTextW(save, caption, 128);
+        const std::wstring label = caption;
+        const auto mnemonic = label.find(L'&');
+        CHECK(mnemonic != std::wstring::npos && mnemonic + 1 < label.size());
+        CHECK(label[mnemonic + 1] == L's' || label[mnemonic + 1] == L'S');
+        GetWindowTextW(edit, caption, 128);
+        CHECK(std::wstring(caption) == L"Save");
+    }
+    SetWindowTextW(save, L"Save && close");
+    LocalizeDialog(window, "nb");
+    wchar_t literal[128]{};
+    GetWindowTextW(save, literal, 128);
+    CHECK(std::wstring(literal) == L"Save && close");
+    DestroyWindow(window);
     CHECK(UiText("en", L"Settings...") == L"Settings...");
     for (const auto* locale : {"nb", "de", "it", "fr", "es"}) {
         CHECK(UiText(locale, L"Settings...") != L"Settings...");
@@ -186,6 +248,12 @@ void Localization() {
         CHECK(UiText(locale, L"Save") != L"Save");
     }
     CHECK(UiText("zz", L"Settings...") == L"Settings...");
+    for (const auto* locale : {"nb", "de", "it", "fr", "es"})
+        for (const auto* text : {L"Move left", L"Move right", L"Exact sequence", L"Affected aliases",
+                 L"Favorites saved.", L"Alias deleted.", L"Combination saved.", L"Combination deleted.",
+                 L"No dependent aliases.", L"Use once", L"Key:", L"Reset to Alt+E",
+                 L"Start SwashMoji when I sign in to Windows", L"Variant for the next insertion or copy"})
+            CHECK(UiText(locale, text) != text);
     for (const auto* locale : {"nb", "de", "it", "fr", "es"})
         for (const auto* text : {L"My vocabulary - SwashMoji", L"Saved aliases", L"Pinned favorites",
                  L"Alias editor", L"+ New", L"+ New combination / edit...", L"Combinations - SwashMoji",

@@ -200,7 +200,7 @@ void RefreshPins(HWND dialog, Editor& editor, const ResultId& selected = {}) {
         const auto& id = editor.profile.pins[i];
         SearchResult result;
         const bool valid = ResolveResult(editor.catalog, editor.profile, id, result);
-        const auto label = std::to_wstring(i + 1) + L". " + (valid ? result.payload + L" " + result.label : L"Unavailable: " + id.value);
+        const auto label = std::to_wstring(i + 1) + L". " + (valid ? result.payload + L" " + result.label : UiText(editor.profile.settings.uiLanguage, L"Unavailable: ") + id.value);
         SendMessageW(list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
         if (id == selected) selection = i;
     }
@@ -386,7 +386,7 @@ INT_PTR CALLBACK DialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPa
         const auto phrase = Text(dialog, IDC_PHRASE);
         auto result = SetAlias(editor->profile, editor->catalog, phrase, editor->target, editor->original);
         if (result == AliasResult::Duplicate) {
-            if (MessageBoxW(dialog, L"This phrase already has an alias. Replace its emoji?", L"Replace alias",
+            if (MessageBoxW(dialog, DialogText(dialog, L"This phrase already has an alias. Replace its emoji?").c_str(), DialogText(dialog, L"Replace alias").c_str(),
                             MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) != IDYES) return TRUE;
             result = SetAlias(editor->profile, editor->catalog, phrase, editor->target, editor->original, true);
         }
@@ -518,6 +518,8 @@ INT_PTR CALLBACK ConfirmCombinationDelete(HWND dialog, UINT message, WPARAM wPar
     if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
     if (message == WM_INITDIALOG) {
         NativeTheme::Apply(dialog);
+        const auto* locale = reinterpret_cast<const char*>(GetPropW(GetParent(dialog), L"SwashMojiUiLocale"));
+        LocalizeDialog(dialog, locale ? locale : "en");
         SetDlgItemTextW(dialog, IDC_COMBO_DEPENDENTS, reinterpret_cast<const wchar_t*>(lParam));
         SetFocus(GetDlgItem(dialog, IDCANCEL)); return FALSE;
     }
@@ -618,7 +620,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         std::wstring text;
         for (const auto& item : e->parent.profile.aliases) if (item.second.target == ResultId{ResultKind::Combination, e->draft.id})
             text += item.second.phrase + L"\r\n";
-        if (text.empty()) text = L"No dependent aliases.";
+        if (text.empty()) text = DialogText(dialog, L"No dependent aliases.");
         if (DialogBoxParamW(reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(dialog, GWLP_HINSTANCE)),
             MAKEINTRESOURCEW(IDD_COMBO_DELETE), dialog, ConfirmCombinationDelete, reinterpret_cast<LPARAM>(text.c_str())) != IDOK) return TRUE;
         DeleteCombination(e->parent.profile, e->draft.id); e->draft = {};

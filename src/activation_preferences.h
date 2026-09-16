@@ -44,7 +44,7 @@ inline INT_PTR CALLBACK ActivationPreferencesProc(HWND dialog, UINT message, WPA
         for (unsigned int key = 0x70; key <= 0x7A; ++key) add(703, L"F" + std::to_wstring(key - 0x6F), key);
         SelectActivationChoice(dialog, 702, state->hotkey >> 8);
         SelectActivationChoice(dialog, 703, state->hotkey & 255);
-        SetDlgItemTextW(dialog, 705, state->diagnostic.c_str());
+        SetDlgItemTextW(dialog, 705, UiDiagnostic(state->uiLanguage, state->diagnostic).c_str());
         if (!state->diagnostic.empty()) EnableWindow(GetDlgItem(dialog, IDOK), FALSE);
         return TRUE;
     }
@@ -58,7 +58,7 @@ inline INT_PTR CALLBACK ActivationPreferencesProc(HWND dialog, UINT message, WPA
             std::wstring error;
             const bool imported = id == 706;
             const bool ok = imported ? state->importProfile(error) : state->exportProfile(error);
-            SetDlgItemTextW(dialog, 705, error.c_str());
+            SetDlgItemTextW(dialog, 705, UiDiagnostic(state->uiLanguage, error).c_str());
             if (ok && imported) EndDialog(dialog, IDOK);
             return TRUE;
         }
@@ -67,7 +67,7 @@ inline INT_PTR CALLBACK ActivationPreferencesProc(HWND dialog, UINT message, WPA
                 SendDlgItemMessageW(dialog, control, CB_GETCURSEL, 0, 0), 0)); };
             std::wstring error;
             if (state->apply((get(702) << 8) | get(703), IsDlgButtonChecked(dialog, 701) == BST_CHECKED, error)) EndDialog(dialog, IDOK);
-            else SetDlgItemTextW(dialog, 705, error.c_str());
+            else SetDlgItemTextW(dialog, 705, UiDiagnostic(state->uiLanguage, error).c_str());
             return TRUE;
         }
         if (id == IDCANCEL) { EndDialog(dialog, IDCANCEL); return TRUE; }

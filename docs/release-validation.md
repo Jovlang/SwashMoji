@@ -4,6 +4,26 @@ SwashMoji has a repeatable automated release workflow. Release acceptance remain
 open: automated and hidden-control checks cannot establish actual delivery to
 all target apps, visible opening time, accessibility or user-study outcomes.
 
+## Help and diagnostic localization — 2026-09-16
+
+The Release build and all 13 CTest suites passed in `build-agent`, including the
+offline generator and the new storage, picker-keyboard and combination-editor
+localization checks (120.24 seconds for the final full run).
+
+F1 help, insertion/copy recovery, storage and startup diagnostics, profile import
+and alias replacement confirmations, combination deletion, file-filter labels,
+and picker status text now use the selected interface language. The help no longer
+describes the removed hover preview. Importing a profile or changing the interface
+language refreshes the picker's action labels and accessible result name.
+
+Automated regression coverage checks every new translation entry, help shortcuts,
+joined recovery/save diagnostics, English fallback, double-NUL file-filter framing,
+actual hidden picker messages, and localized deletion confirmations without
+rewriting the listed personal aliases. Native Windows dialog buttons still follow
+the OS language; an error before profile loading uses the default English locale.
+Visual fit, linguistic review and screen-reader acceptance remain desktop/manual
+checks; no computer-use or real-input test was run for this change.
+
 ## Version 0.3 automated candidate — 2026-09-14
 
 The `build-release-0.3` Release build and all 13 CTest suites passed, including
@@ -16,6 +36,28 @@ Hidden-control performance p95 values were 21.135 ms for empty-session preparati
 queries. These measurements do not close the visible-performance gate below.
 Desktop insertion, compatibility, DPI, accessibility and user acceptance remain
 open as documented in the acceptance protocol.
+
+## Localization follow-up — 2026-09-15
+
+The Release build and all 13 CTest suites passed in `build-agent`, including
+the new localization regressions and offline catalog generator. No interactive
+desktop harness was run for this follow-up.
+
+Dialog localization now retains resource keyboard mnemonics, preserves literal
+ampersands, and excludes editable/list controls from label translation. Additional
+Settings, Details and combination-message translations cover all five non-English
+interface locales. Hidden-control regression checks exercise translated Save
+mnemonics and ensure an edit value equal to a translation key remains unchanged.
+At this stage, help, some diagnostics and confirmations remained English; see the
+September 16 follow-up above. Translation layout and screen-reader acceptance
+are still open.
+
+A fresh hidden-control performance run is retained in
+`build-agent/performance-20260915-localization.csv`: session preparation p95
+22.589 ms, broad `r` query 33.744 ms, and other queries 12.008–20.327 ms.
+This run overlapped the automated search suite, so it is diagnostic evidence,
+not an idle-machine performance acceptance result. No performance improvement
+or visible-latency pass is claimed.
 
 ## Version 0.3 desktop follow-up — 2026-09-15
 
@@ -132,6 +174,12 @@ Run desktop harnesses separately with modifier keys released. Preserve
 Exit 77 means unverified, not passed. These historical runs did not complete visual acceptance.
 
 ## Remaining acceptance protocol
+
+The [2026-09-15 real-application attempt](compatibility-2026-09-15.md) was blocked
+by desktop test setup and closes no target-application gate. It also identifies
+why an environment-only `LOCALAPPDATA` override must not be assumed to isolate
+the packaged application's profile; verify the resolved directory or use a
+dedicated Windows test account.
 
 Record candidate ZIP hash, date, tester, Windows/app versions, exact steps,
 expected/actual text, focus behavior, outcome and evidence path for every row.

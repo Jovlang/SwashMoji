@@ -1,12 +1,18 @@
 #include "localization.h"
 #include <iterator>
 #include <map>
+#include <cwctype>
 
 namespace SwashMoji {
 namespace {
 using Table = std::map<std::wstring, std::wstring>;
+#include "localization_supplement.h"
+#include "localization_messages.h"
+#include "localization_diagnostics.h"
+#include "localization_help.h"
 const std::map<std::string, Table>& Tables() {
-    static const std::map<std::string, Table> tables{
+    static const auto tables = [] {
+    std::map<std::string, Table> result{
         {"nb", {
             {L"English", L"Engelsk"}, {L"Norwegian", L"Norsk"}, {L"German", L"Tysk"}, {L"Italian", L"Italiensk"}, {L"French", L"Fransk"}, {L"Spanish", L"Spansk"},
             {L"Languages - SwashMoji", L"Språk – SwashMoji"}, {L"Interface language:", L"Grensesnittspråk:"},
@@ -112,19 +118,62 @@ const std::map<std::string, Table>& Tables() {
             ,{L"Search emoji across languages", L"Buscar emojis en todos los idiomas"}, {L"No pinned favorites yet", L"Aún no hay favoritos fijados"}, {L"Your saved phrases appear here", L"Tus frases guardadas aparecerán aquí"}, {L"No saved combinations yet", L"Aún no hay combinaciones guardadas"}, {L"No emoji added yet", L"Aún no se han añadido emojis"}, {L"No matching emoji", L"No hay emojis coincidentes"}, {L"Create one to get started.", L"Crea una para empezar."}, {L"Unsaved changes", L"Cambios sin guardar"}
         }}
     };
+    const char* locales[]{"nb", "de", "it", "fr", "es"};
+    for (const auto& row : kDialogTranslations)
+        for (size_t i = 0; i < std::size(locales); ++i)
+            result[locales[i]].emplace(row[0], row[i + 1]);
+    for (const auto& row : kMessageTranslations)
+        for (size_t i = 0; i < std::size(locales); ++i)
+            result[locales[i]].emplace(row[0], row[i + 1]);
+    for (const auto& row : kDiagnosticTranslations)
+        for (size_t i = 0; i < std::size(locales); ++i)
+            result[locales[i]].emplace(row[0], row[i + 1]);
+    for (const auto& row : kHelpTranslations)
+        for (size_t i = 0; i < std::size(locales); ++i)
+            result[locales[i]].emplace(row[0], row[i + 1]);
+    return result;
+    }();
     return tables;
 }
 std::wstring StripMnemonic(std::wstring text) {
-    for (size_t p = 0; (p = text.find(L'&', p)) != std::wstring::npos; ) text.erase(p, 1);
-    return text;
+    std::wstring result;
+    for (size_t p = 0; p < text.size(); ++p) {
+        if (text[p] != L'&') result += text[p];
+        else if (p + 1 < text.size() && text[p + 1] == L'&') { result += L'&'; ++p; }
+    }
+    return result;
+}
+std::wstring PreserveMnemonic(const std::wstring& original, const std::wstring& translated) {
+    wchar_t key{};
+    for (size_t p = 0; p + 1 < original.size(); ++p) {
+        if (original[p] != L'&') continue;
+        if (original[p + 1] == L'&') { ++p; continue; }
+        key = original[p + 1]; break;
+    }
+    std::wstring result;
+    bool assigned = false;
+    for (const auto character : translated) {
+        if (key && !assigned && towlower(character) == towlower(key)) {
+            result += L'&'; assigned = true;
+        }
+        if (character == L'&') result += L'&';
+        result += character;
+    }
+    if (key && !assigned) { result += L" (&"; result += key; result += L')'; }
+    return result;
 }
 BOOL CALLBACK LocalizeChild(HWND child, LPARAM parameter) {
     const auto* locale = reinterpret_cast<const std::string*>(parameter);
+    // Translate labels only. Edit/list contents can contain personal vocabulary
+    // that happens to equal a translation key.
+    wchar_t className[32]{};
+    GetClassNameW(child, className, static_cast<int>(std::size(className)));
+    if (_wcsicmp(className, L"STATIC") && _wcsicmp(className, L"BUTTON")) return TRUE;
     wchar_t text[1024]{};
     GetWindowTextW(child, text, static_cast<int>(std::size(text)));
     if (!*text) return TRUE;
     auto translated = UiText(*locale, StripMnemonic(text).c_str());
-    if (translated != StripMnemonic(text)) SetWindowTextW(child, translated.c_str());
+    if (translated != StripMnemonic(text)) SetWindowTextW(child, PreserveMnemonic(text, translated).c_str());
     return TRUE;
 }
 }
@@ -142,5 +191,43 @@ void LocalizeDialog(HWND dialog, const std::string& locale) {
     const auto localized = UiText(locale, title);
     SetWindowTextW(dialog, localized.c_str());
     EnumChildWindows(dialog, LocalizeChild, reinterpret_cast<LPARAM>(&locale));
+}
+std::wstring UiDiagnostic(const std::string& locale, const std::wstring& english) {
+    const auto exact = UiText(locale, english.c_str());
+    if (exact != english || locale == "en") return exact;
+    // Storage can join recovery and save diagnostics. Match whole known messages
+    // and their separating spaces; never replace words inside arbitrary strings.
+    std::wstring result;
+    for (size_t position = 0; position < english.size();) {
+        if (english[position] == L' ') { result += L' '; ++position; continue; }
+        const wchar_t* matched = nullptr;
+        size_t length = 0;
+        for (const auto& row : kDiagnosticTranslations) {
+            const auto size = wcslen(row[0]);
+            if (size > length && english.compare(position, size, row[0]) == 0 &&
+                (position + size == english.size() || english[position + size] == L' ')) {
+                matched = row[0]; length = size;
+            }
+        }
+        if (!matched) return english;
+        result += UiText(locale, matched);
+        position += length;
+    }
+    return result;
+}
+std::wstring UiHelpText(const std::string& locale) {
+    std::wstring result;
+    for (const auto& row : kHelpTranslations) {
+        if (!result.empty()) result += L"\r\n\r\n";
+        result += UiText(locale, row[0]);
+    }
+    return result;
+}
+std::wstring UiProfileFilter(const std::string& locale) {
+    auto result = UiText(locale, L"SwashMoji profile (*.tsv)");
+    result += L'\0'; result += L"*.tsv"; result += L'\0';
+    result += UiText(locale, L"All files (*.*)");
+    result += L'\0'; result += L"*.*"; result += L'\0'; result += L'\0';
+    return result;
 }
 }

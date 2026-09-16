@@ -15,9 +15,28 @@ std::wstring DraftPayload(const Combination& draft) {
     std::wstring payload; for (const auto& entry : draft.entries) payload += entry.payload; return payload;
 }
 int Height(const RECT& value) { return value.bottom - value.top; }
+void LocalizedDeleteConfirmation() {
+    const auto parent = CreateWindowExW(0, L"STATIC", L"Test owner", WS_POPUP,
+        0, 0, 400, 200, nullptr, nullptr, GetModuleHandleW(nullptr), nullptr);
+    CHECK(parent);
+    for (const auto* locale : {"nb", "de", "it", "fr", "es"}) {
+        SetPropW(parent, L"SwashMojiUiLocale", const_cast<char*>(locale));
+        const auto dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDD_COMBO_DELETE),
+            parent, ConfirmCombinationDelete, reinterpret_cast<LPARAM>(L"Save\r\nrocket 🚀"));
+        CHECK(dialog);
+        wchar_t text[256]{};
+        GetWindowTextW(dialog, text, 256);
+        CHECK(std::wstring(text) == UiText(locale, L"Delete combination"));
+        GetDlgItemTextW(dialog, IDC_COMBO_DEPENDENTS, text, 256);
+        CHECK(std::wstring(text) == L"Save\r\nrocket 🚀");
+        DestroyWindow(dialog);
+    }
+    DestroyWindow(parent);
+}
 int main(int argc, char** argv) {
     HWND dialog{};
     try {
+        LocalizedDeleteConfirmation();
         CHECK(argc == 2); Catalog catalog; std::ifstream file(std::filesystem::u8path(argv[1]), std::ios::binary); CHECK(catalog.Load(file));
         Profile profile; unsigned saves{}; std::function<bool()> persist = [&] { ++saves; return true; };
         Editor parent{catalog, profile, {}, {}, persist}; CombinationEditor state{parent};

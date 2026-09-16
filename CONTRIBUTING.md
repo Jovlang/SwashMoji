@@ -85,6 +85,18 @@ a portable ZIP with checksums in a new subdirectory of `build-m6`; it does not
 publish a release. The complete procedure, evidence and outstanding desktop/user
 acceptance work live in [release validation](docs/release-validation.md).
 
+## Interface translations
+
+Interface text is compiled into `src/localization.cpp` and its
+`localization_*.h` tables. Keep each new message row populated in the order English,
+Norwegian, German, Italian, French and Spanish. Translate application-owned text
+at the UI boundary with `UiText` or `UiDiagnostic`; never translate user aliases,
+combination names, paths or catalog names through these tables. Preserve key names,
+numeric error codes and the meaning of partial-input/clipboard warnings.
+The storage, picker-keyboard and combination-editor suites cover this behavior
+without desktop input. F1 paragraphs live in `localization_help.h` and must retain
+the documented shortcuts. Native Windows dialog buttons follow the OS language.
+
 ## Documentation changes
 
 Keep [README.md](README.md) a short English project overview. Put complete

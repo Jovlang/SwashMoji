@@ -64,7 +64,10 @@ The same dialog has an independent **Interface language** setting. Choose Englis
 Norwegian, German, Italian, French, or Spanish for SwashMoji's menus,
 dialogs, buttons, and messages. The change is saved with the profile and applies
 to subsequently opened UI; it does not restrict search or change the selected
-languages used for emoji names.
+languages used for emoji names. F1 help, application diagnostics and confirmation
+messages use this language too. Native Windows file dialogs and standard message-box
+buttons use the Windows language. A catalog-loading error before the profile can
+be loaded uses the default English interface.
 
 English and Norwegian are the defaults. **Italian**, **German**, **French**, and **Spanish** also have
 translated names for all 3598 emoji variants in the catalog. Regular matching
@@ -73,8 +76,7 @@ still searches all available languages regardless of your display selection:
 are preferred when matches are otherwise equal; an exact name in another language
 ranks above a weaker match in a selected language. Personal aliases and built-in
 phrases retain phrase matching and typo tolerance regardless of the language
-selection. Menus, buttons, and messages remain in English; this setting only
-changes displayed emoji names.
+selection. Emoji-name preferences are independent of the interface language.
 
 Names in results, previews, and variant choices use the same language preferences.
 The selected variant's names appear below the results, separated by “·”. Identical
@@ -224,8 +226,8 @@ are documented separately.
 ## Compatibility and test status
 
 Click/Tab behavior and DPI support are implemented, but full desktop, screen-reader,
-and multi-monitor testing remains. The most recently documented native insertion
-tests were denied foreground activation; this does not verify actual insertion.
+and multi-monitor testing remains. Both controlled native insertion harnesses
+passed on September 15, 2026. Real-application compatibility remains unverified.
 Overall release acceptance is still open.
 
 See [selection and DPI](selection.md) and the [release protocol](release-validation.md)

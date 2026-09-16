@@ -48,7 +48,7 @@ inline bool ApplyLanguageChoices(HWND dialog, LanguagePreferencesState& state) {
     if (ui < 0 || static_cast<size_t>(ui) >= locales.size()) return false;
     state.profile.settings.uiLanguage = locales[ui].code;
     if (state.persist()) return true;
-    SetDlgItemTextW(dialog, kLanguageStatus, L"Applied for this session, but could not save. Try Save again.");
+    SetDlgItemTextW(dialog, kLanguageStatus, UiText(state.profile.settings.uiLanguage, L"Applied for this session, but could not save. Try Save again.").c_str());
     return false;
 }
 

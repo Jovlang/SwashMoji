@@ -17,6 +17,30 @@ void CheckSelectedStatus() {
     CHECK(StatusText()==FormatEmojiDisplayName(*emoji, g_profile.settings.displayLanguages));
 }
 
+void LocalizedPickerMessages() {
+    const auto original = g_profile.settings.uiLanguage;
+    const std::wstring failure = L"The original app is no longer available.\nCopy instead, then paste where you want.";
+    for (const auto* locale : {"nb", "de", "it", "fr", "es"}) {
+        g_profile.settings.uiLanguage = locale;
+        RefreshInterfaceLabels();
+        SetRecoveryMessage(failure);
+        wchar_t text[1024]{};
+        GetWindowTextW(g_recoveryLabel, text, 1024);
+        CHECK(std::wstring(text) == UiText(locale, failure.c_str()) && std::wstring(text) != failure);
+        GetWindowTextW(g_copyInstead, text, 1024);
+        CHECK(std::wstring(text) == UiText(locale, L"Copy instead"));
+        CHECK(HelpText() == UiHelpText(locale));
+        g_storageDiagnostic = L"Profile recovered from the last complete backup. Cannot save the profile. Changes remain in memory.";
+        UpdateStatusLine();
+        CHECK(StatusText() == UiDiagnostic(locale, g_storageDiagnostic));
+    }
+    g_storageDiagnostic.clear();
+    SetRecoveryMessage(L"");
+    g_profile.settings.uiLanguage = original;
+    RefreshInterfaceLabels();
+    UpdateStatusLine();
+}
+
 void LanguageDialogControls() {
     Profile profile;
     unsigned saves{};
@@ -161,6 +185,7 @@ int main() {
         CHECK(g_profile.settings.displayLanguages.Set({"en", "nb"}));
         RefreshList();
         LanguageDialogControls();
+        LocalizedPickerMessages();
         ActivationDialogControls();
         const auto statusStyle=GetWindowLongPtrW(g_status,GWL_STYLE);
         RECT statusBounds{}; GetWindowRect(g_status,&statusBounds);
