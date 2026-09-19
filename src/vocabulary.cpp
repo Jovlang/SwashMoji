@@ -415,6 +415,11 @@ struct CombinationEditor {
     std::vector<const Emoji*> variants;
     bool loading{};
 };
+CombinationEditor MakeCombinationEditor(Editor& editor) {
+    CombinationEditor result{editor};
+    result.draft.name = editor.phrase;
+    return result;
+}
 struct VocabularyPages {
     Editor& editor;
     CombinationEditor& combinations;
@@ -557,6 +562,7 @@ INT_PTR CALLBACK CombinationProc(HWND dialog, UINT message, WPARAM wParam, LPARA
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_ADD_HINT));
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_SEQUENCE_HINT));
         NativeTheme::MarkMuted(GetDlgItem(dialog, IDC_COMBO_STATUS));
+        SetDlgItemTextW(dialog, IDC_COMBO_NAME, e->draft.name.c_str());
         ComboSaved(dialog, *e); ComboSearch(dialog, *e);
         ComboStatus(dialog, L"");
         SetFocus(GetDlgItem(dialog, IDC_COMBO_NAME)); return FALSE;
@@ -742,7 +748,7 @@ void ShowCombinationDetails(HWND owner, HINSTANCE instance, const Catalog& catal
 bool ShowVocabulary(HWND owner, HINSTANCE instance, const Catalog& catalog, Profile& profile,
                     const std::wstring& phrase, const ResultId& target, const std::function<bool()>& persist) {
     Editor editor{catalog, profile, phrase, target, persist};
-    CombinationEditor combinations{editor};
+    CombinationEditor combinations = MakeCombinationEditor(editor);
     VocabularyPages pages{editor, combinations};
     return DialogBoxParamW(instance, MAKEINTRESOURCEW(IDD_VOCABULARY_TABS), owner, VocabularyPagesProc,
                            reinterpret_cast<LPARAM>(&pages)) != -1;

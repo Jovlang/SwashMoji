@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
         Command(dialog, IDC_COMBO_REMOVE); CHECK(state.draft.entries.size() == 7);
         CHECK(profile.combinations.at(state.draft.id).payload == saved); // Draft edits have no persistent effect.
         DestroyWindow(dialog); dialog = nullptr;
-        Editor vocabulary{catalog, profile, {}, {}, persist};
+        Editor vocabulary{catalog, profile, L"learned phrase", {}, persist};
         dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDD_VOCABULARY), nullptr, DialogProc,
                                     reinterpret_cast<LPARAM>(&vocabulary));
         CHECK(dialog);
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
         SetDlgItemTextW(dialog, IDC_PHRASE, L"draft");
         CHECK(Text(dialog, IDC_VOCABULARY_STATUS) == L"Unsaved changes");
         DestroyWindow(dialog); dialog = nullptr;
-        CombinationEditor tabCombination{vocabulary};
+        CombinationEditor tabCombination = MakeCombinationEditor(vocabulary);
         VocabularyPages pages{vocabulary, tabCombination};
         dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDD_VOCABULARY_TABS), nullptr,
                                     VocabularyPagesProc, reinterpret_cast<LPARAM>(&pages));
@@ -173,10 +173,12 @@ int main(int argc, char** argv) {
         CHECK(IsDlgButtonChecked(dialog, IDC_ALIASES_TAB) == BST_CHECKED);
         CHECK((GetWindowLongPtrW(pages.vocabulary, GWL_STYLE) & WS_VISIBLE) != 0);
         CHECK((GetWindowLongPtrW(pages.combination, GWL_STYLE) & WS_VISIBLE) == 0);
+        CHECK(Text(pages.vocabulary, IDC_PHRASE) == L"learned phrase");
         SendMessageW(GetDlgItem(dialog, IDC_ALIASES_TAB), WM_KEYDOWN, VK_RIGHT, 0);
         CHECK(IsDlgButtonChecked(dialog, IDC_COMBINATIONS_TAB) == BST_CHECKED);
         CHECK((GetWindowLongPtrW(pages.vocabulary, GWL_STYLE) & WS_VISIBLE) == 0);
         CHECK((GetWindowLongPtrW(pages.combination, GWL_STYLE) & WS_VISIBLE) != 0);
+        CHECK(Text(pages.combination, IDC_COMBO_NAME) == L"learned phrase");
         CHECK((GetWindowLongPtrW(pages.combination, GWL_STYLE) & WS_CHILD) != 0);
         constexpr LONG_PTR pageEdges = WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE;
         CHECK((GetWindowLongPtrW(pages.vocabulary, GWL_EXSTYLE) & pageEdges) == 0);
