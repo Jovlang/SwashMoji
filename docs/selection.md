@@ -11,6 +11,8 @@ twenty use up to two, and larger sets use up to three. The window shrinks and
 expands with the results, retaining the preference and using the displayed row
 count for navigation and hit testing. Empty searches with no results retain one
 row for the teaching action.
+The results list is hidden while the teaching button occupies that row, so it
+cannot intercept pointer input or paint over the button.
 
 Click or Enter inserts and closes. Ctrl+click or Ctrl+Enter keeps the picker open.
 Shift+Enter copies and closes only after success. A click must start and finish

@@ -169,6 +169,17 @@ int main() {
         g_window = CreateWindowExW(0, type.lpszClassName, L"Keyboard test", WS_POPUP,
             0, 0, kPickerWidth, PickerHeight(), nullptr, nullptr, type.hInstance, nullptr);
         CHECK(g_window);
+        SetWindowTextW(g_edit, L"abcdef");
+        RECT teachBounds{};
+        GetWindowRect(g_teachPhrase, &teachBounds);
+        POINT teachPoint{(teachBounds.left + teachBounds.right) / 2, (teachBounds.top + teachBounds.bottom) / 2};
+        ScreenToClient(g_window, &teachPoint);
+        const auto hit = ChildWindowFromPointEx(g_window, teachPoint, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED);
+        CHECK(hit == g_teachPhrase);
+        CHECK(!(GetWindowLongPtrW(g_list, GWL_STYLE) & WS_VISIBLE));
+        SetWindowTextW(g_edit, L"");
+        CHECK(GetWindowLongPtrW(g_list, GWL_STYLE) & WS_VISIBLE);
+        CHECK(!(GetWindowLongPtrW(g_teachPhrase, GWL_STYLE) & WS_VISIBLE));
         g_inputTarget = {42, 1, 1};
         g_session.originalTarget = 42;
         CaptureInputTarget(g_window);

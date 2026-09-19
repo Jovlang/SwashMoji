@@ -10,9 +10,10 @@
 #include "../src/vocabulary_ids.h"
 
 namespace {
-enum class DialogAction { Create, Cancel, Edit, DeclineReplacement, Delete, CheckHeartPrefill, Favorites };
+enum class DialogAction { Create, Cancel, Edit, DeclineReplacement, Delete, CheckHeartPrefill, CheckPhrasePrefill, Favorites };
 DialogAction action;
 std::string dialogFailure;
+bool dialogVisited{};
 
 HWND OwnDialog(const wchar_t* caption) {
     struct Find { const wchar_t* caption; HWND found{}; } find{caption};
@@ -43,6 +44,7 @@ void CALLBACK DriveDialog(HWND, UINT, UINT_PTR timer, DWORD) {
     if (!host) return;
     const auto dialog = GetDlgItem(host, IDC_VOCABULARY_PAGE);
     if (!dialog) return;
+    dialogVisited = true;
     KillTimer(nullptr, timer);
     try {
         // Opening the global picker shortcut during a modal editor must not reset it.
@@ -72,6 +74,10 @@ void CALLBACK DriveDialog(HWND, UINT, UINT_PTR timer, DWORD) {
             CHECK(std::wstring(targetQuery) == L"red heart");
             CHECK(SendDlgItemMessageW(dialog, IDC_TARGET_RESULTS, LB_GETCOUNT, 0, 0) >= 1);
             CHECK(SendDlgItemMessageW(dialog, IDC_TARGET_RESULTS, LB_GETCURSEL, 0, 0) == 0);
+        } else if (action == DialogAction::CheckPhrasePrefill) {
+            wchar_t phrase[256]{};
+            GetDlgItemTextW(dialog, IDC_PHRASE, phrase, 256);
+            CHECK(std::wstring(phrase) == L"abcdef");
         } else if (action == DialogAction::Create) {
             wchar_t prefill[256]{};
             GetDlgItemTextW(dialog, IDC_PHRASE, prefill, 256);
@@ -122,6 +128,24 @@ void ExerciseDialog(DialogAction next) {
     CHECK(g_inputTarget.window == inputTarget.window && g_inputTarget.process == inputTarget.process &&
           g_inputTarget.thread == inputTarget.thread && g_session.originalTarget == inputTarget.window);
     CHECK(g_storage.Load().profile.aliases.size() == g_profile.aliases.size());
+}
+
+void ExerciseTeachButton() {
+    action = DialogAction::CheckPhrasePrefill;
+    dialogFailure.clear();
+    dialogVisited = false;
+    SetWindowTextW(g_edit, L"abcdef");
+    CHECK(g_visible.empty());
+    CHECK(GetWindowLongPtrW(g_teachPhrase, GWL_STYLE) & WS_VISIBLE);
+    ShowWindow(g_window, SW_SHOW);
+    SetActiveWindow(g_window);
+    const auto timer = SetTimer(nullptr, 0, 25, DriveDialog);
+    CHECK(timer);
+    SendMessageW(g_teachPhrase, BM_CLICK, 0, 0);
+    KillTimer(nullptr, timer);
+    ShowWindow(g_window, SW_HIDE);
+    CHECK(dialogVisited);
+    CHECK(dialogFailure.empty());
 }
 
 struct StubInput : InputPlatform {
@@ -321,6 +345,13 @@ int wmain(int argc, wchar_t** argv) {
             300, 300, kPickerWidth, PickerHeight(), nullptr, nullptr, type.hInstance, nullptr);
         CHECK(g_window);
 
+        if (argc == 2 && std::wstring(argv[1]) == L"--teach-only") {
+            ExerciseTeachButton();
+            report("PASS: teaching button opened vocabulary with the unmatched phrase prefilled.");
+            DestroyWindow(g_window);
+            return 0;
+        }
+
         if (argc == 2 && std::wstring(argv[1]) == L"--preview") {
             CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
             InitializeColorEmojiDrawing(); LoadInstalledColorEmojiFonts();
@@ -369,6 +400,8 @@ int wmain(int argc, wchar_t** argv) {
         ExerciseDialog(DialogAction::Favorites);
         LearningIntegration();
         SelectionIntegration();
+        SetWindowTextW(g_edit, L"rocket");
+        ExerciseTeachButton();
         SetWindowTextW(g_edit, L"rocket");
         ExerciseDialog(DialogAction::Create);
         const auto saved = EncodeProfile(g_profile);

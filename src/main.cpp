@@ -233,7 +233,11 @@ void RefreshList() {
         ResizePicker(PickerHeight());
     }
     LayoutChildren(window);
-    ShowWindow(g_teachPhrase, g_visible.empty() && !NormalizePhrase(g_session.query).empty() ? SW_SHOW : SW_HIDE);
+    const bool teachPhrase = g_visible.empty() && !NormalizePhrase(g_session.query).empty();
+    // These controls occupy the same space. The list is above the button in
+    // sibling z-order, so it must be hidden to let the button receive clicks.
+    ShowWindow(g_list, teachPhrase ? SW_HIDE : SW_SHOW);
+    ShowWindow(g_teachPhrase, teachPhrase ? SW_SHOW : SW_HIDE);
     g_displayVisible.clear();
     g_session.rankingSnapshot.clear();
     for (const auto& result : g_visible) g_session.rankingSnapshot.push_back(result.id);
