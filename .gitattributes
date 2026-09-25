@@ -7,3 +7,8 @@
 
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+*.svg          text eol=lf
+*.rc           text eol=lf
