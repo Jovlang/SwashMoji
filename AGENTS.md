@@ -2,7 +2,7 @@
 
 ## Project
 
-SwashMoji is a self-contained Windows emoji picker written in C++17 using native
+SwashMoji is a self-contained Windows emoji and letter-variant picker written in C++17 using native
 Win32 controls, Direct2D and DirectWrite. Keep runtime operation offline and avoid
 adding dependencies without a concrete need. Source and catalog files are UTF-8.
 
@@ -24,6 +24,9 @@ or insertion. Localization scope and search policy are documented in
   locale-keyed names and search caches, shared name formatting, Unicode
   normalization, multilingual matching and ranking.
 - `src/picker.cpp/.h`: testable picker-session state, grid navigation and selection.
+- `src/letter_variants.h`: letter-variant catalog, explicit uppercase/lowercase
+  pairs, global/filtered ranking and choice recording; `src/main.cpp` coordinates
+  the shared picker UI in letter mode.
 - `src/models.h`, `src/personalization.cpp/.h`, `src/storage.cpp/.h`: profile data, learning,
   favorites, saved combinations, persistence and migration.
 - `src/insertion.cpp/.h`: testable insertion and clipboard logic;
@@ -81,6 +84,27 @@ to unlock a build; use another build directory.
 
 ## Behavior to preserve
 
+- `Alt+E` is the default configurable global emoji shortcut. `Alt+I` is a
+  separate global shortcut for letter variants, usable directly from other apps;
+  reserve it from emoji shortcut settings. `Alt+K` cycles skin tone only inside
+  the emoji picker. `Alt+T` switches recent/most-used ranking in both pickers,
+  sharing the persisted `sort_by_usage` setting.
+- An empty letter query shows all supported variants; one base letter filters
+  that same set without changing its usage data or ranking rules. Preserve case
+  and explicit catalog pairs rather than using locale-dependent casing. Keep
+  variant counts and the 40-entry recent history separate from emoji history.
+  Compare recency then count, or count then recency, according to the sort mode;
+  break remaining ties with catalog order. Snapshot both when opening and select
+  the newly ranked first result so `Alt+I`, `Enter` uses it. Keep repeated insertion
+  stable within a session; an explicit sort change applies immediately while
+  preserving selection. **Learn from searches** controls recording and applying
+  variant history. See `docs/learning.md` and `docs/user-guide.md`.
+- The letter picker has no placeholder or ordinary status line, including no
+  reserved footer space. `Alt+S` must not expose one or alter the emoji picker's
+  status preference while in letter mode. Preserve visible insertion errors and
+  **Copy instead** independently of the ordinary status line. Reuse the shared
+  insertion/clipboard recovery path; do not expose emoji aliases, Details or
+  favorite actions for letter variants.
 - English (`en`), Norwegian (`nb`), German (`de`), Italian (`it`), French (`fr`) and Spanish (`es`) search
   together. Search locale filters are independent of display preferences; an empty
   filter searches all available localizations for non-fuzzy matches. Search uses
@@ -117,12 +141,14 @@ to unlock a build; use another build directory.
 - Preserve profile migration, backup recovery and unsupported-version protection.
   Use isolated directories for tests, never the user's real
   `%LOCALAPPDATA%\SwashMoji` or legacy `%LOCALAPPDATA%\WinMoji` data.
-  Profile version 9 adds `letter_recent`; global and filtered letter variants share usage and recency.
+  Profile version 9 adds `letter_recent`; versions 1–8 start with empty variant
+  recency, retaining any version 8 usage counts without inventing past order.
   Version 8 adds `letter_usage` for the Alt+I letter-variant picker.
   Version 7 adds `ui_language` (English by default for versions 1–6).
   Version 6 adds `activation_hotkey` (Alt+E by default for versions 1–5).
   Version 5 added `display_languages`; versions 1–4 migrate with `en`, `nb` defaults.
-  Startup registration is per-user Windows configuration, not a profile field. History clearing retains aliases, combinations, favorites,
+  Startup registration is per-user Windows configuration, not a profile field.
+  History clearing removes both emoji and letter-variant usage/recency, retaining aliases, combinations, favorites,
   appearance settings, display languages, interface language and the activation shortcut.
   Consult `docs/profile-format.md` before changing the file format.
 
