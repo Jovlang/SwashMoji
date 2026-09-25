@@ -5,6 +5,8 @@
 SwashMoji is a self-contained Windows emoji and letter-variant picker written in C++17 using native
 Win32 controls, Direct2D and DirectWrite. Keep runtime operation offline and avoid
 adding dependencies without a concrete need. Source and catalog files are UTF-8.
+Honor `.gitattributes` for every file created or modified. Preserve its declared text/binary
+treatment and line endings, and use `git check-attr` when a file's applicable attributes are unclear.
 
 Read `README.md` for the product overview, `docs/user-guide.md` for user behavior
 and commands, and `CONTRIBUTING.md` for general build/test workflow. Consult the
