@@ -121,7 +121,7 @@ int wmain(int argc, wchar_t** argv) {
             }
         }
         const auto clipboardSequence = GetClipboardSequenceNumber();
-        const std::wstring text = L"👍🏽👩‍💻🚀✨";
+        const std::wstring text = L"üúèéäæßÜẞ👍🏽👩‍💻🚀✨";
         CHECK(InsertText(platform, target, text).status == InsertionStatus::FullySubmitted);
         CHECK(WaitText(edit, text));
         CHECK(InsertText(platform, target, L"✅").status == InsertionStatus::FullySubmitted);

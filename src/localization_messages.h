@@ -1,5 +1,8 @@
 // English, Norwegian, German, Italian, French, Spanish. Compiled into the app.
 static const wchar_t* const kMessageTranslations[][6] = {
+{L"Type a letter", L"Skriv en bokstav", L"Buchstaben eingeben", L"Digita una lettera", L"Saisissez une lettre", L"Escribe una letra"},
+{L"Letter variants", L"Bokstavvarianter", L"Buchstabenvarianten", L"Varianti di lettere", L"Variantes de lettres", L"Variantes de letras"},
+{L"Alt+I could not be registered.", L"Alt+I kunne ikke registreres.", L"Alt+I konnte nicht registriert werden.", L"Impossibile registrare Alt+I.", L"Impossible d’enregistrer Alt+I.", L"No se pudo registrar Alt+I."},
 {L"Favorites", L"Favoritter", L"Favoriten", L"Preferiti", L"Favoris", L"Favoritos"},
 {L"You can pin up to ten favorites. Unpin one in My vocabulary to make room.", L"Du kan feste ti favoritter. Løsne én i Mitt ordforråd for å få plass.", L"Sie können zehn Favoriten anheften. Lösen Sie einen unter Mein Vokabular, um Platz zu schaffen.", L"Puoi fissare dieci preferiti. Rimuovine uno da Il mio vocabolario per fare spazio.", L"Vous pouvez épingler dix favoris. Désépinglez-en un dans Mon vocabulaire pour faire de la place.", L"Puedes fijar diez favoritos. Desfija uno en Mi vocabulario para hacer espacio."},
 {L"Could not open My vocabulary.", L"Kunne ikke åpne Mitt ordforråd.", L"Mein Vokabular konnte nicht geöffnet werden.", L"Impossibile aprire Il mio vocabolario.", L"Impossible d’ouvrir Mon vocabulaire.", L"No se pudo abrir Mi vocabulario."},

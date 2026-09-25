@@ -72,3 +72,19 @@ writes `picker-vocabulary-result.txt` next to itself and then exits.
 checks. See [contributor workflow](../CONTRIBUTING.md) and
 [release validation](release-validation.md) for current results and remaining
 interactive acceptance checks.
+
+## Letter variants
+
+The Alt+I picker shows all variants for an empty query and filters by exact base
+letter and case otherwise. Both views share counts and a 40-entry recent history.
+Alt+T uses the shared emoji sort preference: recency then count, or count then
+recency, with built-in catalog order breaking remaining ties. It snapshots both
+on opening; typing another base uses that same snapshot. Switching sort mode
+applies immediately while preserving selection. Successful insertion and
+explicit copying increment once; cancellation and failed/partial input do not.
+`Learn from searches` controls both recording and applying letter counts and recency.
+These counts are separate from emoji history and are persisted in profile v9.
+The keyboard suite exercises variant navigation, failed insertion/copy, successful
+Unicode payload submission, restart persistence and session stability using
+injected adapters. The native input harness also includes accented letters and
+ligatures in its exact-payload check.

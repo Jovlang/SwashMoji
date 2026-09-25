@@ -48,6 +48,8 @@ struct Combination {
 };
 
 struct Profile : RankingPreferences {
+    std::map<std::wstring, unsigned int> letterUsage;
+    std::vector<std::wstring> letterHistory; // Newest first, separate from emoji history.
     Settings settings;
     std::map<std::wstring, Combination> combinations;
     std::map<std::wstring, Alias> aliases;

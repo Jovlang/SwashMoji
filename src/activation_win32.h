@@ -14,7 +14,7 @@ public:
         : add_(add), remove_(remove) {}
     int Id() const { return id_; }
     bool Prepare(HWND window, unsigned int hotkey) {
-        if (!ValidActivationHotkey(hotkey)) return false;
+        if (!ValidActivationHotkey(hotkey) || hotkey == 0x0149) return false; // Alt+I opens letter variants.
         if (id_ && hotkey == value_) return true;
         pending_ = id_ == 1 ? 2 : 1;
         if (add_(window, pending_, (hotkey >> 8) | MOD_NOREPEAT, hotkey & 255)) return true;

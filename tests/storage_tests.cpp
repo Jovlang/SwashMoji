@@ -43,6 +43,8 @@ std::string Read(const fs::path& path) {
 void Codec() {
     Profile profile;
     profile.settings = {true, true, 3, 5};
+    profile.letterHistory = {L"eè", L"uü"};
+    profile.letterUsage = {{L"eè", 2}, {L"uü", 5}};
     profile.settings.learnQueries = false;
     Remember(profile, L"👍🏽");
     Remember(profile, L"🚀\t\\\n\r✨");
@@ -54,6 +56,8 @@ void Codec() {
     auto decoded = DecodeProfile(bytes);
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 0);
     CHECK(decoded.profile.history == profile.history);
+    CHECK(decoded.profile.letterHistory == profile.letterHistory);
+    CHECK(decoded.profile.letterUsage == profile.letterUsage);
     CHECK(decoded.profile.usage == profile.usage);
     CHECK(decoded.profile.settings.positionAboveTextField);
     CHECK(decoded.profile.settings.sortByUsage);
@@ -64,8 +68,8 @@ void Codec() {
     CHECK(EncodeProfile(decoded.profile) == bytes);
     for (size_t size = 0; size < bytes.size(); ++size) CHECK(DecodeProfile(bytes.substr(0, size)).format != ProfileFormat::Valid);
     CHECK(decoded.profile.aliases.at(L"på vei").target.value == L"🚶");
-    CHECK(DecodeProfile("SwashMoji\t8\nend\t0\n").format == ProfileFormat::Unsupported);
-    CHECK(DecodeProfile("SwashMoji\t8").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t10\nend\t0\n").format == ProfileFormat::Unsupported);
+    CHECK(DecodeProfile("SwashMoji\t10").format == ProfileFormat::Unsupported);
     CHECK(DecodeProfile("\xEF\xBB\xBF" "SwashMoji\t1\r\nsetting\temoji_rows\t2\r\nend\t1\r\n").profile.settings.emojiRows == 2);
     decoded = DecodeProfile("SwashMoji\t1\nusage\trocket\t4294967296\nrecent\tbad\\q\nsetting\temoji_rows\t99\nusage\tgood\t2\nend\t4\n");
     CHECK(decoded.format == ProfileFormat::Valid && decoded.skippedRecords == 3);
@@ -125,6 +129,7 @@ void ActivationSettings(const fs::path& root) {
         if (conflict) return FALSE;
         registrations[id] = key; return TRUE;
     }, [&](HWND, int id) -> BOOL { return registrations.erase(id) != 0; });
+    CHECK(!active.Prepare(nullptr, 0x0149)); // Reserved for letter variants.
     CHECK(active.Prepare(nullptr, 0x0145)); active.Commit(nullptr, 0x0145);
     const auto original = active.Id();
     conflict = true;
@@ -175,7 +180,7 @@ void ImportExport(const fs::path& root) {
     CHECK(imported.settings.skinTone == 4 && imported.aliases.at(L"launch").target.value == L"rocket");
     Write(directory / L"truncated.tsv", "SwashMoji\t6\nsetting\tskin_tone\t2\n");
     CHECK(!ReadProfileExport(directory / L"truncated.tsv", imported, diagnostic) && !diagnostic.empty());
-    Write(directory / L"future.tsv", "SwashMoji\t99\nend\t0\n");
+    Write(directory / L"future.tsv", "SwashMoji\t109\nend\t0\n");
     CHECK(!ReadProfileExport(directory / L"future.tsv", imported, diagnostic) && !diagnostic.empty());
     Write(directory / L"skipped.tsv", "SwashMoji\t6\nbogus\nend\t1\n");
     CHECK(!ReadProfileExport(directory / L"skipped.tsv", imported, diagnostic) && !diagnostic.empty());
@@ -203,7 +208,7 @@ void Localization() {
         CHECK(UiDiagnostic(locale, L"Unknown diagnostic 🚀") == L"Unknown diagnostic 🚀");
         CHECK(UiDiagnostic(locale, recovered + L" custom text") == recovered + L" custom text");
         const auto help = UiHelpText(locale);
-        for (const auto* key : {L"Alt+E", L"Ctrl+Enter", L"Shift+Enter", L"Alt+C", L"Alt+D", L"Alt+F", L"Alt+I",
+        for (const auto* key : {L"Alt+E", L"Ctrl+Enter", L"Shift+Enter", L"Alt+C", L"Alt+D", L"Alt+F", L"Alt+I", L"Alt+K",
                  L"Alt+1", L"Alt+2", L"Alt+3", L"Alt+T", L"Alt+S", L"Alt+A", L"Alt+P", L"F1", L"Ctrl+Backspace", L"Ctrl+Z"})
             CHECK(help.find(key) != std::wstring::npos);
         CHECK(help.find(L"Hover") == std::wstring::npos);
@@ -277,7 +282,7 @@ void FamilyMigration(const fs::path& root) {
     CHECK(UsageCount(loaded.profile, L"👍") == 15);
     CHECK(loaded.profile.aliases.at(L"launch").target.value == L"🚀");
     CHECK(Read(directory / L"profile.tsv.bak") == v2);
-    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 7);
+    CHECK(DecodeProfile(Read(directory / L"profile.tsv")).version == 9);
     loaded = store.Load(&catalog);
     CHECK(!loaded.migrated && UsageCount(loaded.profile, L"👍") == 15);
     RecordChoice(loaded.profile, {ResultKind::Emoji, L"👍"}, L"good");
@@ -311,7 +316,7 @@ void LanguageSettings(const fs::path& root) {
     for (const auto& selection : std::vector<std::vector<std::string>>{{"en"}, {"nb"}, {"nb", "en"}, {"en", "nb"}, {"it"}, {"de"}, {"it", "de"}, {"de", "it"}}) {
         CHECK(profile.settings.displayLanguages.Set(selection));
         const auto decoded = DecodeProfile(EncodeProfile(profile));
-        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 7 && !decoded.skippedRecords);
+        CHECK(decoded.format == ProfileFormat::Valid && decoded.version == 9 && !decoded.skippedRecords);
         CHECK(decoded.profile.settings.displayLanguages.Locales() == selection);
         ClearHistory(profile);
         CHECK(profile.settings.displayLanguages.Locales() == selection);
@@ -342,7 +347,7 @@ void LanguageSettings(const fs::path& root) {
     CHECK(loaded.profile.settings.skinTone == 3 && loaded.profile.combinations.at(L"combo-1").payload == L"🚀✨");
     CHECK(loaded.profile.aliases.at(L"launch").target.value == L"combo-1");
     CHECK(Read(path / L"profile.tsv.bak") == v4);
-    CHECK(DecodeProfile(Read(path / L"profile.tsv")).version == 7);
+    CHECK(DecodeProfile(Read(path / L"profile.tsv")).version == 9);
     CHECK(!storage.Load().migrated);
     CHECK(loaded.profile.settings.displayLanguages.Set({"nb"}));
     std::wstring diagnostic;
@@ -364,7 +369,7 @@ void Migration(const fs::path& root) {
     CHECK(upgraded.profile.settings.skinTone == 3 && UsageCount(upgraded.profile, L"👍🏽") == 8);
     CHECK(upgraded.profile.history == (std::vector<ResultId>{{ResultKind::Emoji, L"👍🏽"}}));
     CHECK(Read(v1Directory / L"profile.tsv.bak") == v1);
-    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 7);
+    CHECK(DecodeProfile(Read(v1Directory / L"profile.tsv")).version == 9);
     CHECK(!oldStore.Load().migrated);
     const auto directory = root / L"migration";
     const auto fallback = root / L"WinMoji";
@@ -417,13 +422,13 @@ void Recovery(const fs::path& root) {
 
 void ProtectFutureAndCorrupt(const fs::path& root) {
     const auto directory = root / L"future";
-    Write(directory / L"profile.tsv", "SwashMoji\t99\nfuture-data\n");
+    Write(directory / L"profile.tsv", "SwashMoji\t109\nfuture-data\n");
     Write(directory / L"profile.tsv.bak", EncodeProfile(Profile{}));
     ProfileStorage store(directory);
     CHECK(!store.Load().diagnostic.empty() && store.ReadOnly());
     std::wstring diagnostic;
     CHECK(!store.Save(Profile{}, diagnostic));
-    CHECK(Read(directory / L"profile.tsv") == "SwashMoji\t99\nfuture-data\n");
+    CHECK(Read(directory / L"profile.tsv") == "SwashMoji\t109\nfuture-data\n");
     const auto broken = root / L"broken";
     Write(broken / L"profile.tsv", "corrupt");
     ProfileStorage corrupt(broken);
@@ -431,7 +436,7 @@ void ProtectFutureAndCorrupt(const fs::path& root) {
     CHECK(!corrupt.Save(Profile{}, diagnostic));
     CHECK(Read(broken / L"profile.tsv") == "corrupt");
     const auto futureBackup = root / L"future-backup";
-    Write(futureBackup / L"profile.tsv.bak", "SwashMoji\t99");
+    Write(futureBackup / L"profile.tsv.bak", "SwashMoji\t109");
     ProfileStorage backupStore(futureBackup);
     CHECK(!backupStore.Load().diagnostic.empty() && backupStore.ReadOnly());
     CHECK(!backupStore.Save(Profile{}, diagnostic));
@@ -464,9 +469,30 @@ void FailedWrites(const fs::path& root) {
     CHECK(Read(blocked) == "not a directory");
 }
 
+void LetterHistoryMigration(const fs::path& root) {
+    const auto directory = root / L"letter-history";
+    const std::string old = "SwashMoji\t8\nletter_usage\tuü\t7\nend\t1\n";
+    Write(directory / L"profile.tsv", old);
+    ProfileStorage store(directory);
+    auto loaded = store.Load();
+    CHECK(loaded.migrated && !loaded.unsaved);
+    CHECK(loaded.profile.letterUsage.at(L"uü") == 7 && loaded.profile.letterHistory.empty());
+    CHECK(Read(directory / L"profile.tsv.bak") == old);
+    loaded.profile.letterHistory = {L"uü", L"eè"};
+    loaded.profile.letterUsage[L"eè"] = 1;
+    std::wstring diagnostic;
+    CHECK(store.Save(loaded.profile, diagnostic));
+    CHECK(store.Save(loaded.profile, diagnostic)); // complete v9 backup
+    Write(directory / L"profile.tsv", "truncated");
+    const auto recovered = store.Load();
+    CHECK(recovered.recovered && recovered.profile.letterHistory == loaded.profile.letterHistory);
+    CHECK(recovered.profile.letterUsage == loaded.profile.letterUsage);
+}
+
 int main() {
     try {
         TestDirectory directory;
+        LetterHistoryMigration(directory.path);
         Codec(); ImportExport(directory.path); Localization(); ActivationSettings(directory.path); Migration(directory.path); FamilyMigration(directory.path); LanguageSettings(directory.path); Recovery(directory.path);
         ProtectFutureAndCorrupt(directory.path); FailedWrites(directory.path);
         std::cout << "Profile codec, migration, recovery and write-failure checks passed.\n";

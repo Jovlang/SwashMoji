@@ -149,6 +149,89 @@ void CombinationInsertion() {
     std::filesystem::remove_all(path);
 }
 
+void LetterVariantPicker() {
+    const auto path = std::filesystem::current_path() / (L"letter-picker-test-" + std::to_wstring(GetCurrentProcessId()));
+    g_storage = ProfileStorage(path);
+    g_profile = {}; g_letterMode = true; g_inputTarget = {42, 1, 1};
+    BeginPickerSession();
+    const bool emojiStatus = g_statusVisible;
+    CHECK(!(GetWindowLongW(g_status, GWL_STYLE) & WS_VISIBLE));
+    wchar_t cue[256]{L'x', 0};
+    SendMessageW(g_edit, EM_GETCUEBANNER, reinterpret_cast<WPARAM>(cue), std::size(cue));
+    CHECK(cue[0] == 0);
+    const auto compactHeight = PickerHeight();
+    ToggleStatusLine();
+    CHECK(g_statusVisible == emojiStatus && PickerHeight() == compactHeight);
+    SetRecoveryMessage(L"The original app is no longer available.\nCopy instead, then paste where you want.");
+    CHECK(GetWindowLongW(g_recoveryLabel, GWL_STYLE) & WS_VISIBLE);
+    CHECK(GetWindowLongW(g_copyInstead, GWL_STYLE) & WS_VISIBLE);
+    CHECK(!(GetWindowLongW(g_status, GWL_STYLE) & WS_VISIBLE));
+    CHECK(PickerHeight() == compactHeight + Px(kRecoveryHeight));
+    SetRecoveryMessage(L"");
+    SendMessageW(g_edit, WM_CHAR, L'u', 0);
+    CHECK(g_session.query == L"u" && g_displayVisible[0].payload == L"ü");
+    SendMessageW(g_edit, WM_KEYDOWN, VK_RIGHT, 0);
+    CHECK(g_session.selected.value == L"uú");
+    CombinationInput partial; partial.accepted = 1;
+    InsertSelection(true, &partial);
+    CHECK(g_profile.letterUsage.empty() && g_session.selected.value == L"uú");
+    CombinationClipboard failed; failed.success = false; CopySelection(&failed);
+    CHECK(g_profile.letterUsage.empty() && failed.payload == L"ú");
+    CombinationInput full; InsertSelection(true, &full);
+    CHECK(full.batches.size() == 1 && full.batches[0][0].code == L'ú');
+    CHECK(g_profile.letterUsage.at(L"uú") == 1 && g_profile.usage.empty());
+    CHECK(g_displayVisible[0].payload == L"ü"); // frozen session order
+    CHECK(g_storage.Load().profile.letterUsage.at(L"uú") == 1);
+    BeginPickerSession();
+    CHECK(g_displayVisible[0].payload == L"ú");
+    SendMessageW(g_edit, WM_CHAR, L'e', 0);
+    CHECK(g_session.query == L"e" && g_displayVisible[0].payload == L"é");
+    SendMessageW(g_edit, WM_CHAR, L'U', 0);
+    CHECK(g_session.query == L"U" && g_displayVisible[0].payload == L"Ü");
+    CombinationClipboard copied; CopySelection(&copied);
+    CHECK(copied.payload == L"Ü" && g_profile.letterUsage.at(L"UÜ") == 1);
+    // Global and filtered views share successful choices, with a frozen session.
+    g_profile.letterUsage[L"uú"] = 4;
+    SetWindowTextW(g_edit, L"");
+    BeginPickerSession();
+    CHECK(g_visible[0].payload == L"Ü"); // newest successful copy
+    CHECK(g_session.selected == g_visible[0].id);
+    BYTE keys[256]{}, altKeys[256]{};
+    CHECK(GetKeyboardState(keys)); altKeys[VK_MENU] = 0x80;
+    CHECK(SetKeyboardState(altKeys));
+    MSG toggle{}; toggle.hwnd = g_edit; toggle.message = WM_SYSKEYDOWN; toggle.wParam = 'T';
+    CHECK(ProcessAppMessage(toggle));
+    CHECK(SetKeyboardState(keys));
+    CHECK(g_sortByUsage && g_visible[0].payload == L"ú");
+    CHECK(g_storage.Load().profile.settings.sortByUsage);
+    CHECK(g_storage.Load().profile.letterHistory == g_profile.letterHistory);
+    SendMessageW(g_edit, WM_CHAR, L'u', 0);
+    CHECK(g_visible[0].payload == L"ú");
+    SetWindowTextW(g_edit, L"");
+    CHECK(g_visible[0].payload == L"ú");
+    CombinationClipboard globalCopy; CopySelection(&globalCopy);
+    CHECK(globalCopy.payload == L"ú" && g_profile.letterUsage.at(L"uú") == 5);
+    BeginPickerSession();
+    CHECK(g_session.query.empty() && g_session.selected.value == L"uú");
+    CombinationInput globalInput; InsertSelection(false, &globalInput);
+    CHECK(globalInput.batches.size() == 1 && globalInput.batches[0][0].code == L'ú');
+    CHECK(g_profile.letterUsage.at(L"uú") == 6);
+    CHECK(g_profile.letterHistory.front() == L"uú");
+    CHECK(g_profile.history.empty());
+    g_profile.settings.learnQueries = false;
+    BeginPickerSession(); SendMessageW(g_edit, WM_CHAR, L'u', 0);
+    CHECK(g_displayVisible[0].payload == L"ü");
+    InsertSelection(true, &full);
+    CHECK(!g_profile.letterUsage.count(L"uü"));
+    SendMessageW(g_edit, WM_CHAR, L'b', 0);
+    CHECK(g_displayVisible.empty());
+    CHECK(!(GetWindowLongW(g_teachPhrase, GWL_STYLE) & WS_VISIBLE));
+    CHECK(path.parent_path() == std::filesystem::current_path());
+    std::filesystem::remove_all(path);
+    g_letterMode = false; BeginPickerSession();
+    CHECK(!!(GetWindowLongW(g_status, GWL_STYLE) & WS_VISIBLE) == emojiStatus);
+}
+
 int main() {
     try {
         // Synthetic messages must not inherit modifiers held on the user's desktop.
@@ -330,6 +413,7 @@ int main() {
         CHECK(SendMessageW(g_list, LB_GETCURSEL, 0, 0) == g_emojiRows);
         CHECK(g_profile.history.empty());
         CombinationInsertion();
+        LetterVariantPicker();
         DestroyWindow(g_window);
         std::cout << "PASS: launch and typed-query arrows, all row counts, modified text editing and cleared search\n";
     } catch (const std::exception& error) {

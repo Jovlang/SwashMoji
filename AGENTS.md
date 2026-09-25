@@ -117,7 +117,9 @@ to unlock a build; use another build directory.
 - Preserve profile migration, backup recovery and unsupported-version protection.
   Use isolated directories for tests, never the user's real
   `%LOCALAPPDATA%\SwashMoji` or legacy `%LOCALAPPDATA%\WinMoji` data.
-  Profile version 7 adds `ui_language` (English by default for versions 1–6).
+  Profile version 9 adds `letter_recent`; global and filtered letter variants share usage and recency.
+  Version 8 adds `letter_usage` for the Alt+I letter-variant picker.
+  Version 7 adds `ui_language` (English by default for versions 1–6).
   Version 6 adds `activation_hotkey` (Alt+E by default for versions 1–5).
   Version 5 added `display_languages`; versions 1–4 migrate with `en`, `nb` defaults.
   Startup registration is per-user Windows configuration, not a profile field. History clearing retains aliases, combinations, favorites,

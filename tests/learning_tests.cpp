@@ -1,4 +1,7 @@
 #include "test_support.h"
+#include "letter_variants.h"
+#include <set>
+#include "storage.h"
 #include "search.h"
 #include "storage.h"
 #include <sstream>
@@ -159,8 +162,77 @@ void Determinism(const Catalog& catalog) {
         CHECK(Ids(Search(catalog, Profile{}, query)) == Ids(Search(reverse, Profile{}, query)));
 }
 
+void LetterLearning() {
+    Profile profile;
+    CHECK(!SearchLetterVariants(L"", {}).empty());
+    CHECK(SearchLetterVariants(L"ab", {}).empty());
+    CHECK(SearchLetterVariants(L"u", {})[0].payload == L"ü");
+    CHECK(SearchLetterVariants(L"S", {})[0].payload == L"ẞ");
+    RecordLetterChoice(profile, L"eè");
+    RecordLetterChoice(profile, L"ex");
+    CHECK(profile.letterUsage.size() == 1);
+    CHECK(SearchLetterVariants(L"e", profile.letterUsage)[0].payload == L"è");
+    CHECK(SearchLetterVariants(L"E", profile.letterUsage)[0].payload == L"É");
+    profile.letterUsage[L"eè"] = UINT_MAX;
+    RecordLetterChoice(profile, L"eè");
+    CHECK(profile.letterUsage.at(L"eè") == UINT_MAX);
+    const auto decoded = DecodeProfile(EncodeProfile(profile));
+    CHECK(decoded.version == 9 && !decoded.skippedRecords && decoded.profile.letterUsage == profile.letterUsage);
+    const auto bad = DecodeProfile("SwashMoji\t8\nletter_usage\tex\t1\nletter_usage\teè\t2\nletter_usage\teè\t3\nletter_usage\tuü\t0\nend\t4\n");
+    CHECK(bad.skippedRecords == 3 && bad.profile.letterUsage.at(L"eè") == 2);
+    CHECK(DecodeProfile("SwashMoji\t7\nend\t0\n").profile.letterUsage.empty());
+    profile.settings.learnQueries = false;
+    RecordLetterChoice(profile, L"uü");
+    CHECK(profile.letterUsage.size() == 1);
+    ClearHistory(profile); CHECK(profile.letterUsage.empty());
+}
+
+void GlobalLetterRanking() {
+    Profile profile;
+    RecordLetterChoice(profile, L"uü");
+    RecordLetterChoice(profile, L"uü");
+    RecordLetterChoice(profile, L"eé");
+    RecordLetterChoice(profile, L"eé");
+    RecordLetterChoice(profile, L"eè");
+    auto search = [&](const std::wstring& query, bool usage) {
+        return SearchLetterVariants(query, profile.letterUsage, profile.letterHistory, usage);
+    };
+    CHECK(search(L"", false)[0].payload == L"è");
+    CHECK(search(L"e", false)[0].payload == L"è");
+    CHECK(search(L"", true)[0].payload == L"é"); // recency breaks equal counts
+    CHECK(search(L"e", true)[0].payload == L"é");
+    const auto snapshot = profile;
+    RecordLetterChoice(profile, search(L"", false)[0].id.value);
+    CHECK(profile.letterUsage.at(L"eè") == 2);
+    CHECK(profile.letterHistory.size() == 3);
+    CHECK(search(L"e", true)[0].payload == L"è");
+    CHECK(SearchLetterVariants(L"", snapshot.letterUsage, snapshot.letterHistory, true)[0].payload == L"é");
+    const auto decoded = DecodeProfile(EncodeProfile(profile));
+    CHECK(decoded.profile.letterHistory == profile.letterHistory);
+    const auto bad = DecodeProfile("SwashMoji\t9\nletter_recent\teè\nletter_recent\teè\nletter_recent\tex\nend\t3\n");
+    CHECK(bad.skippedRecords == 2 && bad.profile.letterHistory == std::vector<std::wstring>{L"eè"});
+    const auto old = DecodeProfile("SwashMoji\t8\nletter_usage\tuü\t3\nend\t1\n");
+    CHECK(old.profile.letterHistory.empty() && old.profile.letterUsage.at(L"uü") == 3);
+    CHECK(SearchLetterVariants(L"", old.profile.letterUsage, {}, false)[0].payload == L"ü");
+    const auto all = SearchLetterVariants(L"", {});
+    std::set<std::wstring> payloads;
+    for (const auto& result : all) {
+        CHECK(ValidLetterChoice(result.id.value));
+        CHECK(payloads.insert(result.payload).second);
+        RecordLetterChoice(profile, result.id.value);
+    }
+    CHECK(profile.letterHistory.size() == kMaxHistory);
+    profile.settings.learnQueries = false;
+    const auto before = EncodeProfile(profile);
+    RecordLetterChoice(profile, L"uü");
+    CHECK(EncodeProfile(profile) == before);
+    ClearHistory(profile);
+    CHECK(profile.letterHistory.empty() && profile.letterUsage.empty());
+}
+
 int main() {
     try {
+        LetterLearning(); GlobalLetterRanking();
         const auto catalog = Fixture();
         LearningAndSnapshot(catalog); BoundsAndLru(catalog); FavoritesAndFamilies(catalog); Determinism(catalog);
         std::cout << "Query learning, LRU bounds, preference snapshots, favorites and family aggregation passed.\n";

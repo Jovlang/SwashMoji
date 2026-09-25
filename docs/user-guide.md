@@ -118,7 +118,7 @@ or `Home`/`End` to edit the search text.
 | `Ctrl+Z` | Undo text deletion |
 | `Alt+1`, `Alt+2`, `Alt+3` | Choose the maximum number of emoji rows |
 | `Alt+F` | Cycle through installed color and monochrome emoji fonts |
-| `Alt+I` | Cycle the global skin tone |
+| `Alt+K` | Cycle the global skin tone |
 | `Alt+S` | Show or hide the selected result's text |
 | `Esc` | Close the active dialog, help, or picker |
 | `F1` | Show the feature and shortcut overview |
@@ -139,7 +139,7 @@ See [selection, navigation, and display scaling](selection.md) for details.
 
 ## Skin tones and variant details
 
-`Alt+I` cycles the global skin tone for all compatible emoji. Skin-tone variants
+`Alt+K` cycles the global skin tone for all compatible emoji. Skin-tone variants
 share usage history, so they are not learned or counted as separate families.
 
 **Details** (`Alt+D` or the result menu) shows a larger preview and valid catalog
@@ -232,3 +232,34 @@ Overall release acceptance is still open.
 
 See [selection and DPI](selection.md) and the [release protocol](release-validation.md)
 for documented results and remaining checks. Automated tests do not replace these checks.
+
+## Letter variants
+
+Press `Alt+I`, type a base letter, select a variant with the arrow keys, and press
+`Enter` to insert it. For example, `Alt+I`, `u`, `Enter` inserts `ü` on a fresh
+profile. `e` offers `é è ê ë ē ė ę ě ĕ`; `s` includes `ß`, and `a` includes `æ`.
+Use Shift or Caps Lock for uppercase variants. Typing another letter replaces
+the current base; Backspace clears it. Letters without variants show no results.
+
+The letter picker has no placeholder or ordinary status line. Insertion errors
+and **Copy instead** still appear when needed. `Alt+S` applies only to the emoji
+picker.
+
+Opening `Alt+I` with an empty field shows all supported variants, including
+uppercase forms. `Alt+T` switches between **most recent** and **most used**, using
+the same saved setting as the emoji picker. Typing `e` filters this list to `e`
+variants without changing the ranking rules; clearing the field restores all
+variants. Your most recent/frequent choice can become `Alt+I`, `Enter`.
+
+Successful insertion or explicit copying updates the same local usage counts and
+recent history in both views. Case is preserved. Most recent mode compares
+recency first, then frequency; most used reverses that priority. Remaining ties
+keep the built-in order (lowercase bases a–z, then uppercase A–Z globally).
+Choices affect ranking next session, keeping repeat insertion stable. `Alt+T`
+applies immediately while preserving the selected variant. **Learn from searches**
+controls recording and applying variant history. Emoji history is separate.
+`Shift+Enter`, `Ctrl+Enter`, and insertion recovery behave as in the emoji picker.
+This first version has no variant pins.
+
+`Alt+I` is reserved for this picker; global skin-tone cycling has moved to `Alt+K`.
+If another program owns `Alt+I`, startup reports the registration failure.

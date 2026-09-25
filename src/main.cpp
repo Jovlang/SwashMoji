@@ -24,6 +24,7 @@
 #include "activation_win32.h"
 #include "localization.h"
 #include "picker.h"
+#include "letter_variants.h"
 #include <oleacc.h>
 #include <windowsx.h>
 
@@ -40,6 +41,10 @@ using namespace SwashMoji;
 constexpr wchar_t kClassName[] = L"SwashMojiWindow";
 constexpr wchar_t kHelpClassName[] = L"SwashMojiHelpWindow";
 ActivationRegistration g_activation;
+constexpr int kLetterHotkeyId = 3;
+bool g_letterMode{};
+std::map<std::wstring, unsigned int> g_letterSnapshot;
+std::vector<std::wstring> g_letterHistorySnapshot;
 constexpr int kPickerWidth = 500;
 constexpr int kPickerHeight = 132;
 constexpr int kInputHeight = 34;
@@ -124,6 +129,7 @@ bool g_profileUnsaved{};
 std::wstring g_storageDiagnostic;
 bool& g_sortByUsage = g_profile.settings.sortByUsage;
 bool g_statusVisible{true};
+bool StatusLineVisible() { return g_statusVisible && !g_letterMode; }
 bool g_pickerAboveAnchor{};
 int& g_emojiRows = g_profile.settings.emojiRows;
 int& g_skinToneIndex = g_profile.settings.skinTone;
@@ -160,7 +166,7 @@ int LocalizedMessageBox(HWND owner, const wchar_t* message, const wchar_t* title
 }
 
 void RefreshInterfaceLabels() {
-    SetWindowTextW(g_list, UiText(g_profile.settings.uiLanguage, L"Matching emoji").c_str());
+    SetWindowTextW(g_list, UiText(g_profile.settings.uiLanguage, g_letterMode ? L"Letter variants" : L"Matching emoji").c_str());
     SetWindowTextW(g_copyInstead, UiText(g_profile.settings.uiLanguage, L"Copy instead").c_str());
     SetWindowTextW(g_teachPhrase, UiText(g_profile.settings.uiLanguage, L"No matches. Teach this phrase (Alt+A)").c_str());
 }
@@ -208,7 +214,8 @@ void SaveProfile() {
 void SaveSettings() { SaveProfile(); }
 
 void RememberSelection(const ResultId& target) {
-    RecordChoice(g_profile, target, g_session.query);
+    if (g_letterMode) RecordLetterChoice(g_profile, target.value);
+    else RecordChoice(g_profile, target, g_session.query);
     SaveProfile();
 }
 
@@ -222,7 +229,10 @@ void RefreshList() {
     if (!preserveSelection) { g_variantTarget = {}; g_variantPayload.clear(); }
     g_session.query = input;
     SendMessageW(g_list, LB_RESETCONTENT, 0, 0);
-    g_visible = Search(g_catalog, g_profile, g_session.query, &g_rankingPreferences);
+    g_visible = g_letterMode ? SearchLetterVariants(g_session.query,
+        g_profile.settings.learnQueries ? g_letterSnapshot : std::map<std::wstring, unsigned int>{},
+        g_profile.settings.learnQueries ? g_letterHistorySnapshot : std::vector<std::wstring>{}, g_sortByUsage)
+        : Search(g_catalog, g_profile, g_session.query, &g_rankingPreferences);
     // Fit the current results without changing the user's preferred maximum.
     // Resize before filling the multicolumn list so its native row count agrees
     // with the item mapping, hit tests and keyboard navigation.
@@ -233,7 +243,7 @@ void RefreshList() {
         ResizePicker(PickerHeight());
     }
     LayoutChildren(window);
-    const bool teachPhrase = g_visible.empty() && !NormalizePhrase(g_session.query).empty();
+    const bool teachPhrase = !g_letterMode && g_visible.empty() && !NormalizePhrase(g_session.query).empty();
     // These controls occupy the same space. The list is above the button in
     // sibling z-order, so it must be hidden to let the button receive clicks.
     ShowWindow(g_list, teachPhrase ? SW_HIDE : SW_SHOW);
@@ -260,6 +270,7 @@ void RefreshList() {
 }
 
 void ToggleSelectedPin() {
+    if (g_letterMode) return;
     const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
     if (index < 0 || static_cast<size_t>(index) >= g_displayVisible.size()) return;
     const auto id = g_displayVisible[index].id;
@@ -277,6 +288,17 @@ void ToggleSelectedPin() {
 }
 
 void BeginPickerSession() {
+    g_letterSnapshot = g_profile.letterUsage;
+    g_letterHistorySnapshot = g_profile.letterHistory;
+    if (g_letterMode) {
+        // A new session selects its newly ranked first variant, not the prior
+        // session's selection retained by an empty-query refresh on opening.
+        g_session.selected = {};
+        SendMessageW(g_list, LB_SETCURSEL, static_cast<WPARAM>(-1), 0);
+    }
+    SendMessageW(g_edit, EM_SETLIMITTEXT, g_letterMode ? 1 : 255, 0);
+    SendMessageW(g_edit, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(L""));
+    SetWindowTextW(g_list, UiText(g_profile.settings.uiLanguage, g_letterMode ? L"Letter variants" : L"Matching emoji").c_str());
     g_variantTarget = {}; g_variantPayload.clear();
     g_rankingPreferences = g_profile;
     RefreshList();
@@ -290,6 +312,7 @@ void CancelPendingReturn() {
 }
 
 void OpenVocabulary(bool prefill) {
+    if (g_letterMode && prefill) return;
     if (g_vocabularyOpen || g_detailsOpen) return;
     CancelPendingReturn();
     const int index = static_cast<int>(SendMessageW(g_list, LB_GETCURSEL, 0, 0));
@@ -510,7 +533,7 @@ bool TryGetTextFieldAnchor(HWND active, RECT& anchor) {
 
 int PickerHeight() {
     const int listHeight = GridRows(g_visible.size(), g_emojiRows) * kResultSize;
-    return Px(kPickerHeight + listHeight - kResultSize - (g_statusVisible ? 0 : 26)
+    return Px(kPickerHeight + listHeight - kResultSize - (StatusLineVisible() ? 0 : 26)
         + (g_recoveryMessage.empty() ? 0 : kRecoveryHeight));
 }
 
@@ -571,7 +594,7 @@ void UpdateStatusLine() {
     if (!g_status) return;
     if (!g_storageDiagnostic.empty()) { SetWindowTextW(g_status, UiDiagnostic(g_profile.settings.uiLanguage, g_storageDiagnostic).c_str()); return; }
     const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
-    std::wstring label = UiText(g_profile.settings.uiLanguage, L"No matches. Teach this phrase with Alt+A.");
+    std::wstring label = UiText(g_profile.settings.uiLanguage, g_letterMode ? L"Type a letter" : L"No matches. Teach this phrase with Alt+A.");
     if (index >= 0 && static_cast<size_t>(index) < g_displayVisible.size()) {
         const auto& result = g_displayVisible[index];
         const auto* exact = g_catalog.Find(result.id == g_variantTarget && !g_variantPayload.empty() ? g_variantPayload : result.payload);
@@ -593,6 +616,7 @@ void ShowFontToast() {
 }
 
 void ToggleStatusLine() {
+    if (g_letterMode) return;
     g_statusVisible = !g_statusVisible;
     KillTimer(g_window, kStatusTimerId);
     ShowWindow(g_status, g_statusVisible ? SW_SHOW : SW_HIDE);
@@ -610,6 +634,7 @@ void SetEmojiRows(int rows) {
 }
 
 void CycleSkinTone() {
+    if (g_letterMode) return;
     static const wchar_t* names[]{L"Default", L"Light", L"Medium-light", L"Medium",
                                   L"Medium-dark", L"Dark"};
     g_skinToneIndex = (g_skinToneIndex + 1) % 6;
@@ -1022,8 +1047,9 @@ void LayoutChildren(HWND window) {
     MoveWindow(g_list, margin, listY, area.right - margin * 2, listHeight, TRUE);
     MoveWindow(g_teachPhrase, margin + Px(12), listY + Px(5), area.right - margin * 2 - Px(24), Px(36), TRUE);
     const int footerY = listY + listHeight;
+    ShowWindow(g_status, StatusLineVisible() ? SW_SHOW : SW_HIDE);
     MoveWindow(g_status, margin + Px(2), footerY + Px(6), area.right - margin * 2 - Px(4), Px(20), TRUE);
-    const int recoveryY = footerY + (g_statusVisible ? Px(34) : Px(8));
+    const int recoveryY = footerY + (StatusLineVisible() ? Px(34) : Px(8));
     MoveWindow(g_recoveryLabel, margin, recoveryY, area.right - margin * 2 - Px(132), Px(kRecoveryHeight - 12), TRUE);
     MoveWindow(g_copyInstead, area.right - margin - Px(126), recoveryY + Px(8), Px(126), Px(30), TRUE);
 }
@@ -1206,6 +1232,7 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
 }
 
 void OpenDetails() {
+    if (g_letterMode) return;
     if (g_detailsOpen || g_vocabularyOpen) return;
     const auto index = SendMessageW(g_list, LB_GETCURSEL, 0, 0);
     if (index < 0 || static_cast<size_t>(index) >= g_displayVisible.size()) return;
@@ -1250,6 +1277,13 @@ void OpenDetails() {
 }
 
 LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (g_letterMode && message == WM_CHAR && !(GetKeyState(VK_CONTROL) & 0x8000) &&
+        ((wParam >= 'a' && wParam <= 'z') || (wParam >= 'A' && wParam <= 'Z'))) {
+        const wchar_t text[]{static_cast<wchar_t>(wParam), 0};
+        SetWindowTextW(g_edit, text);
+        SendMessageW(g_edit, EM_SETSEL, 0, -1);
+        return 0;
+    }
     const WNDPROC original = control == g_edit ? g_editProc : g_listProc;
     if (message == WM_GETDLGCODE) return CallWindowProcW(original, control, message, wParam, lParam) | DLGC_WANTARROWS;
     if (control == g_list && message == WM_LBUTTONDOWN) {
@@ -1257,6 +1291,7 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
         if (g_pressedIndex < 0) return 0;
     }
     if (control == g_list && message == WM_CONTEXTMENU) {
+        if (g_letterMode) return 0;
         POINT point{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
         if (point.x == -1 && point.y == -1) {
             RECT area{};
@@ -1299,7 +1334,7 @@ LRESULT CALLBACK InputProc(HWND control, UINT message, WPARAM wParam, LPARAM lPa
     }
     if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN) {
         if (wParam == VK_TAB) { FocusNext((GetKeyState(VK_SHIFT) & 0x8000) != 0); return 0; }
-        if (wParam == 'I' && (GetKeyState(VK_MENU) & 0x8000)) {
+        if (wParam == 'K' && (GetKeyState(VK_MENU) & 0x8000)) {
             CycleSkinTone();
             return 0;
         }
@@ -1485,7 +1520,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         return 0;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        if (wParam == 'I' && (GetKeyState(VK_MENU) & 0x8000)) {
+        if (wParam == 'K' && (GetKeyState(VK_MENU) & 0x8000)) {
             CycleSkinTone();
             return 0;
         }
@@ -1500,8 +1535,31 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         break;
     case WM_HOTKEY:
         if (g_vocabularyOpen || g_detailsOpen) return 0;
+        if (wParam == kLetterHotkeyId) {
+            g_letterMode = true;
+            SetWindowTextW(g_edit, L"");
+            if (IsWindowVisible(window) && !CaptureExternalTarget(GetForegroundWindow()).window) {
+                CancelPendingReturn();
+                SetRecoveryMessage(L"");
+                BeginPickerSession();
+                SetForegroundWindow(window);
+                SetFocus(g_edit);
+            } else CenterOnActiveMonitor();
+            return 0;
+        }
         if (g_activation.Id() && wParam == static_cast<WPARAM>(g_activation.Id())) {
-            if (IsWindowVisible(window)) return 0;
+            if (IsWindowVisible(window)) {
+                if (g_letterMode) {
+                    CancelPendingReturn();
+                    g_letterMode = false;
+                    SetRecoveryMessage(L"");
+                    SetWindowTextW(g_edit, L"");
+                    BeginPickerSession();
+                    SetFocus(g_edit);
+                }
+                return 0;
+            }
+            g_letterMode = false;
             SetWindowTextW(g_edit, L"");
             CenterOnActiveMonitor();
         }
@@ -1525,6 +1583,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         break;
     case kShowPickerMessage:
         if (g_vocabularyOpen || g_detailsOpen) return 0;
+        g_letterMode = false;
         SetWindowTextW(g_edit, L"");
         CenterOnActiveMonitor();
         return 0;
@@ -1534,6 +1593,8 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         case WM_LBUTTONUP:
         case NIN_SELECT:
         case NIN_KEYSELECT:
+            g_letterMode = false;
+            SetWindowTextW(g_edit, L"");
             CenterOnActiveMonitor();
             break;
         case WM_RBUTTONUP:
@@ -1548,6 +1609,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
     case WM_DESTROY:
         CancelPendingReturn();
         if (g_foregroundHook) { UnhookWinEvent(g_foregroundHook); g_foregroundHook = nullptr; }
+        UnregisterHotKey(window, kLetterHotkeyId);
         g_activation.Clear(window);
         Shell_NotifyIconW(NIM_DELETE, &g_tray);
         PostQuitMessage(0);
@@ -1612,7 +1674,7 @@ bool ProcessAppMessage(const MSG& message) {
                 ToggleStatusLine();
                 return true;
             }
-            if (message.wParam == 'I') {
+            if (message.wParam == 'K') {
                 CycleSkinTone();
                 return true;
             }
@@ -1690,6 +1752,9 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
             UiText(g_profile.settings.uiLanguage, L" could not be registered. It may be in use by another application.\n\nOpen Settings from the tray icon to choose another shortcut. You can still click the tray icon to open the picker.");
         LocalizedMessageBox(nullptr, warning.c_str(), L"SwashMoji", MB_ICONWARNING);
     }
+
+    if (!RegisterHotKey(g_window, kLetterHotkeyId, MOD_ALT | MOD_NOREPEAT, 'I'))
+        LocalizedMessageBox(g_window, L"Alt+I could not be registered.", L"SwashMoji", MB_ICONWARNING);
 
     MSG message;
     while (GetMessageW(&message, nullptr, 0, 0)) {

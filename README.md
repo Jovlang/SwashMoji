@@ -53,7 +53,8 @@ To build from source, follow [CONTRIBUTING.md](CONTRIBUTING.md#build-on-windows)
 
 | Key | Action |
 | --- | --- |
-| `Alt+E` | Open the picker |
+| `Alt+E` | Open the emoji picker |
+| `Alt+I` | Open letter variants (`u` → `ü`, for example) |
 | `Enter` | Insert without changing the clipboard |
 | `Ctrl+Enter` | Insert and keep the picker open |
 | `Shift+Enter` | Copy to the clipboard |

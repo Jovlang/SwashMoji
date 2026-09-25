@@ -3,16 +3,18 @@
 The runtime uses `%LOCALAPPDATA%\SwashMoji\profile.tsv`. All profile tests pass an
 isolated directory explicitly; they never resolve or change the user's profile.
 
-## Version 7
+## Version 9
 
 Files are UTF-8 with LF line endings. The reader also accepts a UTF-8 BOM and CRLF.
-The header is `SwashMoji<TAB>7`. Following lines contain typed records:
+The header is `SwashMoji<TAB>9`. Following lines contain typed records:
 
 | Record | Fields after the record type |
 | --- | --- |
 | `setting` | setting name, unsigned integer value |
 | `display_languages` | one or two registered locale codes, primary first (for example `en<TAB>nb`) |
 | `ui_language` | one registered locale code for application interface text |
+| `letter_recent` | base-and-variant key; newest first (version 9) |
+| `letter_usage` | base-and-variant key, nonzero unsigned 32-bit count (version 8) |
 | `recent` | target kind, stable target ID; newest records first |
 | `usage` | target kind, stable target ID, nonzero unsigned 32-bit count |
 | `query` | normalized complete query, target kind, stable target ID, nonzero unsigned 32-bit count; most recently chosen pair first |
@@ -98,7 +100,7 @@ its aliases, pins, history, usage and query counts in one atomic profile save.
 ## Migration and persistence
 
 The Settings dialog can export the current in-memory profile as a complete
-version 7 `.tsv` file and import a complete supported profile. Import rejects
+version 9 `.tsv` file and import a complete supported profile. Import rejects
 files containing skipped invalid records rather than silently accepting a
 partial profile. Supported older versions are decoded and written back in the
 current format; catalog family IDs are normalized before saving. Import replaces
@@ -116,7 +118,7 @@ The mapping is idempotent and also handles catalogs that later recognize an ID.
 Aliases and settings are preserved. The runtime passes its loaded catalog to
 `ProfileStorage::Load`; codec-only consumers may omit that catalog.
 
-Migration atomically writes version 7 and backs up the previous complete file.
+Migration atomically writes version 9 and backs up the previous complete file.
 A failed write leaves the previous format on disk, retains the migrated values
 in memory, and reports unsaved state. Retrying does not double counts. Unsupported
 future versions remain read-only.
@@ -155,3 +157,18 @@ is running. CTest covers the original preference comparator, search behavior and
 catalog identity, UTF-8/escaping, legacy migration, every truncation point of a
 sample profile, backup recovery, future-format protection, malformed numeric
 records, and real filesystem replacement failures using a locked test file.
+
+Version 8 adds `letter_usage<TAB>base-and-variant<TAB>count`, for example
+`letter_usage<TAB>uü<TAB>3`. Keys contain exactly a supported base letter and one
+of its catalogued variants, preserving case. Counts are nonzero unsigned 32-bit
+integers, saturate at UINT32_MAX, and reject duplicate keys (first valid wins).
+Versions 1–7 migrate with no letter counts. These counts are included in profile
+backup, export/import and history clearing. Disabled learning neither collects
+nor applies them. Ranking takes a snapshot when opening the picker.
+
+Version 9 adds `letter_recent<TAB>base-and-variant`, newest first, retaining up to
+40 distinct valid choice keys. Invalid, duplicate and excess records are skipped.
+Versions 1–8 start with empty variant recency; version 8 usage counts are retained
+and break recency ties, without inventing a previous order. Variant history is
+included in atomic saves, backup recovery, import/export and history clearing.
+The existing `sort_by_usage` setting controls both emoji and variant pickers.

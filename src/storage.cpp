@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "storage.h"
+#include "letter_variants.h"
 #include "catalog.h"
 #include "text.h"
 #include <algorithm>
@@ -15,7 +16,7 @@ namespace {
 constexpr size_t kMaxFileBytes = 4 * 1024 * 1024;
 constexpr size_t kMaxRecordBytes = 16384;
 constexpr size_t kMaxRecords = 50000;
-constexpr unsigned int kVersion = 7;
+constexpr unsigned int kVersion = 9;
 
 bool Number(const std::string& text, unsigned int& result) {
     if (text.empty()) return false;
@@ -173,6 +174,8 @@ std::string EncodeProfile(const Profile& profile) {
         return std::string(id.kind == ResultKind::Emoji ? "emoji\t" : "combination\t") + Escape(id.value);
     };
     for (const auto& id : profile.history) records.push_back("recent\t" + targetFields(id));
+    for (const auto& key : profile.letterHistory) records.push_back("letter_recent\t" + Escape(key));
+    for (const auto& usage : profile.letterUsage) records.push_back("letter_usage\t" + Escape(usage.first) + "\t" + std::to_string(usage.second));
     for (const auto& usage : profile.usage) records.push_back("usage\t" + targetFields(usage.first) + "\t" + std::to_string(usage.second));
     for (const auto& id : profile.pins) records.push_back("pin\t" + targetFields(id));
     for (const auto& choice : profile.queryChoices)
@@ -253,6 +256,18 @@ DecodedProfile DecodeProfile(const std::string& bytes) {
                 for (const auto& locale : SupportedLocales()) if (fields[1] == locale.code) { valid = true; break; }
             }
             if (valid) { result.profile.settings.uiLanguage = fields[1]; haveUiLanguage = true; }
+        } else if (valid && fields[0] == "letter_recent" && version >= 9) {
+            std::wstring key;
+            auto& history = result.profile.letterHistory;
+            valid = fields.size() == 2 && Unescape(fields[1], key) && ValidLetterChoice(key) &&
+                history.size() < kMaxHistory && std::find(history.begin(), history.end(), key) == history.end();
+            if (valid) history.push_back(key);
+        } else if (valid && fields[0] == "letter_usage" && version >= 8) {
+            std::wstring key;
+            unsigned int count{};
+            valid = fields.size() == 3 && Unescape(fields[1], key) && ValidLetterChoice(key) &&
+                Number(fields[2], count) && count && !result.profile.letterUsage.count(key);
+            if (valid) result.profile.letterUsage[key] = count;
         } else if (valid && fields[0] == "recent") {
             ResultId id;
             valid = version < 3 ? (fields.size() == 2 && Unescape(fields[1], id.value) && !id.value.empty()) :

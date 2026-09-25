@@ -57,7 +57,7 @@ bool NormalizeFamilyHistory(Profile& profile, const Catalog& catalog) {
     return changed;
 }
 
-void ClearHistory(Profile& profile) { profile.history.clear(); profile.usage.clear(); profile.queryChoices.clear(); }
+void ClearHistory(Profile& profile) { profile.letterUsage.clear(); profile.letterHistory.clear(); profile.history.clear(); profile.usage.clear(); profile.queryChoices.clear(); }
 
 int HistoryBoost(const RankingPreferences& profile, const ResultId& target) {
     const auto found = std::find(profile.history.begin(), profile.history.end(), target);
