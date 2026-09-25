@@ -6,6 +6,8 @@ SwashMoji is a lightweight, native emoji picker built for people who use emoji o
 
 Press **Alt+E** and start typing. SwashMoji learns which emoji you actually use and brings your favorites to the front. Press **Alt+T** to switch between recently used and most-used emoji.
 
+Need a letter variant? Press **Alt+I** from any app to browse accented letters and variants such as `ü`, `è`, `æ`, and `ß`. Type a base letter to filter, choose with the arrow keys, and press **Enter**. Both views learn from your choices; **Alt+T** switches between recently used and most used here too.
+
 Search naturally across multiple languages — no language switching required. SwashMoji searches every supported language at once, while displaying emoji names in **one or two languages you choose**.
 
 Make the vocabulary yours with **custom aliases, pinned favorites, and reusable emoji combinations**. Turn the words you actually type into the emoji and sequences you actually want.
@@ -49,12 +51,21 @@ To build from source, follow [CONTRIBUTING.md](CONTRIBUTING.md#build-on-windows)
 
 ![Combination editor with deploy selected and a moai and rocket sequence](docs/screenshots/combination-editor.png)
 
+**Your letter variants, ready to use.** Open **Alt+I** with an empty field to browse all variants, ordered by recent use or frequency.
+
+![Letter variant picker with an empty field, three rows of variants, and ü selected](docs/screenshots/letter-variants.png)
+
+**An alternative version of a letter.** Type `u` to see only its variants, ranked using the same usage history. Choose with the arrow keys and press **Enter**.
+
+![Letter variant picker filtered by u, with ü selected in a single row of variants](docs/screenshots/letter-variants-u.png)
+
 ## Essential shortcuts
 
 | Key | Action |
 | --- | --- |
 | `Alt+E` | Open the emoji picker |
 | `Alt+I` | Open letter variants (`u` → `ü`, for example) |
+| `Alt+T` | Switch recently used / most used in either picker |
 | `Enter` | Insert without changing the clipboard |
 | `Ctrl+Enter` | Insert and keep the picker open |
 | `Shift+Enter` | Copy to the clipboard |
