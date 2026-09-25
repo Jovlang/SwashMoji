@@ -168,11 +168,19 @@ void LetterLearning() {
     CHECK(SearchLetterVariants(L"ab", {}).empty());
     CHECK(SearchLetterVariants(L"u", {})[0].payload == L"ü");
     CHECK(SearchLetterVariants(L"S", {})[0].payload == L"ẞ");
+    const auto currencies = SearchLetterVariants(L"$", {});
+    CHECK(!currencies.empty() && currencies[0].payload == L"¢");
+    CHECK(std::any_of(currencies.begin(), currencies.end(), [](const auto& result) { return result.payload == L"€"; }));
+    CHECK(std::any_of(currencies.begin(), currencies.end(), [](const auto& result) { return result.payload == L"₿"; }));
+    CHECK(ValidLetterChoice(L"$€"));
     RecordLetterChoice(profile, L"eè");
     RecordLetterChoice(profile, L"ex");
     CHECK(profile.letterUsage.size() == 1);
     CHECK(SearchLetterVariants(L"e", profile.letterUsage)[0].payload == L"è");
     CHECK(SearchLetterVariants(L"E", profile.letterUsage)[0].payload == L"É");
+    Profile currencyProfile;
+    RecordLetterChoice(currencyProfile, L"$€");
+    CHECK(SearchLetterVariants(L"$", currencyProfile.letterUsage)[0].payload == L"€");
     profile.letterUsage[L"eè"] = UINT_MAX;
     RecordLetterChoice(profile, L"eè");
     CHECK(profile.letterUsage.at(L"eè") == UINT_MAX);
@@ -221,6 +229,7 @@ void GlobalLetterRanking() {
         CHECK(payloads.insert(result.payload).second);
         RecordLetterChoice(profile, result.id.value);
     }
+    CHECK(payloads.count(L"€") == 1 && payloads.count(L"₿") == 1);
     CHECK(profile.letterHistory.size() == kMaxHistory);
     profile.settings.learnQueries = false;
     const auto before = EncodeProfile(profile);

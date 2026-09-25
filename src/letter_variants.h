@@ -31,6 +31,7 @@ inline std::wstring LetterVariants(wchar_t base) {
     case L'w': lower = L"ŵ"; caps = L"Ŵ"; break;
     case L'y': lower = L"ýÿŷ"; caps = L"ÝŸŶ"; break;
     case L'z': lower = L"žźż"; caps = L"ŽŹŻ"; break;
+    case L'$': lower = L"¢£¤¥֏؋৲৳฿៛₠₡₢₣₤₥₦₧₨₩₪₫€₭₮₯₰₱₲₳₴₵₶₷₸₹₺₻₼₽₾₿"; break;
     }
     return upper ? caps : lower;
 }
@@ -42,7 +43,7 @@ inline std::vector<SearchResult> SearchLetterVariants(const std::wstring& query,
         const std::vector<std::wstring>& history = {}, bool sortByUsage = true) {
     std::vector<SearchResult> results;
     if (query.size() > 1) return results;
-    const std::wstring bases = query.empty() ? L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" : query;
+    const std::wstring bases = query.empty() ? L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$" : query;
     for (auto base : bases) for (auto letter : LetterVariants(base)) {
         const std::wstring payload(1, letter);
         // The global and filtered views use the same stable choice key.

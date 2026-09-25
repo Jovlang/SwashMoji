@@ -76,7 +76,8 @@ interactive acceptance checks.
 ## Letter variants
 
 The Alt+I picker shows all variants for an empty query and filters by exact base
-letter and case otherwise. Both views share counts and a 40-entry recent history.
+letter and case otherwise; `$` filters the currency-symbol group. Both views share
+counts and a 40-entry recent history.
 Alt+T uses the shared emoji sort preference: recency then count, or count then
 recency, with built-in catalog order breaking remaining ties. It snapshots both
 on opening; typing another base uses that same snapshot. Switching sort mode

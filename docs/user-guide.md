@@ -238,6 +238,7 @@ for documented results and remaining checks. Automated tests do not replace thes
 Press `Alt+I`, type a base letter, select a variant with the arrow keys, and press
 `Enter` to insert it. For example, `Alt+I`, `u`, `Enter` inserts `ü` on a fresh
 profile. `e` offers `é è ê ë ē ė ę ě ĕ`; `s` includes `ß`, and `a` includes `æ`.
+Type `$` to browse currency symbols such as `¢`, `£`, `¥`, `€`, `₹`, `₽`, and `₿`.
 Use Shift or Caps Lock for uppercase variants. Typing another letter replaces
 the current base; Backspace clears it. Letters without variants show no results.
 

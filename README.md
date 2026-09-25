@@ -6,7 +6,7 @@ SwashMoji is a lightweight, native emoji picker built for people who use emoji o
 
 Press **Alt+E** and start typing. SwashMoji learns which emoji you actually use and brings your favorites to the front. Press **Alt+T** to switch between recently used and most-used emoji.
 
-Need a letter variant? Press **Alt+I** from any app to browse accented letters and variants such as `ü`, `è`, `æ`, and `ß`. Type a base letter to filter, choose with the arrow keys, and press **Enter**. Both views learn from your choices; **Alt+T** switches between recently used and most used here too.
+Need a letter variant or currency symbol? Press **Alt+I** from any app to browse accented letters and variants such as `ü`, `è`, `æ`, and `ß`. Type a base letter to filter, or `$` for currency symbols, choose with the arrow keys, and press **Enter**. Both views learn from your choices; **Alt+T** switches between recently used and most used here too.
 
 Search naturally across multiple languages — no language switching required. SwashMoji searches every supported language at once, while displaying emoji names in **one or two languages you choose**.
 
@@ -64,7 +64,7 @@ To build from source, follow [CONTRIBUTING.md](CONTRIBUTING.md#build-on-windows)
 | Key | Action |
 | --- | --- |
 | `Alt+E` | Open the emoji picker |
-| `Alt+I` | Open letter variants (`u` → `ü`, for example) |
+| `Alt+I` | Open letter variants (`u` → `ü`) and currency symbols (`$` → `€`) |
 | `Alt+T` | Switch recently used / most used in either picker |
 | `Enter` | Insert without changing the clipboard |
 | `Ctrl+Enter` | Insert and keep the picker open |
