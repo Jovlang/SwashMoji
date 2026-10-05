@@ -37,7 +37,7 @@ or duplicate names are omitted; [search documentation](search.md) defines fallba
 Combination names are unchanged. The line retains its
 full accessible text when ellipsized. Alt+S can hide it. Font/tone messages and
 failure recovery remain available, but there are no permanent shortcut hints or
-Details button. Right-click a result or press Alt+D for Details; F1 retains help.
+Details button. Right-click a result or press Alt+Enter or Alt+D for Details; F1 retains help.
 `picker.cpp` maps ranked results into the native listbox's column-major slots.
 Complete pages read left-to-right across ten columns. Incomplete final pages
 balance real items across columns without synthetic empty items; every ranked
@@ -46,7 +46,7 @@ instead of assuming adjacent ranking indices are spatial neighbors.
 
 ## Variants
 
-Details (Alt+D or context menu) opens an accessible native modal dialog.
+Details (Alt+Enter, Alt+D or context menu) opens an accessible native modal dialog.
 The variant list contains complete catalog sequences from the selected family,
 including available mixed-tone sequences. Selecting a row previews that exact
 sequence. Use once commits a pending payload; Cancel discards the draft.
@@ -54,7 +54,9 @@ sequence. Use once commits a pending payload; Cancel discards the draft.
 The pending variant survives font/row/tone changes and failed insertion/copy.
 It clears after a successful insertion/copy, a changed query or a new/dismissed
 session. Global tone is never rewritten by Use once. Learning records the family
-once after success, using the existing frozen session preferences. Details does
+once after success, using the existing frozen session preferences. Alt+Enter is
+consumed in letter mode, which has no Details view. Repeated Alt+Enter key-down
+messages do not reopen Details or attempt insertion. Details does
 not directly send input; Enter there confirms Use once.
 
 ## DPI and accessibility

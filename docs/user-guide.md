@@ -142,7 +142,7 @@ See [selection, navigation, and display scaling](selection.md) for details.
 `Alt+K` cycles the global skin tone for all compatible emoji. Skin-tone variants
 share usage history, so they are not learned or counted as separate families.
 
-**Details** (`Alt+D` or the result menu) shows a larger preview and valid catalog
+**Details** (`Alt+Enter`, `Alt+D`, or the result menu) shows a larger preview and valid catalog
 variants, including mixed skin tones. **Use once** selects the variant for the
 next successful insertion or copy without changing the global skin tone.
 **Cancel** discards the draft.
@@ -243,7 +243,8 @@ Use Shift or Caps Lock for uppercase variants. Typing another letter replaces
 the current base; Backspace clears it. Letters without variants show no results.
 
 The letter picker has no placeholder or ordinary status line. Insertion errors
-and **Copy instead** still appear when needed. `Alt+S` applies only to the emoji
+and **Copy instead** still appear when needed. Alt+Enter has no action in the
+letter picker. Alt+S applies only to the emoji
 picker.
 
 Opening `Alt+I` with an empty field shows all supported variants, including

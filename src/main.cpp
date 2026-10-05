@@ -1633,6 +1633,11 @@ bool ProcessAppMessage(const MSG& message) {
             DestroyWindow(g_helpWindow); return true;
         }
         if (pickerKey && message.wParam == VK_ESCAPE) { RestoreTargetOnEscape(); return true; }
+        // Consume repeats too: Alt+Enter must never fall through to insertion.
+        if (pickerKey && altPressed && message.wParam == VK_RETURN) {
+            if (firstKeyPress) OpenDetails();
+            return true;
+        }
         if (pickerKey && altPressed && firstKeyPress && message.wParam == 'D') { OpenDetails(); return true; }
         if (pickerKey && altPressed && firstKeyPress && message.wParam == 'A') {
             OpenVocabulary(true);

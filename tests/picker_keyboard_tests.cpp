@@ -41,6 +41,51 @@ void LocalizedPickerMessages() {
     UpdateStatusLine();
 }
 
+bool shortcutDetailsOpened{};
+void CALLBACK CancelShortcutDetails(HWND, UINT, UINT_PTR timer, DWORD) {
+    EnumThreadWindows(GetCurrentThreadId(), [](HWND window, LPARAM) -> BOOL {
+        if (GetWindow(window, GW_OWNER) == g_window && GetDlgItem(window, 403)) {
+            shortcutDetailsOpened = g_detailsOpen;
+            SendMessageW(window, WM_COMMAND, IDCANCEL, 0);
+            return FALSE;
+        }
+        return TRUE;
+    }, 0);
+    KillTimer(nullptr, timer);
+}
+
+void DetailsShortcut() {
+    const auto before = EncodeProfile(g_profile);
+    const auto query = g_session.query;
+    const auto selected = g_session.selected;
+    const auto target = g_inputTarget.window;
+    // System-message Alt context works even without thread keyboard state.
+    for (const auto control : {g_edit, g_list, g_window}) {
+        MSG key{}; key.hwnd = control; key.message = WM_SYSKEYDOWN;
+        key.wParam = VK_RETURN; key.lParam = (1u << 29);
+        shortcutDetailsOpened = false;
+        const auto timer = SetTimer(nullptr, 0, 25, CancelShortcutDetails);
+        CHECK(timer);
+        CHECK(ProcessAppMessage(key));
+        KillTimer(nullptr, timer);
+        CHECK(shortcutDetailsOpened);
+        CHECK(g_session.query == query && g_session.selected == selected);
+        CHECK(g_inputTarget.window == target && EncodeProfile(g_profile) == before);
+        CHECK(g_recoveryMessage.empty());
+        key.lParam |= (1u << 30);
+        shortcutDetailsOpened = false;
+        CHECK(ProcessAppMessage(key));
+        CHECK(!shortcutDetailsOpened && g_recoveryMessage.empty());
+        key.lParam = (1u << 29);
+        g_letterMode = true;
+        CHECK(ProcessAppMessage(key));
+        CHECK(!shortcutDetailsOpened && g_recoveryMessage.empty());
+        g_letterMode = false;
+        key.message = WM_KEYDOWN; key.lParam = 0;
+        CHECK(!ProcessAppMessage(key)); // Ordinary Enter still reaches insertion.
+    }
+}
+
 void LanguageDialogControls() {
     Profile profile;
     unsigned saves{};
@@ -278,6 +323,7 @@ int main() {
         CHECK(g_session.query == L"slightly smiling face");
         CHECK(g_profile.settings.displayLanguages.Set({"en", "nb"}));
         RefreshList();
+        DetailsShortcut();
         LanguageDialogControls();
         LocalizedPickerMessages();
         ActivationDialogControls();
