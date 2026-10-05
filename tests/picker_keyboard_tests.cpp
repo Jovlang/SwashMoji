@@ -86,6 +86,58 @@ void DetailsShortcut() {
     }
 }
 
+void DetailsVariantLayout() {
+    const auto instance = GetModuleHandleW(nullptr);
+    DetailsState single{{g_catalog.Find(L"🚀")}};
+    CHECK(single.variants.front());
+    const auto compact = CreateDialogParamW(instance, MAKEINTRESOURCEW(400), g_window,
+        DetailsProc, reinterpret_cast<LPARAM>(&single));
+    CHECK(compact);
+    for (int id : {403, 404, 405, IDOK})
+        CHECK(!(GetWindowLongPtrW(GetDlgItem(compact, id), GWL_STYLE) & WS_VISIBLE));
+    CHECK(GetNextDlgTabItem(compact, nullptr, FALSE) == GetDlgItem(compact, IDCANCEL));
+    CHECK(LOWORD(SendMessageW(compact, DM_GETDEFID, 0, 0)) == IDCANCEL);
+    wchar_t closeText[256]{}; GetDlgItemTextW(compact, IDCANCEL, closeText, 256);
+    CHECK(std::wstring(closeText) == UiText(g_profile.settings.uiLanguage, L"Close"));
+    RECT compactBounds{}; GetWindowRect(compact, &compactBounds);
+    DestroyWindow(compact);
+
+    DetailsState multiple{CatalogVariants(g_catalog, {ResultKind::Emoji, L"🤝"})};
+    CHECK(multiple.variants.size() > 6); // Also covers a horizontally scrolling family.
+    const auto dialog = CreateDialogParamW(instance, MAKEINTRESOURCEW(400), g_window,
+        DetailsProc, reinterpret_cast<LPARAM>(&multiple));
+    CHECK(dialog);
+    const auto list = GetDlgItem(dialog, 403);
+    CHECK(GetWindowLongPtrW(list, GWL_STYLE) & WS_VISIBLE);
+    CHECK(GetWindowLongPtrW(list, GWL_STYLE) & LBS_MULTICOLUMN);
+    CHECK(SendMessageW(list, LB_GETCOUNT, 0, 0) == multiple.variants.size());
+    RECT first{}, second{}, fullBounds{};
+    SendMessageW(list, LB_GETITEMRECT, 0, reinterpret_cast<LPARAM>(&first));
+    SendMessageW(list, LB_GETITEMRECT, 1, reinterpret_cast<LPARAM>(&second));
+    CHECK(first.top == second.top && second.left == first.right);
+    SendMessageW(list, WM_KEYDOWN, VK_RIGHT, 0);
+    CHECK(SendMessageW(list, LB_GETCURSEL, 0, 0) == 1 && multiple.selected == 1);
+    GetWindowRect(dialog, &fullBounds);
+    CHECK(fullBounds.bottom - fullBounds.top > compactBounds.bottom - compactBounds.top);
+    const auto last = multiple.variants.size() - 1;
+    SendMessageW(list, LB_SETCURSEL, last, 0);
+    SendMessageW(dialog, WM_COMMAND, MAKEWPARAM(403, LBN_SELCHANGE), reinterpret_cast<LPARAM>(list));
+    CHECK(multiple.selected == last);
+    SendMessageW(list, LB_GETITEMRECT, last, reinterpret_cast<LPARAM>(&second));
+    RECT listBounds{}; GetClientRect(list, &listBounds);
+    CHECK(second.left >= 0 && second.left < listBounds.right && second.top == 0);
+    wchar_t name[1024]{};
+    GetDlgItemTextW(dialog, 402, name, 1024);
+    CHECK(name == FormatEmojiDisplayName(*multiple.variants[last], g_profile.settings.displayLanguages));
+    // Keep complete localized names in native list strings for accessibility.
+    std::wstring label(static_cast<size_t>(SendMessageW(list, LB_GETTEXTLEN, last, 0)) + 1, L'\0');
+    SendMessageW(list, LB_GETTEXT, last, reinterpret_cast<LPARAM>(label.data()));
+    CHECK(label.find(name) != std::wstring::npos);
+    SendMessageW(dialog, WM_APP, 0, 0);
+    CHECK(SendMessageW(list, LB_GETCURSEL, 0, 0) == last);
+    DestroyWindow(dialog);
+}
+
 void LanguageDialogControls() {
     Profile profile;
     unsigned saves{};
@@ -324,6 +376,7 @@ int main() {
         CHECK(g_profile.settings.displayLanguages.Set({"en", "nb"}));
         RefreshList();
         DetailsShortcut();
+        DetailsVariantLayout();
         LanguageDialogControls();
         LocalizedPickerMessages();
         ActivationDialogControls();

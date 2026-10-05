@@ -33,11 +33,51 @@ void LocalizedDeleteConfirmation() {
     }
     DestroyWindow(parent);
 }
+void LocalizedCombinationDetails(const Catalog& catalog) {
+    const auto matchesLabel = [](std::wstring actual, const std::wstring& translated, wchar_t mnemonic) {
+        if (actual.find(L'&') == std::wstring::npos) return false;
+        actual.erase(std::remove(actual.begin(), actual.end(), L'&'), actual.end());
+        // Dialog localization retains English accelerators, appending one when
+        // its letter does not occur in the translated label.
+        return actual == translated || actual == translated + L" (" + mnemonic + L")";
+    };
+    Combination combination;
+    combination.name = L"Close"; // User-entered names must not be translated.
+    for (const auto* glyph : {L"🚀", L"✨"}) {
+        const auto* emoji = catalog.Find(glyph); CHECK(emoji);
+        combination.entries.push_back({emoji->family.value, emoji->glyph});
+    }
+    DisplayLanguages languages;
+    for (const auto* locale : {"en", "nb", "de", "it", "fr", "es"}) {
+        CombinationDetails state{catalog, combination, languages, locale};
+        const auto dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDD_COMBO_DETAILS),
+            nullptr, CombinationDetailsProc, reinterpret_cast<LPARAM>(&state));
+        CHECK(dialog);
+        wchar_t title[256]{}; GetWindowTextW(dialog, title, 256);
+        CHECK(std::wstring(title) == UiText(locale, L"Combination details - SwashMoji"));
+        CHECK(matchesLabel(Text(dialog, IDCANCEL), UiText(locale, L"Close"), L'C'));
+        CHECK(Text(dialog, IDC_COMBO_NAME) == combination.name);
+        CHECK(Text(dialog, IDC_COMBO_DETAILS_PAYLOAD) == L"🚀✨");
+        CHECK(SendDlgItemMessageW(dialog, IDC_COMBO_ENTRIES, LB_GETCOUNT, 0, 0) == 2);
+        std::vector<std::wstring> captions;
+        EnumChildWindows(dialog, [](HWND child, LPARAM parameter) -> BOOL {
+            wchar_t text[256]{}; GetWindowTextW(child, text, 256);
+            reinterpret_cast<std::vector<std::wstring>*>(parameter)->push_back(text);
+            return TRUE;
+        }, reinterpret_cast<LPARAM>(&captions));
+        for (const auto* label : {L"Exact sequence", L"Emoji in insertion order"})
+            CHECK(std::any_of(captions.begin(), captions.end(), [&](const auto& caption) {
+                return matchesLabel(caption, UiText(locale, label), L'E');
+            }));
+        DestroyWindow(dialog);
+    }
+}
 int main(int argc, char** argv) {
     HWND dialog{};
     try {
         LocalizedDeleteConfirmation();
         CHECK(argc == 2); Catalog catalog; std::ifstream file(std::filesystem::u8path(argv[1]), std::ios::binary); CHECK(catalog.Load(file));
+        LocalizedCombinationDetails(catalog);
         Profile profile; unsigned saves{}; std::function<bool()> persist = [&] { ++saves; return true; };
         Editor parent{catalog, profile, {}, {}, persist}; CombinationEditor state{parent};
         dialog = CreateDialogParamW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDD_COMBINATIONS), nullptr, CombinationProc, reinterpret_cast<LPARAM>(&state));

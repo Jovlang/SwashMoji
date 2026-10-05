@@ -718,7 +718,12 @@ INT_PTR CALLBACK VocabularyPagesProc(HWND dialog, UINT message, WPARAM wParam, L
     }
     return FALSE;
 }
-struct CombinationDetails { const Catalog& catalog; const Combination& combination; const DisplayLanguages& languages; };
+struct CombinationDetails {
+    const Catalog& catalog;
+    const Combination& combination;
+    const DisplayLanguages& languages;
+    std::string uiLanguage;
+};
 INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
     INT_PTR themeResult{};
     if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
@@ -726,6 +731,7 @@ INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam
         NativeTheme::Apply(dialog);
         NativeTheme::ApplyEmojiFont(dialog, {IDC_COMBO_DETAILS_PAYLOAD, IDC_COMBO_ENTRIES});
         const auto& state = *reinterpret_cast<CombinationDetails*>(lParam);
+        LocalizeDialog(dialog, state.uiLanguage);
         SetDlgItemTextW(dialog, IDC_COMBO_NAME, state.combination.name.c_str());
         Sequence(dialog, state.catalog, state.combination, 0, state.languages);
         std::wstring payload;
@@ -740,8 +746,9 @@ INT_PTR CALLBACK CombinationDetailsProc(HWND dialog, UINT message, WPARAM wParam
     return FALSE;
 }
 }
-void ShowCombinationDetails(HWND owner, HINSTANCE instance, const Catalog& catalog, const Combination& combination, const DisplayLanguages& languages) {
-    CombinationDetails state{catalog, combination, languages};
+void ShowCombinationDetails(HWND owner, HINSTANCE instance, const Catalog& catalog, const Combination& combination,
+                            const DisplayLanguages& languages, const std::string& uiLanguage) {
+    CombinationDetails state{catalog, combination, languages, uiLanguage};
     DialogBoxParamW(instance, MAKEINTRESOURCEW(IDD_COMBO_DETAILS), owner, CombinationDetailsProc, reinterpret_cast<LPARAM>(&state));
 }
 

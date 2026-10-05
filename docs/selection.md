@@ -47,9 +47,12 @@ instead of assuming adjacent ranking indices are spatial neighbors.
 ## Variants
 
 Details (Alt+Enter, Alt+D or context menu) opens an accessible native modal dialog.
-The variant list contains complete catalog sequences from the selected family,
-including available mixed-tone sequences. Selecting a row previews that exact
-sequence. Use once commits a pending payload; Cancel discards the draft.
+For a single catalog variant, Details shows the preview and name without a variant
+selector or its explanatory text, and uses a shorter dialog with only Close. For multiple variants,
+the selector shows glyph tiles side by side in one horizontal row, including
+available mixed-tone sequences. Larger families scroll horizontally. Selecting a
+tile updates the preview and name; native list strings retain complete localized
+names for accessibility. Use once commits a pending payload; Cancel discards the draft.
 
 The pending variant survives font/row/tone changes and failed insertion/copy.
 It clears after a successful insertion/copy, a changed query or a new/dismissed

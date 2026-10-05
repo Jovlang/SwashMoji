@@ -146,6 +146,9 @@ share usage history, so they are not learned or counted as separate families.
 variants, including mixed skin tones. **Use once** selects the variant for the
 next successful insertion or copy without changing the global skin tone.
 **Cancel** discards the draft.
+With only one variant, Details shows a preview and **Close**, with no variant selector
+or **Use once** action. Multiple variants
+appear side by side; scroll horizontally for larger families.
 
 ## Aliases and learned phrases
 

@@ -1157,6 +1157,16 @@ struct DetailsState {
     std::vector<const Emoji*> variants;
     size_t selected{};
 };
+void LayoutDetailsVariants(HWND dialog) {
+    const auto list = GetDlgItem(dialog, 403);
+    RECT client{};
+    GetClientRect(list, &client);
+    RECT tile{0, 0, 44, 0};
+    MapDialogRect(dialog, &tile);
+    // One row of glyph tiles, scrolling horizontally for larger families.
+    SendMessageW(list, LB_SETITEMHEIGHT, 0, std::max<LONG>(1, client.bottom));
+    SendMessageW(list, LB_SETCOLUMNWIDTH, tile.right, 0);
+}
 INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam) {
     INT_PTR themeResult{};
     if (NativeTheme::HandleMessage(dialog, message, wParam, lParam, themeResult)) return themeResult;
@@ -1167,10 +1177,8 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
     if (message == WM_DRAWITEM && reinterpret_cast<DRAWITEMSTRUCT*>(lParam)->CtlID == 403) {
         auto* item = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
         if (item->itemID == static_cast<UINT>(-1)) return TRUE;
-        const auto length = SendMessageW(item->hwndItem, LB_GETTEXTLEN, item->itemID, 0);
-        std::wstring text(static_cast<size_t>(std::max<LRESULT>(0, length)) + 1, L'\0');
-        SendMessageW(item->hwndItem, LB_GETTEXT, item->itemID, reinterpret_cast<LPARAM>(text.data()));
-        text.resize(static_cast<size_t>(std::max<LRESULT>(0, length)));
+        const auto* state = reinterpret_cast<DetailsState*>(GetWindowLongPtrW(dialog, DWLP_USER));
+        if (!state || item->itemID >= state->variants.size()) return TRUE;
         const bool selected = (item->itemState & ODS_SELECTED) != 0;
         HBRUSH fill = selected
             ? CreateSolidBrush(HighContrast() ? GetSysColor(COLOR_HIGHLIGHT) : kSelected)
@@ -1178,8 +1186,8 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         FillRect(item->hDC, &item->rcItem, fill);
         if (selected) DeleteObject(fill);
         const auto color = selected && HighContrast() ? GetSysColor(COLOR_HIGHLIGHTTEXT) : Foreground();
-        NativeEmoji::DrawLine(item->hDC, item->rcItem, text,
-            static_cast<float>(MulDiv(14, GetDpiForWindow(dialog), 96)), color, false, !HighContrast());
+        DrawLargePreview(item->hDC, item->rcItem, state->variants[item->itemID]->glyph,
+            GetDpiForWindow(dialog), 32, color);
         if (item->itemState & ODS_FOCUS) DrawFocusRect(item->hDC, &item->rcItem);
         return TRUE;
     }
@@ -1190,29 +1198,47 @@ INT_PTR CALLBACK DetailsProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
         SetWindowLongPtrW(dialog, DWLP_USER, lParam);
         LocalizeDialog(dialog, g_profile.settings.uiLanguage);
         NativeTheme::ApplyEmojiFont(dialog, {402, 403});
-        int width = 0;
-        HDC dc = GetDC(dialog);
-        auto font = SelectObject(dc, reinterpret_cast<HFONT>(SendDlgItemMessageW(dialog, 403, WM_GETFONT, 0, 0)));
         for (const auto* emoji : state->variants) {
             const auto label = emoji->glyph + L"  " + FormatEmojiDisplayName(*emoji, g_profile.settings.displayLanguages);
             SendDlgItemMessageW(dialog, 403, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
-            SIZE extent{};
-            GetTextExtentPoint32W(dc, label.c_str(), static_cast<int>(label.size()), &extent);
-            width = std::max(width, static_cast<int>(extent.cx));
         }
-        SelectObject(dc, font); ReleaseDC(dialog, dc);
-        SendDlgItemMessageW(dialog, 403, LB_SETHORIZONTALEXTENT, width + 16, 0);
+        LayoutDetailsVariants(dialog);
         SendDlgItemMessageW(dialog, 403, LB_SETCURSEL, state->selected, 0);
         SetDlgItemTextW(dialog, 402, FormatEmojiDisplayName(*state->variants[state->selected], g_profile.settings.displayLanguages).c_str());
+        if (state->variants.size() == 1) {
+            for (int id : {403, 404, 405, IDOK}) ShowWindow(GetDlgItem(dialog, id), SW_HIDE);
+            SetDlgItemTextW(dialog, IDCANCEL, UiText(g_profile.settings.uiLanguage, L"Close").c_str());
+            SendMessageW(dialog, DM_SETDEFID, IDCANCEL, 0);
+            RECT offset{0, 0, 0, 77};
+            MapDialogRect(dialog, &offset);
+            for (int id : {IDOK, IDCANCEL}) {
+                const auto button = GetDlgItem(dialog, id);
+                RECT bounds{}; GetWindowRect(button, &bounds);
+                MapWindowPoints(nullptr, dialog, reinterpret_cast<POINT*>(&bounds), 2);
+                SetWindowPos(button, nullptr, bounds.left, bounds.top - offset.bottom, 0, 0,
+                    SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+            }
+            RECT bounds{}; GetWindowRect(dialog, &bounds);
+            SetWindowPos(dialog, nullptr, 0, 0, bounds.right - bounds.left,
+                bounds.bottom - bounds.top - offset.bottom, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
         ClampWindow(dialog);
-        SetFocus(GetDlgItem(dialog, 403));
+        SetFocus(GetDlgItem(dialog, state->variants.size() == 1 ? IDCANCEL : 403));
         return FALSE;
     }
     if (!state) return FALSE;
+    if (message == WM_DPICHANGED) {
+        // Recalculate after the PMv2 dialog manager has scaled the controls.
+        PostMessageW(dialog, WM_APP, 0, 0);
+    }
+    if (message == WM_APP) { LayoutDetailsVariants(dialog); return TRUE; }
     if (message == WM_DESTROY) { NativeTheme::ReleaseEmojiFont(dialog); return FALSE; }
     if (message == WM_COMMAND) {
         if (LOWORD(wParam) == IDCANCEL) { EndDialog(dialog, IDCANCEL); return TRUE; }
-        if (LOWORD(wParam) == IDOK) { EndDialog(dialog, IDOK); return TRUE; }
+        if (LOWORD(wParam) == IDOK) {
+            EndDialog(dialog, state->variants.size() == 1 ? IDCANCEL : IDOK);
+            return TRUE;
+        }
         if (LOWORD(wParam) == 403 && HIWORD(wParam) == LBN_SELCHANGE) {
             const auto selection = SendDlgItemMessageW(dialog, 403, LB_GETCURSEL, 0, 0);
             if (selection >= 0 && static_cast<size_t>(selection) < state->variants.size()) state->selected = selection;
@@ -1242,7 +1268,8 @@ void OpenDetails() {
         if (found == g_profile.combinations.end()) return;
         CancelPendingReturn();
         HWND focus = GetFocus(); g_detailsOpen = true;
-        ShowCombinationDetails(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)), g_catalog, found->second, g_profile.settings.displayLanguages);
+        ShowCombinationDetails(g_window, reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(g_window, GWLP_HINSTANCE)),
+            g_catalog, found->second, g_profile.settings.displayLanguages, g_profile.settings.uiLanguage);
         g_detailsOpen = false;
         if (IsWindowVisible(g_window)) SetFocus(IsWindow(focus) ? focus : g_list);
         return;
